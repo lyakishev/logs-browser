@@ -404,15 +404,25 @@ class DisplayLogsModel:
         print model.get_value(iter, 0)
         return
 
-class LogWorker(threading.Thread):
-    stopthread = threading.Event()
-
-    def __init__(self, params):
-        super(LogWorker,self).__init__(self)
-        self.params = params
-
-    def run(self):
-        
+#class LogWorker(threading.Thread):
+#    stopthread = threading.Event()
+#
+#    def __init__(self, params):
+#        super(LogWorker,self).__init__(self)
+#        self.params = params
+#
+#    def run(self):
+#        pass
+#        #for 
+#        #   if ( self.stopthread.isSet() ):
+#        #       self.stopthread.clear()
+#        #       break   
+#        #   progress
+#        #   getlogs
+#        #self.stopthread.clear()
+#        #
+#    
+            
     
 
 
