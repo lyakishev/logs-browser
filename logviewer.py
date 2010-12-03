@@ -64,13 +64,15 @@ class GUI_Controller:
         self.button_box = gtk.HButtonBox()
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
-	self.progress_table = gtk.Table(2,2,False)
+        self.progress_table = gtk.Table(2,2,False)
         self.progress = gtk.ProgressBar()
         self.progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.pulse_progress = gtk.ProgressBar()
         self.pulse_progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-	self.stop_current_btn = gtk.Button('X')
-	self.stop_all_btn = gtk.Button('X')
+        self.stop_current_btn = gtk.Button('X')
+        self.stop_all_btn = gtk.Button('X')
+        self.stop_all_btn.connect('clicked', self.stop_all)
+        self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
         self.eventlogs_window = gtk.ScrolledWindow()
@@ -81,17 +83,19 @@ class GUI_Controller:
         self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
         # Add our view into the main window
         self.eventlogs_window.add_with_viewport(self.eventlogs_view)
-        
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
         self.logs_model = LogsStore.get_model()
-	self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
+        self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         self.logs_view = LogsDisplay.make_view( self.logs_model )
         self.logs_window.add_with_viewport(self.logs_view)
 
         self.build_interface()
         self.root.show_all()
         return
+
+    def stop_all(self, *args):
+        self.allstop.set()
 
     def build_interface(self):
         for chb in self.evt_checkboxes.itervalues():
@@ -135,18 +139,16 @@ class GUI_Controller:
         self.control_box.pack_start(self.event_frame, False, False)
         self.control_box.pack_start(self.action_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
-
         #self.control_box.pack_start(self.progress, False, False)
-
-	self.progress_table.attach(self.progress,0,1,0,1)
-	self.progress_table.attach(self.stop_all_btn,1,2,0,1,xoptions=0,yoptions=0)
-	self.progress_table.attach(self.pulse_progress,0,1,1,2)
-	self.progress_table.attach(self.stop_current_btn,1,2,1,2,xoptions=0,yoptions=0)
+        self.progress_table.attach(self.progress,0,1,0,1)
+        self.progress_table.attach(self.stop_all_btn,1,2,0,1,xoptions=0,yoptions=0)
+        self.progress_table.attach(self.pulse_progress,0,1,1,2)
+        self.progress_table.attach(self.stop_current_btn,1,2,1,2,xoptions=0,yoptions=0)
         self.control_box.pack_start(self.progress_table, False, False)
-        
-	self.main_box.pack_start(self.control_box, False, False)
+        self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logs_frame, True, True)
         self.root.add(self.main_box)
+
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
         gtk.main_quit()
@@ -191,8 +193,8 @@ class GUI_Controller:
                     while gtk.events_pending():
                     	gtk.main_iteration(False)
                     if l['evt_type'] in types:
-                        if l['the_time']<=end_date and l['the_time']>=start_date:   
-                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))   
+                        if l['the_time']<=end_date and l['the_time']>=start_date:
+                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
                         if l['the_time']<start_date:
                             break
                 self.progress.set_fraction(frac/evl_count)
@@ -208,7 +210,7 @@ class GUI_Controller:
                     	gtk.main_iteration(False)
                     if counter<n:
                         if l['evt_type'] in types:
-                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))   
+                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
                             counter+=1
 		    else:
 			break
@@ -247,7 +249,7 @@ class GUI_Controller:
     def run(self):
         """ run is called to set off the GTK mainloop """
         gtk.main()
-        return  
+        return
 
 class ServersModel:
     """ The model class holds the information we want to display """
@@ -308,12 +310,10 @@ class DisplayServersModel:
         self.renderer1 = gtk.CellRendererToggle()
         self.renderer1.set_property('activatable', True)
         self.renderer1.connect( 'toggled', self.col1_toggled_cb, model )
-		
         # Connect column0 of the display with column 0 in our list model
         # The renderer will then display whatever is in column 0 of
         # our model .
         self.column0 = gtk.TreeViewColumn("Server", self.renderer, text=0)
-		
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
@@ -361,7 +361,6 @@ class DisplayLogsModel:
             self.renderers[r].set_property( 'editable', False )
             self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
                                 text=r))
-		
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
@@ -395,7 +394,7 @@ class DisplayLogsModel:
             model.get_value(iter, 2),
             model.get_value(iter, 3),
             model.get_value(iter, 4),
-            model.get_value(iter, 5).decode("string-escape")))
+            model.get_value(iter, 5).decode("string-escape").encode('utf-8')))
         popup_frame.add(log_text)
         popup.add(popup_frame)
         popup.show_all()
