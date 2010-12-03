@@ -18,7 +18,6 @@ class GUI_Controller:
         self.root.connect("destroy", self.destroy_cb)
         self.root.set_default_size(1200,800)
         self.tree_frame = gtk.Frame(label="Event Logs")
-        self.event_frame = gtk.Frame(label="Event types")
         self.event_box = gtk.VBox()
         self.evt_checkboxes = {}
         for evt in evt_dict.itervalues():
@@ -26,11 +25,43 @@ class GUI_Controller:
             if "ERROR" in evt:
                 self.evt_checkboxes[evt].set_active(True)
 
-        self.action_frame = gtk.Frame(label="Actions")
-        self.action_box = gtk.VBox()
-        self.all_radiobutton = gtk.RadioButton(None, "All")
-        self.date_radiobutton = gtk.RadioButton(self.all_radiobutton,
-                                                "By Date:")
+        self.filter_frame = gtk.Frame(label="Filter")
+        self.filter_box = gtk.VBox()
+        self.evt_type_frame = gtk.Frame()
+        self.evt_type_filter = gtk.CheckButton("Type")
+
+
+        self.quantity_frame = gtk.Frame()
+        self.quantity_filter = gtk.CheckButton("Quantity")
+        self.last_label = gtk.Label("Last")
+        self.last_adjustment = gtk.Adjustment(value=3, lower=1, upper=100, step_incr=1)
+        self.last_spinbutton = gtk.SpinButton(adjustment=self.last_adjustment)
+        self.last_box = gtk.HBox()
+
+        self.content_frame = gtk.Frame()
+        self.content_filter = gtk.CheckButton("Contains")
+        self.like_entry = gtk.Entry()
+        self.notlike_entry = gtk.Entry()
+        self.like_label = gtk.Label('Like')
+        self.notlike_label = gtk.Label('Not like')
+        self.content_table = gtk.Table(2,2,False)
+        
+        self.date_frame = gtk.Frame()
+        self.date_filter = gtk.CheckButton("Date")
+        self.date_box = gtk.VBox()
+        self.date_last_box = gtk.HBox()
+        self.from_label = gtk.RadioButton(label="From")
+        self.last_date_radio = gtk.RadioButton(self.from_label,label='Last')
+        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100, step_incr=1)
+        self.last_date_spin = gtk.SpinButton(adjustment=self.last_date_adj)
+        self.last_date_combo = gtk.combo_box_new_text()
+        self.last_date_combo.append_text('seconds')
+        self.last_date_combo.append_text('minutes')
+        self.last_date_combo.append_text('hours')
+        self.last_date_combo.append_text('days')
+        self.last_date_combo.set_active(1)
+        
+
         now = datetime.datetime.now()
         self.from_hours_adjustment = gtk.Adjustment(value=now.hour, lower=0, upper=23, step_incr=1)
         self.from_minute_adjustment =gtk.Adjustment(value=now.minute, lower=0, upper=59, step_incr=1)
@@ -41,25 +72,18 @@ class GUI_Controller:
         self.to_second_adjustment = gtk.Adjustment(value=now.second, lower=0, upper=59, step_incr=1)
 
         self.fromto_table = gtk.Table(2, 8, False)
-        self.from_label = gtk.Label("From")
         self.fromyear_entry = gtk.Entry(10)
         self.fromyear_entry.set_text(now.strftime("%d.%m.%Y"))
         self.fromhours_spin = gtk.SpinButton(adjustment=self.from_hours_adjustment)
         self.fromminutes_spin = gtk.SpinButton(adjustment=self.from_minute_adjustment)
         self.fromseconds_spin = gtk.SpinButton(adjustment=self.from_second_adjustment)
-        self.to_label = gtk.Label("To")
+        self.to_label = gtk.CheckButton("To")
         self.toyear_entry = gtk.Entry(10)
         self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
         self.tohours_spin = gtk.SpinButton(adjustment=self.to_hours_adjustment)
         self.tominutes_spin = gtk.SpinButton(adjustment=self.to_minute_adjustment)
         self.toseconds_spin = gtk.SpinButton(adjustment=self.to_second_adjustment)
 
-        self.last_radiobutton = gtk.RadioButton(self.all_radiobutton, "Last:")
-        self.last_adjustment = gtk.Adjustment(value=3, lower=1, upper=100, step_incr=1)
-        self.last_spinbutton = gtk.SpinButton(adjustment=self.last_adjustment)
-        self.last_box = gtk.HBox()
-        self.startstop_radiobutton = gtk.RadioButton(self.all_radiobutton,
-                                                    "Stop")
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
         self.show_button = gtk.Button("Show")
@@ -98,8 +122,39 @@ class GUI_Controller:
         self.allstop.set()
 
     def build_interface(self):
+        self.filter_frame.add(self.filter_box)
+        self.evt_type_frame.set_label_widget(self.evt_type_filter)
+        self.evt_type_frame.add(self.event_box)
         for chb in self.evt_checkboxes.itervalues():
             self.event_box.pack_start(chb, False, False, 1)
+        self.filter_box.pack_start(self.evt_type_frame, False, False)
+        self.filter_box.pack_start(self.date_frame, False, False)
+        self.filter_box.pack_start(self.quantity_frame, False, False)
+        self.filter_box.pack_start(self.content_frame, False, False)
+
+        #self.date_frame.set_label_widget(self.date_filter)
+        #self.date_frame.add(self.event_box)
+        self.quantity_frame.set_label_widget(self.quantity_filter)
+        self.quantity_frame.add(self.last_box)
+        self.last_box.pack_start(self.last_label, False, False)
+        self.last_box.pack_start(self.last_spinbutton, False, False,20)
+
+        self.date_frame.set_label_widget(self.date_filter)
+        self.date_frame.add(self.date_box)
+        self.date_box.pack_start(self.fromto_table, False, False)
+        self.date_box.pack_start(self.date_last_box, False, False)
+        self.date_last_box.pack_start(self.last_date_radio, False, False)
+        self.date_last_box.pack_start(self.last_date_spin, False, False)
+        self.date_last_box.pack_start(self.last_date_combo, False, False)
+
+        self.content_frame.set_label_widget(self.content_filter)
+        self.content_frame.add(self.content_table)
+        self.content_table.attach(self.like_label,0,1,0,1, xoptions=0, yoptions=0)
+        self.content_table.attach(self.notlike_label,0,1,1,2, xoptions=0, yoptions=0)
+        self.content_table.attach(self.like_entry,1,2,0,1)
+        self.content_table.attach(self.notlike_entry,1,2,1,2)
+
+
         self.fromto_table.attach(self.from_label, 0, 1, 0, 2, xoptions=0,
                                     yoptions=0, xpadding=10)
         self.fromto_table.attach(self.fromyear_entry, 1, 4, 1, 2, xoptions=0,
@@ -122,22 +177,15 @@ class GUI_Controller:
                                     yoptions=0)
 
 
-        self.last_box.pack_start(self.last_radiobutton, False, False)
-        self.last_box.pack_start(self.last_spinbutton, False, False, 9)
 
-        self.action_box.pack_start(self.all_radiobutton)
-        self.action_box.pack_start(self.date_radiobutton)
-        self.action_box.pack_start(self.fromto_table)
-        self.action_box.pack_start(self.last_box)
-        self.action_box.pack_start(self.startstop_radiobutton)
         self.tree_frame.add(self.eventlogs_window)
         self.logs_frame.add(self.logs_window)
-        self.event_frame.add(self.event_box)
-        self.action_frame.add(self.action_box)
+        #self.action_frame.add(self.action_box)
         self.button_box.pack_start(self.show_button)
         self.control_box.pack_start(self.tree_frame, True, True)
-        self.control_box.pack_start(self.event_frame, False, False)
-        self.control_box.pack_start(self.action_frame, False, False)
+        self.control_box.pack_start(self.filter_frame, False, False)
+        #self.control_box.pack_start(self.event_frame, False, False)
+        #self.control_box.pack_start(self.action_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         #self.control_box.pack_start(self.progress, False, False)
         self.progress_table.attach(self.progress,0,1,0,1)
