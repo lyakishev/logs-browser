@@ -82,7 +82,7 @@ class GUI_Controller:
         self.fromminutes_spin = gtk.SpinButton(adjustment=self.from_minute_adjustment)
         self.fromseconds_spin = gtk.SpinButton(adjustment=self.from_second_adjustment)
         self.to_label = gtk.CheckButton("To")
-        self.to_label.set_active(True)
+        self.to_label.set_active(False)
         self.to_label.connect("toggled", self.to_date_sens)
         self.toyear_entry = gtk.Entry(10)
         self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
@@ -94,14 +94,14 @@ class GUI_Controller:
         self.button_box = gtk.HButtonBox()
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
-        self.progress_table = gtk.Table(2,2,False)
+        #self.progress_table = gtk.Table(2,2,False)
         self.progress = gtk.ProgressBar()
         self.progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        self.pulse_progress = gtk.ProgressBar()
-        self.pulse_progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        self.stop_current_btn = gtk.Button('X')
-        self.stop_all_btn = gtk.Button('X')
-        self.stop_all_btn.connect('clicked', self.stop_all)
+        #self.pulse_progress = gtk.ProgressBar()
+        #self.pulse_progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
+        #self.stop_current_btn = gtk.Button('X')
+        #self.stop_all_btn = gtk.Button('X')
+        #self.stop_all_btn.connect('clicked', self.stop_all)
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
@@ -131,6 +131,7 @@ class GUI_Controller:
         self.quantity_sens()
         self.date_sens()
         self.content_sens()
+        self.to_date_sens()
         return
 
     #def __getattr__(self, name):
@@ -180,8 +181,8 @@ class GUI_Controller:
         else:
             self.quantity_frame.children()[0].set_sensitive(False)
 
-    def stop_all(self, *args):
-        self.allstop.set()
+    #def stop_all(self, *args):
+    #    self.allstop.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -250,11 +251,12 @@ class GUI_Controller:
         #self.control_box.pack_start(self.action_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         #self.control_box.pack_start(self.progress, False, False)
-        self.progress_table.attach(self.progress,0,1,0,1)
-        self.progress_table.attach(self.stop_all_btn,1,2,0,1,xoptions=0,yoptions=0)
-        self.progress_table.attach(self.pulse_progress,0,1,1,2)
-        self.progress_table.attach(self.stop_current_btn,1,2,1,2,xoptions=0,yoptions=0)
-        self.control_box.pack_start(self.progress_table, False, False)
+        #self.progress_table.attach(self.progress,0,1,0,1)
+        #self.progress_table.attach(self.stop_all_btn,1,2,0,1,xoptions=0,yoptions=0)
+        #self.progress_table.attach(self.pulse_progress,0,1,1,2)
+        #self.progress_table.attach(self.stop_current_btn,1,2,1,2,xoptions=0,yoptions=0)
+        self.control_box.pack_start(self.progress, False, False)
+        #self.control_box.pack_start(self.progress_table, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logs_frame, True, True)
         self.root.add(self.main_box)
@@ -266,23 +268,32 @@ class GUI_Controller:
 
     def get_dates(self):
         '''Define start_date and end_date'''
-        st_date = datetime.datetime.strptime(self.fromyear_entry.get_text(),
-                                                '%d.%m.%Y')
-        start_date = datetime.datetime(
-            st_date.year, st_date.month, st_date.day,
-            self.fromhours_spin.get_value_as_int(),
-            self.fromminutes_spin.get_value_as_int(),
-            self.fromseconds_spin.get_value_as_int()
-        )
-
-        e_date = datetime.datetime.strptime(self.toyear_entry.get_text(),
-                                                '%d.%m.%Y')
-        end_date = datetime.datetime(
-            e_date.year, e_date.month, e_date.day,
-            self.tohours_spin.get_value_as_int(),
-            self.tominutes_spin.get_value_as_int(),
-            self.toseconds_spin.get_value_as_int()
-        )
+        if self.last_date_radio.get_active():
+            end_date = datetime.datetime.now()
+            dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
+            active = self.last_date_combo.get_active()
+            delta = self.last_date_spin.get_value()/dateunit[active]
+            start_date = end_date-datetime.timedelta(delta)
+        elif self.from_label.get_active():
+            st_date = datetime.datetime.strptime(self.fromyear_entry.get_text(),
+                                                    '%d.%m.%Y')
+            start_date = datetime.datetime(
+                st_date.year, st_date.month, st_date.day,
+                self.fromhours_spin.get_value_as_int(),
+                self.fromminutes_spin.get_value_as_int(),
+                self.fromseconds_spin.get_value_as_int()
+            )
+            if self.to_label.get_active():
+                e_date = datetime.datetime.strptime(self.toyear_entry.get_text(),
+                                                    '%d.%m.%Y')
+                end_date = datetime.datetime(
+                    e_date.year, e_date.month, e_date.day,
+                    self.tohours_spin.get_value_as_int(),
+                    self.tominutes_spin.get_value_as_int(),
+                    self.toseconds_spin.get_value_as_int()
+                )
+            else:
+                end_date = datetime.datetime.now()
         return (start_date, end_date)
 
     def get_cont(self):
@@ -303,6 +314,7 @@ class GUI_Controller:
         fltr['content'] = self.content_filter.get_active() and self.get_cont() or ""
         fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
         #gtk.gdk.threads_init()
+        self.progress.set_fraction(0.0)
         for comp, log in evlogs:
         #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model)
@@ -312,8 +324,8 @@ class GUI_Controller:
 
 		#self.progress.set_fraction(frac/evl_count)
         #        frac+=1
-        #self.progress.set_text("Complete")
-        #self.progress.set_fraction(1.0)
+        self.progress.set_text("Complete")
+        self.progress.set_fraction(1.0)
 
     def get_event_types(self):
         types = []

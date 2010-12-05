@@ -41,7 +41,7 @@ def getEventLog(ev_obj, server, logtype):
     sdt = dtre.search(the_time)
     #strptime has problem with threads
     #dtdate = datetime.datetime.strptime(the_time, '%m/%d/%y %H:%M:%S') #
-    dtdate = datetime.datetime(int(sdt.group(3)), int(sdt.group(1)),
+    dtdate = datetime.datetime(int("20"+sdt.group(3)), int(sdt.group(1)),
                                 int(sdt.group(2)), int(sdt.group(4)),
                                 int(sdt.group(5)),int(sdt.group(6)))
     log['evt_id'] = str(winerror.HRESULT_CODE(ev_obj.EventID))
