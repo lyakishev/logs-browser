@@ -4,7 +4,7 @@ import win32evtlog
 import win32evtlogutil
 import winerror
 import pywintypes
-from datetime import *
+import datetime
 import re
  
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
@@ -36,7 +36,7 @@ def getEventLogs(server, logtype):
 def getEventLog(ev_obj, server, logtype):
     log = {}
     the_time = ev_obj.TimeGenerated.Format() #'12/23/99 15:54:09'
-    dtdate = datetime.strptime(the_time, '%m/%d/%y %H:%M:%S')
+    dtdate = datetime.datetime.strptime(the_time, '%m/%d/%y %H:%M:%S')
     log['evt_id'] = str(winerror.HRESULT_CODE(ev_obj.EventID))
     log['computer'] = str(ev_obj.ComputerName)
     log['cat'] = ev_obj.EventCategory

@@ -5,9 +5,10 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject
 from servers_log import logs
-from evs import *
+#from evs import *
 import datetime
-import threading
+#import threading
+from logworker import *
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -263,70 +264,53 @@ class GUI_Controller:
         gtk.main_quit()
         return
 
+    def get_dates(self):
+        '''Define start_date and end_date'''
+        st_date = datetime.datetime.strptime(self.fromyear_entry.get_text(),
+                                                '%d.%m.%Y')
+        start_date = datetime.datetime(
+            st_date.year, st_date.month, st_date.day,
+            self.fromhours_spin.get_value_as_int(),
+            self.fromminutes_spin.get_value_as_int(),
+            self.fromseconds_spin.get_value_as_int()
+        )
+
+        e_date = datetime.datetime.strptime(self.toyear_entry.get_text(),
+                                                '%d.%m.%Y')
+        end_date = datetime.datetime(
+            e_date.year, e_date.month, e_date.day,
+            self.tohours_spin.get_value_as_int(),
+            self.tominutes_spin.get_value_as_int(),
+            self.toseconds_spin.get_value_as_int()
+        )
+        return (start_date, end_date)
+
+    def get_cont(self):
+        return self.like_entry.get_text()
+
+    def get_quant(self):
+        return self.last_spinbutton.get_value()
+    
+
     def show_logs(self, params):
         self.logs_model.clear()
         evlogs = self.get_active_servers()
-        types = self.get_event_types()
         evl_count = len(evlogs)
         frac = 1.0
-        if self.all_radiobutton.get_active() == True:
-            for comp, log in evlogs:
-                self.progress.set_text("%s %s" % (comp,log))
-                self.logs+=getEventLogsAll(comp, log, types)
-                self.progress.set_fraction(frac/evl_count)
-                frac+=1
-                while gtk.events_pending():
-                    gtk.main_iteration(False)
-        elif self.date_radiobutton.get_active() == True:
-            st_date = datetime.datetime.strptime(self.fromyear_entry.get_text(),
-                                                '%d.%m.%Y')
-            start_date = datetime.datetime(
-                st_date.year, st_date.month, st_date.day,
-                self.fromhours_spin.get_value_as_int(),
-                self.fromminutes_spin.get_value_as_int(),
-                self.fromseconds_spin.get_value_as_int()
-            )
+        fltr = {}
+        fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
+        fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
+        fltr['content'] = self.content_filter.get_active() and self.get_cont() or ""
+        fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
+        for comp, log in evlogs:
+            self.worker = LogWorker(comp, log, fltr, self.logs_model)
+            self.worker.start()
 
-            e_date = datetime.datetime.strptime(self.toyear_entry.get_text(),
-                                                '%d.%m.%Y')
-            end_date = datetime.datetime(
-                e_date.year, e_date.month, e_date.day,
-                self.tohours_spin.get_value_as_int(),
-                self.tominutes_spin.get_value_as_int(),
-                self.toseconds_spin.get_value_as_int()
-            )
-            for comp, log in evlogs:
-                self.progress.set_text("%s %s" % (comp,log))
-                for l in getEventLogs(comp, log):
-		    self.pulse_progress.pulse()
-                    while gtk.events_pending():
-                    	gtk.main_iteration(False)
-                    if l['evt_type'] in types:
-                        if l['the_time']<=end_date and l['the_time']>=start_date:
-                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
-                        if l['the_time']<start_date:
-                            break
-                self.progress.set_fraction(frac/evl_count)
-                frac+=1
-		self.stop_curr = False
-        elif self.last_radiobutton.get_active() == True:
-            n = self.last_spinbutton.get_value_as_int()
-            for comp, log in evlogs:
-		counter = 0
-                self.progress.set_text("%s %s" % (comp,log))
-                for l in getEventLogs(comp, log):
-                    while gtk.events_pending():
-                    	gtk.main_iteration(False)
-                    if counter<n:
-                        if l['evt_type'] in types:
-                            self.logs_model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
-                            counter+=1
-		    else:
-			break
-		self.progress.set_fraction(frac/evl_count)
-                frac+=1
-        self.progress.set_text("Complete")
-        self.progress.set_fraction(1.0)
+
+		#self.progress.set_fraction(frac/evl_count)
+        #        frac+=1
+        #self.progress.set_text("Complete")
+        #self.progress.set_fraction(1.0)
 
     def get_event_types(self):
         types = []
