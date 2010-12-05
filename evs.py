@@ -15,6 +15,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 
 #----------------------------------------------------------------------
 #msg=re.compile('"(.+?)"')
+dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 
 
 def getEventLogs(server, logtype):
@@ -33,10 +34,16 @@ def getEventLogs(server, logtype):
 		win32evtlog.CloseEventLog(hand)
 		return
 
+
 def getEventLog(ev_obj, server, logtype):
     log = {}
     the_time = ev_obj.TimeGenerated.Format() #'12/23/99 15:54:09'
-    dtdate = datetime.datetime.strptime(the_time, '%m/%d/%y %H:%M:%S')
+    sdt = dtre.search(the_time)
+    #strptime has problem with threads
+    #dtdate = datetime.datetime.strptime(the_time, '%m/%d/%y %H:%M:%S') #
+    dtdate = datetime.datetime(int(sdt.group(3)), int(sdt.group(1)),
+                                int(sdt.group(2)), int(sdt.group(4)),
+                                int(sdt.group(5)),int(sdt.group(6)))
     log['evt_id'] = str(winerror.HRESULT_CODE(ev_obj.EventID))
     log['computer'] = str(ev_obj.ComputerName)
     log['cat'] = ev_obj.EventCategory

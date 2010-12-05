@@ -302,9 +302,12 @@ class GUI_Controller:
         fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
         fltr['content'] = self.content_filter.get_active() and self.get_cont() or ""
         fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
+        #gtk.gdk.threads_init()
         for comp, log in evlogs:
+        #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model)
             self.worker.start()
+       # gtk.gdk.threads_leave()
 
 
 		#self.progress.set_fraction(frac/evl_count)
@@ -339,11 +342,11 @@ class GUI_Controller:
             stands = self.eventlogs_model.iter_next(stands)
         return logs_for_process
 
-    def run(self):
-        """ run is called to set off the GTK mainloop """
-        gtk.main()
-        return
-
+#    def run(self):
+#        """ run is called to set off the GTK mainloop """
+#        gtk.main()
+#        return
+#
 class ServersModel:
     """ The model class holds the information we want to display """
     def __init__(self):
@@ -519,9 +522,13 @@ class DisplayLogsModel:
 
 
 if __name__ == '__main__':
+    gtk.gdk.threads_init()
     ServersStore = ServersModel()
     LogsStore = LogsModel()
     ServersDisplay = DisplayServersModel()
     LogsDisplay = DisplayLogsModel()
     myGUI = GUI_Controller()
-    myGUI.run()
+    gtk.gdk.threads_enter()
+    gtk.main()
+    gtk.gdk.threads_leave()
+    #myGUI.run()

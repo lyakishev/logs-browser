@@ -1,6 +1,8 @@
 from evs import *
 import threading
-import pdb
+import pygtk
+pygtk.require("2.0")
+import gtk, gobject
 
 class LogWorker(threading.Thread):
 
@@ -72,5 +74,8 @@ class LogWorker(threading.Thread):
            #     self.stopthread.clear()
            #     break
             if l:
+                gtk.gdk.threads_enter()
                 self.model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
+                #myGUI.run()
+                gtk.gdk.threads_leave()
                 #print l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']
