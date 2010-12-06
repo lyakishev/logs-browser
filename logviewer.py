@@ -10,6 +10,8 @@ import datetime
 #import threading
 from logworker import *
 
+semaphore = threading.BoundedSemaphore(value=5)
+
 class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
@@ -301,7 +303,6 @@ class GUI_Controller:
 
     def get_quant(self):
         return self.last_spinbutton.get_value()
-    
 
     def show_logs(self, params):
         self.logs_model.clear()
@@ -316,9 +317,11 @@ class GUI_Controller:
         #gtk.gdk.threads_init()
         self.progress.set_fraction(0.0)
         for comp, log in evlogs:
+            semaphore.acquire()
         #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model)
             self.worker.start()
+            semaphore.release()
        # gtk.gdk.threads_leave()
 
 
@@ -493,17 +496,23 @@ class DisplayLogsModel:
         popup = gtk.Window()
         popup.set_title("Log")
         popup.set_default_size(640,480)
+        scr = gtk.ScrolledWindow()
+        scr.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         popup_frame = gtk.Frame("Log")
         log_text = gtk.TextView()
         log_text.set_wrap_mode(gtk.WRAP_WORD)
+        msg = model.get_value(iter, 5).decode("string-escape")
+        msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
+        msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), msg)
         log_text.get_buffer().set_text("%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
             model.get_value(iter, 0),
             model.get_value(iter, 1),
             model.get_value(iter, 2),
             model.get_value(iter, 3),
             model.get_value(iter, 4),
-            model.get_value(iter, 5).decode("string-escape").encode('utf-8')))
-        popup_frame.add(log_text)
+            msg))
+        popup_frame.add(scr)
+        scr.add(log_text)
         popup.add(popup_frame)
         popup.show_all()
         selection = path.get_selection()
