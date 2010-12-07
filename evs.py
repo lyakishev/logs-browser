@@ -6,6 +6,7 @@ import winerror
 import pywintypes
 import datetime
 import re
+import time
  
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -23,14 +24,18 @@ def getEventLogs(server, logtype):
         hand = win32evtlog.OpenEventLog(server,logtype)  #!!!!!!
     except pywintypes.error:
 	print "Error: %s %s" % (server, logtype)
-        return    
+        return
     flags = win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ #!!!!!!
     while 1:
         try:
             events=win32evtlog.ReadEventLog(hand,flags,0)
         except pywintypes.error:
-            print "Error: %s %s" % (server, logtype)
-            events = None
+            time.sleep(1)
+            try:
+                events=win32evtlog.ReadEventLog(hand,flags,0)
+            except:
+                print "After sleep error: %s %s" % (server, logtype)
+                events = None
             #return
 	if events:
 		for ev_obj in events:

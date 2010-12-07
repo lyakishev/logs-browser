@@ -10,8 +10,6 @@ import datetime
 #import threading
 from logworker import *
 
-semaphore = threading.BoundedSemaphore(value=5)
-
 class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
@@ -317,11 +315,9 @@ class GUI_Controller:
         #gtk.gdk.threads_init()
         self.progress.set_fraction(0.0)
         for comp, log in evlogs:
-            semaphore.acquire()
         #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model)
             self.worker.start()
-            semaphore.release()
        # gtk.gdk.threads_leave()
 
 

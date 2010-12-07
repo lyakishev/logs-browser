@@ -4,7 +4,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject
 
-#semaphore = threading.BoundedSemaphore(value=5)
+semaphore = threading.BoundedSemaphore(value=5)
 
 
 class LogWorker(threading.Thread):
@@ -72,7 +72,7 @@ class LogWorker(threading.Thread):
                 return l
 
     def run(self):
-        #semaphore.acquire()
+        semaphore.acquire()
         for l in self.for_c:
            # if ( self.stopthread.isSet() ):
            #     self.stopthread.clear()
@@ -82,5 +82,5 @@ class LogWorker(threading.Thread):
                 self.model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
                 #myGUI.run()
                 gtk.gdk.threads_leave()
-        #semaphore.release()
+        semaphore.release()
                 #print l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']
