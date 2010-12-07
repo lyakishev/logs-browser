@@ -4,7 +4,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject
 
-semaphore = threading.BoundedSemaphore(value=5)
+semaphore = threading.BoundedSemaphore(value=7)
 
 
 class LogWorker(threading.Thread):
@@ -93,6 +93,9 @@ class LogWorker(threading.Thread):
         semaphore.release()
         gtk.gdk.threads_enter()
         curr_frac = self.progress.get_fraction() + self.frac
+        if curr_frac>1.0:
+            curr_frac=1.0
+            self.progress.set_text("Complete")
         self.progress.set_fraction((curr_frac>1.0) and 1.0 or curr_frac)
         gtk.gdk.threads_leave()
                 #print l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']

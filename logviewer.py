@@ -305,6 +305,7 @@ class GUI_Controller:
     def show_logs(self, params):
         self.logs_model.clear()
         self.progress.set_fraction(0.0)
+        self.progress.set_text("Working...")
         evlogs = self.get_active_servers()
         evl_count = len(evlogs)
         frac = 1.0/(evl_count)
