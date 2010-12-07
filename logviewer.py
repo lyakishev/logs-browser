@@ -503,6 +503,7 @@ class DisplayLogsModel:
         scr.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         popup_frame = gtk.Frame("Log")
         log_text = gtk.TextView()
+        log_text.set_editable(False)
         log_text.set_wrap_mode(gtk.WRAP_WORD)
         msg = model.get_value(iter, 5).decode("string-escape")
         msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
