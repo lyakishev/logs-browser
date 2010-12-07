@@ -297,7 +297,7 @@ class GUI_Controller:
         return (start_date, end_date)
 
     def get_cont(self):
-        return self.like_entry.get_text()
+        return (self.like_entry.get_text(),self.notlike_entry.get_text())
 
     def get_quant(self):
         return self.last_spinbutton.get_value()
@@ -310,7 +310,7 @@ class GUI_Controller:
         fltr = {}
         fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
         fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
-        fltr['content'] = self.content_filter.get_active() and self.get_cont() or ""
+        fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
         fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
         #gtk.gdk.threads_init()
         self.progress.set_fraction(0.0)

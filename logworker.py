@@ -22,11 +22,12 @@ class LogWorker(threading.Thread):
         #self.frac = frac
         self.type_func = self.fltr['types'] and self.f_type or self.ret_self
         self.date_func = fltr['date'] and self.f_date or self.ret_self
-        self.content_func = fltr['content'] and self.f_cont or self.ret_self
+        self.content_like_func = fltr['content'][0] and self.f_likecont or self.ret_self
+        self.content_notlike_func = fltr['content'][1] and self.f_notlikecont or self.ret_self
         #self.last_func = fltr['last'] and self.f_last or (lambda l, c: l)
         self.f1 = (self.date_generator(self.date_func, getEventLogs(self.comp, self.log)))
         self.f2 = (self.type_func(l) for l in self.f1)
-        self.f3 = (self.content_func(l) for l in self.f2)
+        self.f3 = (self.content_notlike_func(l) for l in (self.content_like_func(l1) for l1 in self.f2))
         #self.f4 = (self.last_func(l, i) for i,l inself.f3)
         self.f4 = self.last_gen(self.f3)
         self.for_c = self.f4
@@ -61,9 +62,14 @@ class LogWorker(threading.Thread):
             for l in gen:
                 yield func(l)
 
-    def f_cont(self, l):
+    def f_likecont(self, l):
         if l:
-            if self.fltr['content'] in l['msg']:
+            if self.fltr['content'][0] in l['msg']:
+                return l
+
+    def f_notlikecont(self, l):
+        if l:
+            if self.fltr['content'][1] not in l['msg']:
                 return l
 
     def f_type(self, l):
