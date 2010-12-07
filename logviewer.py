@@ -315,11 +315,14 @@ class GUI_Controller:
         fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
         fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
         #gtk.gdk.threads_init()
-        self.progress.set_fraction(0.0)
+        self.sens_list=[self.evt_type_frame,self.date_frame,
+            self.content_frame,self.quantity_frame,self.show_button]
+        for sl in self.sens_list:
+                sl.set_sensitive(False)
         for comp, log in evlogs:
         #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model,
-                                        self.progress, frac)
+                                        self.progress, frac, self.sens_list)
             self.worker.start()
 
        # gtk.gdk.threads_leave()
