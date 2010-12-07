@@ -30,7 +30,8 @@ def getEventLogs(server, logtype):
         try:
             events=win32evtlog.ReadEventLog(hand,flags,0)
         except pywintypes.error:
-            time.sleep(1)
+            print "Zzzzz...."
+            time.sleep(2)
             try:
                 events=win32evtlog.ReadEventLog(hand,flags,0)
             except:

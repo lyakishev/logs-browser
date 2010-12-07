@@ -3,7 +3,7 @@
 """ Demonstration using editable and activatable CellRenderers """
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject
+import gtk, gobject, gio
 from servers_log import logs
 #from evs import *
 import datetime
