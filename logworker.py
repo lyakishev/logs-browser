@@ -11,15 +11,15 @@ class LogWorker(threading.Thread):
 
     #stopthread = threading.Event()
 
-    def __init__(self, comp, log, fltr, model):
+    def __init__(self, comp, log, fltr, model, progress, frac):
         threading.Thread.__init__(self)
         self.ret_self = lambda l: l
         self.comp = comp
         self.log = log
         self.fltr = fltr
         self.model = model
-        #self.progress = progress
-        #self.frac = frac
+        self.progress = progress
+        self.frac = frac
         self.type_func = self.fltr['types'] and self.f_type or self.ret_self
         self.date_func = fltr['date'] and self.f_date or self.ret_self
         self.content_like_func = fltr['content'][0] and self.f_likecont or self.ret_self
@@ -79,6 +79,7 @@ class LogWorker(threading.Thread):
 
     def run(self):
         semaphore.acquire()
+        print "%s %s acquire" % (self.log, self.comp)
         for l in self.for_c:
            # if ( self.stopthread.isSet() ):
            #     self.stopthread.clear()
@@ -88,5 +89,10 @@ class LogWorker(threading.Thread):
                 self.model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
                 #myGUI.run()
                 gtk.gdk.threads_leave()
+        print "%s %s release" % (self.log, self.comp)
         semaphore.release()
+        gtk.gdk.threads_enter()
+        curr_frac = self.progress.get_fraction() + self.frac
+        self.progress.set_fraction((curr_frac>1.0) and 1.0 or curr_frac)
+        gtk.gdk.threads_leave()
                 #print l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']

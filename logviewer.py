@@ -304,9 +304,10 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.logs_model.clear()
+        self.progress.set_fraction(0.0)
         evlogs = self.get_active_servers()
         evl_count = len(evlogs)
-        frac = 1.0
+        frac = 1.0/(evl_count)
         fltr = {}
         fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
         fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
@@ -316,15 +317,17 @@ class GUI_Controller:
         self.progress.set_fraction(0.0)
         for comp, log in evlogs:
         #    gtk.gdk.threads_enter()
-            self.worker = LogWorker(comp, log, fltr, self.logs_model)
+            self.worker = LogWorker(comp, log, fltr, self.logs_model,
+                                        self.progress, frac)
             self.worker.start()
+
        # gtk.gdk.threads_leave()
 
 
 		#self.progress.set_fraction(frac/evl_count)
         #        frac+=1
-        self.progress.set_text("Complete")
-        self.progress.set_fraction(1.0)
+        #self.progress.set_text("Complete")
+        #self.progress.set_fraction(1.0)
 
     def get_event_types(self):
         types = []
