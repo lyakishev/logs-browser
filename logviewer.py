@@ -261,6 +261,22 @@ class GUI_Controller:
         self.main_box.pack_start(self.logs_frame, True, True)
         self.root.add(self.main_box)
 
+    def parse_like_entry(self):
+        strng = self.like_entry.get_text()
+        
+        def parse(token):
+            if token in ["AND", "OR", "NOT"]:
+                return t.lower()
+            elif token in [")","("]:
+                return token
+            elif not token:
+                return token
+            else:
+                return "'"+t.strip()+"'"+" in l['msg']"
+        
+        if_expr = ' '.join([parse(t) for r in re.split("(AND|OR|NOT|\)|\()")])
+        return if_expr
+
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
         gtk.main_quit()
@@ -297,7 +313,7 @@ class GUI_Controller:
         return (start_date, end_date)
 
     def get_cont(self):
-        return (self.like_entry.get_text(),self.notlike_entry.get_text())
+        return (self.parse_like_entry(),self.notlike_entry.get_text())
 
     def get_quant(self):
         return self.last_spinbutton.get_value()

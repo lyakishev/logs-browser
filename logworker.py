@@ -66,7 +66,7 @@ class LogWorker(threading.Thread):
 
     def f_likecont(self, l):
         if l:
-            if self.fltr['content'][0] in l['msg']:
+            if eval(self.fltr['content'][0]):# in l['msg']:
                 return l
 
     def f_notlikecont(self, l):
