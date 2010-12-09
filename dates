@@ -1,0 +1,100 @@
+nag-tc-01
+-----------------------------------------------------------
+20101208_8_Log.txt r"^\d{8}_\d.+"
+[08:50:04.6264129] 
+r"\[\d{2}.\d{2}.\d{2}.\d*?\]"
+------------------------------------------------------------
+20101208_.Log.txt r"^\d{8}_.+'
+[08-12-2010 06:14:18.1891857]
+r"\[\d{2}.\d{2}.\d{4}.\d{2}.\d{2}.\d{2}.\d*?\]"
+------------------------------------------------------------
+20101208_.Log
+[08:43:38.5432]
+r"\[\d{2}.\d{2}.\d{2}.\d*?\]"
+------------------------------------------------------------
+MoveNextFromWaitingService.exe.config.log.2010-12-08.1
+SQR_AM
+....Log(\d{4}-\d{2}-\d{2})?(.\d+?)
+2010-12-08 17:24:32,875
+r"\d{4}.\d{2}.\d{2}.\d{2}.\d{2}.\d{2}.\d+"
+
+ThreadMachine...		|
+DEBUG [2010-12-09 12:31:54,596] |
+Marti.PAM.BL...			|	
+[DEBUG][2010-12-09 00:09:35,977]|
+OrderCatalogue.BL		|
+OrderCatalogue.GUI		|
+[2010-12-09 12:20:05,355]	|
+
+...Xml...
+<log4j:event logger="FORIS.TelCRM.Marketing.Plugins.InternalProcessorEx" timestamp="1291877131552" level="DEBUG" thread="3"><log4j:message>Получен запрос от диспетчера на запуск задач. Кол-во: 1</log4j:message><log4j:properties><log4j:data name="log4jmachinename" value="nag-tc-01" /><log4j:data name="log4net:HostName" value="nag-tc-01" /><log4j:data name="log4net:UserName" value="NT AUTHORITY\NETWORK SERVICE" /><log4j:data name="log4japp" value="FORIS.TelCRM.Marketing.Plugins.ProcessorService.exe" /></log4j:properties><log4j:locationInfo class="FORIS.TelCRM.Marketing.Plugins.InternalProcessorEx" method="QueueOperations" file="" line="0" /></log4j:event>
+
+CRM.CORE
+AMdService
+30.11.2010 20:11:16 r"\d{2}.\d{2}.\d{4}.\d{2}.\d{2}.\d{2}
+
+Marti.Community...
+FORIS.TelCRM.CustomerManagement.HostingService
+[2010-12-09 11:36:47,060]
+------------------------------------------------------------
+_2010_12_08
+and req_type...
+вообще нет времени
+-----------------------------------------------------------
+
+nag-tc-02
+uprsg20101209(.log20101209)
+2010-12-08 11:24:09,380
+
+AccountsReceivable_2010-12-08_Debtor
+[2010-12-08 10:01:38,162]
+
+FORIS.Billing.BillingEngine.BAS_08-12-10_System.ServiceProcess.ServiceBase
+TID4 09-12-10 11:52:56
+
+FileReceivingTool_08_12_2010
+09-12-10 00:00:00,94
+
+PaymentReceiverUPRS_08-12-10
+08-12-10 11:34:07
+
+wslog_08122010
+09-12-2010 12:06:55
+
+nag-tc-03
+20101207_AMIManager_Message
+Time: 19:38:18.016
+
+20101209_App
+13:20:47.822
+
+20101209_Cmd
+(0x2B1->0x2C1)[13:25:40.136]
+
+CounterFormatter20101207193128.27
+07.12.2010 19:31:28
+
+UnitTesting-08122010-full.0
+07.12.2010 19:35:22,33
+
+RatingEngine_2010-12-08-09-10-23.6753109
+08.12.2010 9:10:23
+
+psp_20101208_19
+08.12.2010 9:22:13
+
+nag-tc-05
+08122010102631-SMSCON_USSDCON_01_activity
+08.12.2010 10:26:31.818
+
+foris_catalogue_mc-101208
+08.12.2010 14:04:58:955
+
+09
+Marti.ServiceRegistry.Server
+17.11.2010 12:53:04
+
+12
+0_1436142_0.000001
+4_2_0.000003
+08-12-2010 06:12:1067
