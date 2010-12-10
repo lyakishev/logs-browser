@@ -274,7 +274,8 @@ class GUI_Controller:
             else:
                 return "'"+t.strip()+"'"+" in l['msg']"
         
-        if_expr = ' '.join([parse(t) for r in re.split("(AND|OR|NOT|\)|\()")])
+        if_expr = ' '.join([parse(t) for t in re.split("(AND|OR|NOT|\)|\()",
+            strng)])
         return if_expr
 
     def destroy_cb(self, *kw):
