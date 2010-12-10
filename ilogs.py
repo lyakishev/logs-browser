@@ -12,7 +12,7 @@ filename_pattern=r"""
 (.+)
 """
 
-filename_parser =re.compile(r"^(\d{8})?_?(\d{2})?_?(.+)(\d{4}.?\d{2}.?\d{2})?(\d{2}.?\d{2}.?\d{2})?.?([a-zA-Z]*).?(\d*).?([a-zA-Z]*)")
+filename_parser =re.compile(r"^(\d{8})?_?(\d{2})?_?((\w+)(\.(\w+)*)\.?(d{4}.?\d{2}.?\d{2})?(\d{2}.?\d{2}.?\d{2})?.?([a-zA-Z]*).?(\d*).?([a-zA-Z]*)")
 mg_parser = re.compile(r"(\d+).?([A-Z]+.?[A-Z]+.?\d{2}).?([a-z]+).?([a-z]+)")
 test_parser = re.compile(filename_pattern, re.VERBOSE)
 #date_parser = re.compile(r"^(\d{8})?_?(\d{2})?.+
@@ -67,6 +67,14 @@ def parse_logs(filename):
                 'source' : "",
                 'computer' : ""
         }
+
+
+if date of change < start_date:
+    pass
+elif date_from_filename < start_date:
+    pass
+else:
+    process
 
 
 #filename_parser =re.compile(r"^(\d{8})?_?(\d{2})?_?(\w+\.(?!\d{2})+)(\d{4}.?\d{2}.?\d{2})?(\d{2}.?\d{2}.?\d{2})?.?([a-zA-Z]*).?(\d*).?([a-zA-Z]*)")

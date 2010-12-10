@@ -1,3 +1,13 @@
+sep = Literal(".") | Literal("_")
+date = Word(nums, exact=8)
+hour = Word(nums, max=2)
+datetime = date + Optional(sep + hour) # (hour | time))
+#ext = "."+Word(alphas, exact=3)
+logname = delimitedList(Word(alphanums),'.')
+filename=Optional(datetime+sep)+logname#+ext
+#filename = datetime+sep+logname+Optional(sep)+Optional(datetime)+sep+ext+Optional(sep+date+sep+counter)
+
+
 nag-tc-01
 -----------------------------------------------------------
 20101208_8_Log.txt r"^\d{8}_\d.+"
