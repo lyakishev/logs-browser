@@ -77,3 +77,8 @@ print filename.parseString("0122010000001-EMAILCON_EMAILCON_01_error.log") #nag-
 #    except:
 #        pass
 
+dtinfile = Word(nums, exact=2)+Literal(".")+Word(nums,exact=2)+Literal(".")+Word(nums, exact=4)+Word(nums, max=2)+Literal(":")+Word(nums, max=2)+Literal(":")+Word(nums, max=2)
+msg=SkipTo(dt | StringEnd())
+log=dtinfile+msg
+log.searchString(fileread) #scanString - generator, parseFile
+

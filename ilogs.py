@@ -44,9 +44,9 @@ gtk.main()
 #    f=open(fillename, 'r')
 #    s=f.read()
 #    log = {}
-#    for l in izip(testp.finditer(s), ifilter(lambda x: x, testp.split(s))):
-#        yield {'the_time': l[0],
-#                'msg': l[1],
+#    for l in log.scanString(s)
+#        yield {'the_time': l['datetime'],
+#                'msg': l['msg'],
 #                'logtype': "",
 #                'source' : "",
 #                'computer' : ""
@@ -61,22 +61,16 @@ gtk.main()
 #    process
 
 
-#filename_parser =re.compile(r"^(\d{8})?_?(\d{2})?_?(\w+\.(?!\d{2})+)(\d{4}.?\d{2}.?\d{2})?(\d{2}.?\d{2}.?\d{2})?.?([a-zA-Z]*).?(\d*).?([a-zA-Z]*)")
-#re.split('[._-]?', "test")
-
-
-                #print f, " ", mg_parser.search(f).group(2)
-                #flss.append(mg_parser.search(f).group(2))
-            #print f, "  ", filename_parser.search(f).group(3)
-        #if filename_parser.search(f).group(1):
-                            #fo=file(os.path.join(root,f), 'r')
-                            #fr=fo.read()
-                            #if "VBScript" in fr:
-                            #       print os.path.join(root,f)
-                            #fo.close()
-#   sflss=set(flss)
- #   flens.append(len(sflss))
-#print flens
 #os.path.getmtime(fname)))
+left_inter = end_date < file_end_date and end_date>file_start_date
+right_inter = start_date>file_start_date and start_date<file_end_date
+if left_inter:
+    parse
+elif right_inter:
+    parse
+elif
+def datetime_intersect():
+    return (t1start <= t2start and t2start <= t1end) or \
+           (t2start <= t1start and t1start <= t2end)
 
 
