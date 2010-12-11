@@ -16,28 +16,32 @@ def parse_date(d):
 
 def hour_to_date(d):
     #pdb.set_trace()
-    try:
+    if d.get('hour', 0):
         return d['date']+timedelta(int(d['hour'])/24.)
-    except KeyError:
+    elif d.get('time', 0):
+        t=datetime.strptime(d['time'], "%H%M%S")
+        return d['date']+timedelta(t.hour/24.+t.minute/(24.*60)+t.second/(24.*60*60))
+    else:
         return d['date']
         
 
 #sep = Literal(".") | Literal("_")
 sep = Suppress(Literal("_") | Literal("-") | Literal("."))
-date_with_full_year = (Word(nums, exact=4)  + Optional(sep) +\
+date_with_full_year = (Word( nums, exact=4)  + Optional(sep) +\
     Word(nums, exact=2) + Optional(sep) + Word(nums, exact=2))
 date_with_short_year = (Word(nums, exact=2)  + Optional(sep) +\
     Word(nums, exact=2) + Optional(sep) + Word(nums, exact=2))
 date = Combine( date_with_full_year | date_with_short_year).setParseAction(parse_date)('date')
-time = Combine(Word(nums, exact=2)  + Optional(sep) +\
-    Word(nums, exact=2) + Optional(sep) + Word(nums, exact=2))
+time = Suppress(Optional(sep))+Combine(Word(nums, exact=2)  + Optional(sep) +\
+    Word(nums, exact=2) + Optional(sep) + Word(nums, exact=2) +\
+    Suppress(Optional(sep)+Optional(Word(nums))))("time")
 mgbeg = Word(nums,exact=13)
-hour = Word(nums, max=2)('hour')
+hour = Suppress(Optional(sep))+Word(nums, max=2)('hour')
 counter = Literal(".")+Word(nums, max=2)("counter")
-date_time = (date + Optional(sep + hour | time+counter)).setParseAction(hour_to_date)("datetime") # (hour | time))
-ext = Literal(".")+Word(alphas, exact=3)("ext")+Optional(counter | sep+date)+LineEnd()
-logname = SkipTo( Optional(sep)+date | sep+date_time | ext) #delimitedList(Word(alphanums),'.') | delimitedList(Word(alphanums), '_')
-filename=Optional(mgbeg+sep)+Optional(date_time+sep)+logname("logname")+Optional(Optional(sep)+date_time)+Optional(logname)("logname2")+ext#+ext
+date_time = (Suppress(Optional(sep)) + date + Optional(time | hour)).setParseAction(hour_to_date)("datetime") # (hour | time))
+ext = Optional(counter) + Suppress(Literal("."))+Word(alphas, exact=3)("ext")+Optional( counter | date_time )+LineEnd()
+logname = SkipTo( date_time | ext) #delimitedList(Word(alphanums),'.') | delimitedList(Word(alphanums), '_')
+filename=Optional(mgbeg+sep)+Optional(date_time+sep)+logname("logname")+Optional(date_time)+Optional(logname)("logname2")+Optional(Word(alphanums))+ext#+ext
 #filename=logname("logname")+Literal("-")+Word(nums)+ext#+ext
 #filename.setParseAction(lambda t: ''.join([t['logname'],t['logname2']]))
 #filename = datetime+sep+logname+Optional(sep)+Optional(datetime)+sep+ext+Optional(sep+date+sep+counter)
@@ -57,13 +61,13 @@ print filename.parseString("FORIS.Billing.BillingEngine.BAS_10-12-10_BillingAppl
 print filename.parseString("FORIS.Billing.BillingEngine.BAS_10-12-10_System.ServiceProcess.ServiceBase.log")
 print filename.parseString("wslog_10122010.log")
 print filename.parseString("uprsg20101210.log")
-#print filename.parseString("uprsg20101210.log20101210.log") #!
+print filename.parseString("uprsg20101210.log20101210.log") #!
 print filename.parseString("20101210_CTIManager_Message.log")
 print filename.parseString("CounterFormatter20101209202233.27.txt")
-#print filename.parseString("RatingEngine_2010-12-10-07-51-36.0563798.txt") #!
+print filename.parseString("RatingEngine_2010-12-10-07-51-36.0563798.txt") #!  check minutes seconds
 print filename.parseString("psp_20101210_11.log")
 print filename.parseString("psp_timer_20101210_12.log")
-#print filename.parseString("4_3_0.000005.log")
+#print filename.parseString("4_3_0.000005.log") #???
 print filename.parseString("foris_catalogue_admin-101208.log") #! this is date??
 print filename.parseString("0122010000001-EMAILCON_EMAILCON_01_error.log") #nag-tc-05 MG
 #nag-tc-06
