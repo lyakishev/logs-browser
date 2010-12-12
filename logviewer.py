@@ -7,7 +7,7 @@ import gtk, gobject, gio
 from servers_log import logs
 #from evs import *
 import datetime
-#import threading
+import threading
 from logworker import *
 
 class GUI_Controller:
@@ -92,6 +92,7 @@ class GUI_Controller:
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
+        self.button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
         #self.progress_table = gtk.Table(2,2,False)
@@ -100,8 +101,8 @@ class GUI_Controller:
         #self.pulse_progress = gtk.ProgressBar()
         #self.pulse_progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         #self.stop_current_btn = gtk.Button('X')
-        #self.stop_all_btn = gtk.Button('X')
-        #self.stop_all_btn.connect('clicked', self.stop_all)
+        self.stop_all_btn = gtk.Button('Stop')
+        self.stop_all_btn.connect('clicked', self.stop_all)
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
@@ -132,6 +133,7 @@ class GUI_Controller:
         self.date_sens()
         self.content_sens()
         self.to_date_sens()
+        self.stop_evt = threading.Event()
         return
 
     #def __getattr__(self, name):
@@ -181,8 +183,8 @@ class GUI_Controller:
         else:
             self.quantity_frame.children()[0].set_sensitive(False)
 
-    #def stop_all(self, *args):
-    #    self.allstop.set()
+    def stop_all(self, *args):
+        self.stop_evt.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -245,6 +247,7 @@ class GUI_Controller:
         self.logs_frame.add(self.logs_window)
         #self.action_frame.add(self.action_box)
         self.button_box.pack_start(self.show_button)
+        self.button_box.pack_start(self.stop_all_btn)
         self.control_box.pack_start(self.tree_frame, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
         #self.control_box.pack_start(self.event_frame, False, False)
@@ -320,6 +323,7 @@ class GUI_Controller:
         return self.last_spinbutton.get_value()
 
     def show_logs(self, params):
+        self.stop_evt.clear()
         self.logs_model.clear()
         self.progress.set_fraction(0.0)
         self.progress.set_text("Working...")
@@ -339,7 +343,8 @@ class GUI_Controller:
         for comp, log in evlogs:
         #    gtk.gdk.threads_enter()
             self.worker = LogWorker(comp, log, fltr, self.logs_model,
-                                        self.progress, frac, self.sens_list)
+                                        self.progress, frac, self.sens_list,
+                                        self.stop_evt)
             self.worker.start()
 
        # gtk.gdk.threads_leave()
