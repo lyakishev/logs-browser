@@ -9,6 +9,11 @@ from servers_log import logs
 import datetime
 #import threading
 from logworker import *
+import Queue
+
+logQueue = Queue.Queue()
+modQueue = Queue.Queue()
+stopEvent = threading.Event()
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -331,24 +336,19 @@ class GUI_Controller:
         fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
         fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
         fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
-        #gtk.gdk.threads_init()
         self.sens_list=[self.evt_type_frame,self.date_frame,
             self.content_frame,self.quantity_frame,self.show_button]
-        for sl in self.sens_list:
-                sl.set_sensitive(False)
-        for comp, log in evlogs:
-        #    gtk.gdk.threads_enter()
-            self.worker = LogWorker(comp, log, fltr, self.logs_model,
-                                        self.progress, frac, self.sens_list)
-            self.worker.start()
+        #for sl in self.sens_list:
+        #        sl.set_sensitive(False)
+        for cologs in evlogs:
+            logQueue.put(cologs)
+        for thr in xrange(5):
+            worker = LogWorker(fltr, logQueue, modQueue)
+            worker.start()
+        for thr in xrange(5):
+            modfiller = ModFiller(self.logs_model, modQueue, logQueue)
+            modfiller.start()
 
-       # gtk.gdk.threads_leave()
-
-
-		#self.progress.set_fraction(frac/evl_count)
-        #        frac+=1
-        #self.progress.set_text("Complete")
-        #self.progress.set_fraction(1.0)
 
     def get_event_types(self):
         types = []
@@ -511,6 +511,7 @@ class DisplayLogsModel:
     #    model[path][0] = new_text
     #    return
     def show_log( self, path, column, params):
+        gtk.gdk.threads_enter()
         selection = path.get_selection()
         (model, iter) = selection.get_selected()
         popup = gtk.Window()
@@ -539,6 +540,7 @@ class DisplayLogsModel:
         selection = path.get_selection()
         (model, iter) = selection.get_selected()
         print model.get_value(iter, 0)
+        gtk.gdk.threads_leave()
         return
 
 #class LogWorker(threading.Thread):
