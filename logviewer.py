@@ -76,19 +76,31 @@ class GUI_Controller:
 
         self.from_label = gtk.RadioButton(self.last_date_radio, label="From")
         self.fromto_table = gtk.Table(2, 8, False)
-        self.fromyear_entry = gtk.Entry(10)
+        self.fromyear_entry = gtk.Entry(max=10)
+        self.fromyear_entry.set_width_chars(10)
         self.fromyear_entry.set_text(now.strftime("%d.%m.%Y"))
         self.fromhours_spin = gtk.SpinButton(adjustment=self.from_hours_adjustment)
+        self.fromhours_spin.set_width_chars(2)
         self.fromminutes_spin = gtk.SpinButton(adjustment=self.from_minute_adjustment)
+        self.fromminutes_spin.set_width_chars(2)
         self.fromseconds_spin = gtk.SpinButton(adjustment=self.from_second_adjustment)
+        self.fromseconds_spin.set_width_chars(2)
+        self.from_now_btn = gtk.Button("Now")
+        self.from_now_btn.connect("clicked", self.set_now_from)
         self.to_label = gtk.CheckButton("To")
         self.to_label.set_active(False)
         self.to_label.connect("toggled", self.to_date_sens)
-        self.toyear_entry = gtk.Entry(10)
+        self.toyear_entry = gtk.Entry(max=10)
+        self.toyear_entry.set_width_chars(10)
         self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
         self.tohours_spin = gtk.SpinButton(adjustment=self.to_hours_adjustment)
+        self.tohours_spin.set_width_chars(2)
         self.tominutes_spin = gtk.SpinButton(adjustment=self.to_minute_adjustment)
+        self.tominutes_spin.set_width_chars(2)
         self.toseconds_spin = gtk.SpinButton(adjustment=self.to_second_adjustment)
+        self.toseconds_spin.set_width_chars(2)
+        self.to_now_btn = gtk.Button("Now")
+        self.to_now_btn.connect("clicked", self.set_now_to)
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
@@ -147,17 +159,33 @@ class GUI_Controller:
     #            frame.set_sensitive(True)
                 
 
+    def set_now_from(self, *args):
+        now = datetime.datetime.now()
+        self.fromhours_spin.set_value(now.hour)
+        self.fromminutes_spin.set_value(now.minute)
+        self.fromseconds_spin.set_value(now.second)
+        self.fromyear_entry.set_text(now.strftime("%d.%m.%Y"))
+
+    def set_now_to(self, *args):
+        now = datetime.datetime.now()
+        self.tohours_spin.set_value(now.hour)
+        self.tominutes_spin.set_value(now.minute)
+        self.toseconds_spin.set_value(now.second)
+        self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
+        
     def to_date_sens(self, *args): #may do with descriptors
         if self.to_label.get_active():
             self.toyear_entry.set_sensitive(True)
             self.tohours_spin.set_sensitive(True)
             self.tominutes_spin.set_sensitive(True)
             self.toseconds_spin.set_sensitive(True)
+            self.to_now_btn.set_sensitive(True)
         else:
             self.toyear_entry.set_sensitive(False)
             self.tohours_spin.set_sensitive(False)
             self.tominutes_spin.set_sensitive(False)
             self.toseconds_spin.set_sensitive(False)
+            self.to_now_btn.set_sensitive(False)
 
     def evt_type_sens(self, *args): #may do with descriptors
         if self.evt_type_filter.get_active():
@@ -222,7 +250,7 @@ class GUI_Controller:
 
         self.fromto_table.attach(self.from_label, 0, 1, 0, 2, xoptions=0,
                                     yoptions=0)
-        self.fromto_table.attach(self.fromyear_entry, 1, 4, 1, 2, xoptions=0,
+        self.fromto_table.attach(self.fromyear_entry, 1, 3, 1, 2, xoptions=0,
                                     yoptions=0)
         self.fromto_table.attach(self.fromhours_spin, 1, 2, 0, 1, xoptions=0,
                                     yoptions=0)
@@ -232,13 +260,17 @@ class GUI_Controller:
                                     yoptions=0)
         self.fromto_table.attach(self.to_label, 4, 5, 0, 2, xoptions=0,
                                     yoptions=0)
-        self.fromto_table.attach(self.toyear_entry, 5, 8, 1, 2, xoptions=0,
+        self.fromto_table.attach(self.toyear_entry, 5, 7, 1, 2, xoptions=0,
                                     yoptions=0)
         self.fromto_table.attach(self.tohours_spin, 5, 6, 0, 1, xoptions=0,
                                     yoptions=0)
         self.fromto_table.attach(self.tominutes_spin, 6, 7, 0, 1, xoptions=0,
                                     yoptions=0)
         self.fromto_table.attach(self.toseconds_spin, 7, 8, 0, 1, xoptions=0,
+                                    yoptions=0)
+        self.fromto_table.attach(self.to_now_btn, 7, 8, 1, 2, xoptions=0,
+                                    yoptions=0)
+        self.fromto_table.attach(self.from_now_btn, 3, 4, 1, 2, xoptions=0,
                                     yoptions=0)
 
 
@@ -324,28 +356,29 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        self.logs_model.clear()
-        self.progress.set_fraction(0.0)
-        self.progress.set_text("Working...")
         evlogs = self.get_active_servers()
-        evl_count = len(evlogs)
-        frac = 1.0/(evl_count)
-        fltr = {}
-        fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
-        fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
-        fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
-        fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
-        #gtk.gdk.threads_init()
-        self.sens_list=[self.evt_type_frame,self.date_frame,
-            self.content_frame,self.quantity_frame,self.show_button]
-        for sl in self.sens_list:
-                sl.set_sensitive(False)
-        for comp, log in evlogs:
-        #    gtk.gdk.threads_enter()
-            self.worker = LogWorker(comp, log, fltr, self.logs_model,
-                                        self.progress, frac, self.sens_list,
-                                        self.stop_evt)
-            self.worker.start()
+        if evlogs:
+            self.logs_model.clear()
+            self.progress.set_fraction(0.0)
+            self.progress.set_text("Working...")
+            evl_count = len(evlogs)
+            frac = 1.0/(evl_count)
+            fltr = {}
+            fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
+            fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
+            fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
+            fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
+            #gtk.gdk.threads_init()
+            self.sens_list=[self.evt_type_frame,self.date_frame,
+                self.content_frame,self.quantity_frame,self.show_button]
+            for sl in self.sens_list:
+                    sl.set_sensitive(False)
+            for comp, log in evlogs:
+            #    gtk.gdk.threads_enter()
+                self.worker = LogWorker(comp, log, fltr, self.logs_model,
+                                            self.progress, frac, self.sens_list,
+                                            self.stop_evt)
+                self.worker.start()
 
        # gtk.gdk.threads_leave()
 
