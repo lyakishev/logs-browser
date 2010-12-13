@@ -9,6 +9,7 @@ from servers_log import logs
 import datetime
 import threading
 from logworker import *
+from widgets.date_time import DateTimeWidget
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -65,42 +66,14 @@ class GUI_Controller:
         self.last_date_combo.append_text('days')
         self.last_date_combo.set_active(1)
         
-        now = datetime.datetime.now()
-        self.from_hours_adjustment = gtk.Adjustment(value=now.hour, lower=0, upper=23, step_incr=1)
-        self.from_minute_adjustment =gtk.Adjustment(value=now.minute, lower=0, upper=59, step_incr=1)
-        self.from_second_adjustment = gtk.Adjustment(value=now.second, lower=0, upper=59, step_incr=1)
-
-        self.to_hours_adjustment = gtk.Adjustment(value=now.hour, lower=0, upper=23, step_incr=1)
-        self.to_minute_adjustment =gtk.Adjustment(value=now.minute, lower=0, upper=59, step_incr=1)
-        self.to_second_adjustment = gtk.Adjustment(value=now.second, lower=0, upper=59, step_incr=1)
+        self.fromto_box = gtk.HBox()
+        self.from_date = DateTimeWidget()
+        self.to_date = DateTimeWidget()
 
         self.from_label = gtk.RadioButton(self.last_date_radio, label="From")
-        self.fromto_table = gtk.Table(2, 8, False)
-        self.fromyear_entry = gtk.Entry(max=10)
-        self.fromyear_entry.set_width_chars(10)
-        self.fromyear_entry.set_text(now.strftime("%d.%m.%Y"))
-        self.fromhours_spin = gtk.SpinButton(adjustment=self.from_hours_adjustment)
-        self.fromhours_spin.set_width_chars(2)
-        self.fromminutes_spin = gtk.SpinButton(adjustment=self.from_minute_adjustment)
-        self.fromminutes_spin.set_width_chars(2)
-        self.fromseconds_spin = gtk.SpinButton(adjustment=self.from_second_adjustment)
-        self.fromseconds_spin.set_width_chars(2)
-        self.from_now_btn = gtk.Button("Now")
-        self.from_now_btn.connect("clicked", self.set_now_from)
         self.to_label = gtk.CheckButton("To")
-        self.to_label.set_active(False)
-        self.to_label.connect("toggled", self.to_date_sens)
-        self.toyear_entry = gtk.Entry(max=10)
-        self.toyear_entry.set_width_chars(10)
-        self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
-        self.tohours_spin = gtk.SpinButton(adjustment=self.to_hours_adjustment)
-        self.tohours_spin.set_width_chars(2)
-        self.tominutes_spin = gtk.SpinButton(adjustment=self.to_minute_adjustment)
-        self.tominutes_spin.set_width_chars(2)
-        self.toseconds_spin = gtk.SpinButton(adjustment=self.to_second_adjustment)
-        self.toseconds_spin.set_width_chars(2)
-        self.to_now_btn = gtk.Button("Now")
-        self.to_now_btn.connect("clicked", self.set_now_to)
+        self.to_label.set_active(True)
+        #self.to_label.connect("toggled", self.to_date_sens)
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
@@ -144,7 +117,7 @@ class GUI_Controller:
         self.quantity_sens()
         self.date_sens()
         self.content_sens()
-        self.to_date_sens()
+        #self.to_date_sens()
         self.stop_evt = threading.Event()
         return
 
@@ -173,19 +146,19 @@ class GUI_Controller:
         self.toseconds_spin.set_value(now.second)
         self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
         
-    def to_date_sens(self, *args): #may do with descriptors
-        if self.to_label.get_active():
-            self.toyear_entry.set_sensitive(True)
-            self.tohours_spin.set_sensitive(True)
-            self.tominutes_spin.set_sensitive(True)
-            self.toseconds_spin.set_sensitive(True)
-            self.to_now_btn.set_sensitive(True)
-        else:
-            self.toyear_entry.set_sensitive(False)
-            self.tohours_spin.set_sensitive(False)
-            self.tominutes_spin.set_sensitive(False)
-            self.toseconds_spin.set_sensitive(False)
-            self.to_now_btn.set_sensitive(False)
+    #def to_date_sens(self, *args): #may do with descriptors
+    #    if self.to_label.get_active():
+    #        self.toyear_entry.set_sensitive(True)
+    #        self.tohours_spin.set_sensitive(True)
+    #        self.tominutes_spin.set_sensitive(True)
+    #        self.toseconds_spin.set_sensitive(True)
+    #        self.to_now_btn.set_sensitive(True)
+    #    else:
+    #        self.toyear_entry.set_sensitive(False)
+    #        self.tohours_spin.set_sensitive(False)
+    #        self.tominutes_spin.set_sensitive(False)
+    #        self.toseconds_spin.set_sensitive(False)
+    #        self.to_now_btn.set_sensitive(False)
 
     def evt_type_sens(self, *args): #may do with descriptors
         if self.evt_type_filter.get_active():
@@ -235,7 +208,7 @@ class GUI_Controller:
         self.date_frame.set_label_widget(self.date_filter)
         self.date_frame.add(self.date_box)
         self.date_box.pack_start(self.date_last_box, False, False)
-        self.date_box.pack_start(self.fromto_table, False, False)
+        self.date_box.pack_start(self.fromto_box, False, False)
         self.date_last_box.pack_start(self.last_date_radio, False, False)
         self.date_last_box.pack_start(self.last_date_spin, False, False)
         self.date_last_box.pack_start(self.last_date_combo, False, False)
@@ -247,32 +220,10 @@ class GUI_Controller:
         self.content_table.attach(self.like_entry,1,2,0,1)
         self.content_table.attach(self.notlike_entry,1,2,1,2)
 
-
-        self.fromto_table.attach(self.from_label, 0, 1, 0, 2, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.fromyear_entry, 1, 3, 1, 2, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.fromhours_spin, 1, 2, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.fromminutes_spin, 2, 3, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.fromseconds_spin, 3, 4, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.to_label, 4, 5, 0, 2, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.toyear_entry, 5, 7, 1, 2, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.tohours_spin, 5, 6, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.tominutes_spin, 6, 7, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.toseconds_spin, 7, 8, 0, 1, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.to_now_btn, 7, 8, 1, 2, xoptions=0,
-                                    yoptions=0)
-        self.fromto_table.attach(self.from_now_btn, 3, 4, 1, 2, xoptions=0,
-                                    yoptions=0)
-
+        self.fromto_box.pack_start(self.from_label, False, False)
+        self.fromto_box.pack_start(self.from_date, False, False)
+        self.fromto_box.pack_start(self.to_label, False, False)
+        self.fromto_box.pack_start(self.to_date, False, False)
 
 
         self.tree_frame.add(self.eventlogs_window)
