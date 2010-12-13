@@ -9,7 +9,7 @@ from servers_log import logs
 import datetime
 import threading
 from logworker import *
-from widgets.date_time import FromToFilter
+from widgets.date_time import DateFilter
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -52,22 +52,7 @@ class GUI_Controller:
         #    getattr(self, '%s_filter' % fltr).connect('toggled', getattr(self,
         #                                              '%s_sens' % fltr))
 
-        self.date_frame = gtk.Frame()
-        self.date_filter = gtk.CheckButton("Date")
-        self.date_box = gtk.VBox()
-        self.date_last_box = gtk.HBox()
-        self.last_date_radio = gtk.RadioButton(label='Last')
-        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100, step_incr=1)
-        self.last_date_spin = gtk.SpinButton(adjustment=self.last_date_adj)
-        self.last_date_combo = gtk.combo_box_new_text()
-        self.last_date_combo.append_text('seconds')
-        self.last_date_combo.append_text('minutes')
-        self.last_date_combo.append_text('hours')
-        self.last_date_combo.append_text('days')
-        self.last_date_combo.set_active(1)
-
-        self.fromto_box = FromToFilter()
-        self.fromto_box.from_radio.set_group(self.last_date_radio)
+        self.date_filter = DateFilter()
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
@@ -101,53 +86,19 @@ class GUI_Controller:
         self.logs_window.add_with_viewport(self.logs_view)
         self.evt_type_filter.connect('toggled', self.evt_type_sens)
         self.quantity_filter.connect('toggled', self.quantity_sens)
-        self.date_filter.connect('toggled', self.date_sens)
+        #self.date_filter.connect('toggled', self.date_sens)
         self.content_filter.connect('toggled', self.content_sens)
         self.build_interface()
         self.evt_type_filter.set_active(True)
-        self.date_filter.set_active(True)
+        #self.date_filter.set_active(True)
         self.root.show_all()
         self.evt_type_sens()
         self.quantity_sens()
-        self.date_sens()
+        #self.date_sens()
         self.content_sens()
         #self.to_date_sens()
         self.stop_evt = threading.Event()
         return
-
-    #def __getattr__(self, name):
-    #    if name in ["%s_sens" % i for i in ['evt_type','quantity','date','content']]:
-    #        fltr = name.replace("_sens", '')
-    #        attr = getattr(self, "%s_filter" % fltr])
-    #        frame = getattr(self, "%s_frame" % fltr)
-    #        if attr.get_active():
-    #            frame.set_sensitive(False)
-    #        else:
-    #            frame.set_sensitive(True)
-
-    def evt_type_sens(self, *args): #may do with descriptors
-        if self.evt_type_filter.get_active():
-            self.evt_type_frame.children()[0].set_sensitive(True)
-        else:
-            self.evt_type_frame.children()[0].set_sensitive(False)
-
-    def date_sens(self, *args): #may do with descriptors
-        if self.date_filter.get_active():
-            self.date_frame.children()[0].set_sensitive(True)
-        else:
-            self.date_frame.children()[0].set_sensitive(False)
-
-    def content_sens(self, *args): #may do with descriptors
-        if self.content_filter.get_active():
-            self.content_frame.children()[0].set_sensitive(True)
-        else:
-            self.content_frame.children()[0].set_sensitive(False)
-
-    def quantity_sens(self, *args): #may do with descriptors
-        if self.quantity_filter.get_active():
-            self.quantity_frame.children()[0].set_sensitive(True)
-        else:
-            self.quantity_frame.children()[0].set_sensitive(False)
 
     def stop_all(self, *args):
         self.stop_evt.set()
@@ -159,7 +110,7 @@ class GUI_Controller:
         for chb in self.evt_checkboxes.itervalues():
             self.event_box.pack_start(chb, False, False, 1)
         self.filter_box.pack_start(self.evt_type_frame, False, False)
-        self.filter_box.pack_start(self.date_frame, False, False)
+        self.filter_box.pack_start(self.date_filter, False, False)
         self.filter_box.pack_start(self.quantity_frame, False, False)
         self.filter_box.pack_start(self.content_frame, False, False)
 
@@ -169,14 +120,6 @@ class GUI_Controller:
         self.quantity_frame.add(self.last_box)
         self.last_box.pack_start(self.last_label, False, False)
         self.last_box.pack_start(self.last_spinbutton, False, False,20)
-
-        self.date_frame.set_label_widget(self.date_filter)
-        self.date_frame.add(self.date_box)
-        self.date_box.pack_start(self.date_last_box, False, False)
-        self.date_box.pack_start(self.fromto_box, False, False)
-        self.date_last_box.pack_start(self.last_date_radio, False, False)
-        self.date_last_box.pack_start(self.last_date_spin, False, False)
-        self.date_last_box.pack_start(self.last_date_combo, False, False)
 
         self.content_frame.set_label_widget(self.content_filter)
         self.content_frame.add(self.content_table)

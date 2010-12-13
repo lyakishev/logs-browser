@@ -2,6 +2,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import datetime
+from common_filter import CommonFilter
 
 class DateTimeWidget(gtk.Table):
     def __init__(self):
@@ -51,9 +52,9 @@ class DateTimeWidget(gtk.Table):
                       self.now_btn]:
             child.set_sensitive(sens)
 
-class FromToFilter(gtk.HBox):
+class FromToOption(gtk.HBox):
     def __init__(self):
-        super(FromToFilter, self).__init__()
+        super(FromToOption, self).__init__()
         self.from_radio = gtk.RadioButton(label="From")
         self.to_check = gtk.CheckButton("To")
         self.to_check.set_active(False)
@@ -71,4 +72,32 @@ class FromToFilter(gtk.HBox):
             self.to_date.set_sens(True)
         else:
             self.to_date.set_sens(False)
+
+class LastDateOption(gtk.HBox):
+    def __init__(self):
+        super(LastDateOption, self).__init__()
+        self.last_date_radio = gtk.RadioButton(label='Last')
+        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100, step_incr=1)
+        self.last_date_spin = gtk.SpinButton(adjustment=self.last_date_adj)
+        self.last_date_combo = gtk.combo_box_new_text()
+        self.last_date_combo.append_text('seconds')
+        self.last_date_combo.append_text('minutes')
+        self.last_date_combo.append_text('hours')
+        self.last_date_combo.append_text('days')
+        self.last_date_combo.set_active(1)
+        self.pack_start(self.last_date_radio, False, False)
+        self.pack_start(self.last_date_spin, False, False)
+        self.pack_start(self.last_date_combo, False, False)
+
+class DateFilter(CommonFilter):
+    def __init__(self):
+        super(DateFilter, self).__init__("Date")
+        self.date_box = gtk.VBox()
+        self.last_option = LastDateOption()
+        self.fromto_option = FromToOption()
+        self.fromto_option.from_radio.set_group(self.last_option.last_date_radio)
+        self.add(self.date_box)
+        self.date_box.pack_start(self.last_option, False, False)
+        self.date_box.pack_start(self.fromto_option, False, False)
+
 
