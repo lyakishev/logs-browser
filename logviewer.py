@@ -12,7 +12,7 @@ from logworker import *
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.evt_type import ContentFilter
-from widgets.quantity import QuntityFilter
+from widgets.quantity import QuantityFilter
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -29,6 +29,7 @@ class GUI_Controller:
 
         self.evt_type_filter = EventTypeFilter(evt_dict, "ERROR")
         self.date_filter = DateFilter()
+        self.quantity_filter = QuantityFilter()
         self.content_filter = ContentFilter()
 
 
