@@ -10,6 +10,9 @@ import datetime
 import threading
 from logworker import *
 from widgets.date_time import DateFilter
+from widgets.evt_type import EventTypeFilter
+from widgets.evt_type import ContentFilter
+from widgets.quantity import QuntityFilter
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -20,39 +23,14 @@ class GUI_Controller:
         self.root.connect("destroy", self.destroy_cb)
         self.root.set_default_size(1200,800)
         self.tree_frame = gtk.Frame(label="Event Logs")
-        self.event_box = gtk.VBox()
-        self.evt_checkboxes = {}
-        for evt in evt_dict.itervalues():
-            self.evt_checkboxes[evt]=gtk.CheckButton(label=evt)
-            if "ERROR" in evt:
-                self.evt_checkboxes[evt].set_active(True)
 
         self.filter_frame = gtk.Frame(label="Filter")
         self.filter_box = gtk.VBox()
-        self.evt_type_frame = gtk.Frame()
-        self.evt_type_filter = gtk.CheckButton("Type")
 
-
-        self.quantity_frame = gtk.Frame()
-        self.quantity_filter = gtk.CheckButton("Quantity")
-        self.last_label = gtk.Label("Last")
-        self.last_adjustment = gtk.Adjustment(value=3, lower=1, upper=100, step_incr=1)
-        self.last_spinbutton = gtk.SpinButton(adjustment=self.last_adjustment)
-        self.last_box = gtk.HBox()
-
-        self.content_frame = gtk.Frame()
-        self.content_filter = gtk.CheckButton("Contains")
-        self.like_entry = gtk.Entry()
-        self.notlike_entry = gtk.Entry()
-        self.like_label = gtk.Label('Like')
-        self.notlike_label = gtk.Label('Not like')
-        self.content_table = gtk.Table(2,2,False)
-
-        #for fltr in ['evt_type','quantity','date','content']:
-        #    getattr(self, '%s_filter' % fltr).connect('toggled', getattr(self,
-        #                                              '%s_sens' % fltr))
-
+        self.evt_type_filter = EventTypeFilter(evt_dict, "ERROR")
         self.date_filter = DateFilter()
+        self.content_filter = ContentFilter()
+
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
@@ -84,19 +62,8 @@ class GUI_Controller:
         self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         self.logs_view = LogsDisplay.make_view( self.logs_model )
         self.logs_window.add_with_viewport(self.logs_view)
-        self.evt_type_filter.connect('toggled', self.evt_type_sens)
-        self.quantity_filter.connect('toggled', self.quantity_sens)
-        #self.date_filter.connect('toggled', self.date_sens)
-        self.content_filter.connect('toggled', self.content_sens)
         self.build_interface()
-        self.evt_type_filter.set_active(True)
-        #self.date_filter.set_active(True)
         self.root.show_all()
-        self.evt_type_sens()
-        self.quantity_sens()
-        #self.date_sens()
-        self.content_sens()
-        #self.to_date_sens()
         self.stop_evt = threading.Event()
         return
 
@@ -105,28 +72,10 @@ class GUI_Controller:
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
-        self.evt_type_frame.set_label_widget(self.evt_type_filter)
-        self.evt_type_frame.add(self.event_box)
-        for chb in self.evt_checkboxes.itervalues():
-            self.event_box.pack_start(chb, False, False, 1)
-        self.filter_box.pack_start(self.evt_type_frame, False, False)
+        self.filter_box.pack_start(self.evt_type_filter, False, False)
         self.filter_box.pack_start(self.date_filter, False, False)
-        self.filter_box.pack_start(self.quantity_frame, False, False)
-        self.filter_box.pack_start(self.content_frame, False, False)
-
-        #self.date_frame.set_label_widget(self.date_filter)
-        #self.date_frame.add(self.event_box)
-        self.quantity_frame.set_label_widget(self.quantity_filter)
-        self.quantity_frame.add(self.last_box)
-        self.last_box.pack_start(self.last_label, False, False)
-        self.last_box.pack_start(self.last_spinbutton, False, False,20)
-
-        self.content_frame.set_label_widget(self.content_filter)
-        self.content_frame.add(self.content_table)
-        self.content_table.attach(self.like_label,0,1,0,1, xoptions=0, yoptions=0)
-        self.content_table.attach(self.notlike_label,0,1,1,2, xoptions=0, yoptions=0)
-        self.content_table.attach(self.like_entry,1,2,0,1)
-        self.content_table.attach(self.notlike_entry,1,2,1,2)
+        self.filter_box.pack_start(self.quantity_filter, False, False)
+        self.filter_box.pack_start(self.content_filter, False, False)
 
         self.tree_frame.add(self.eventlogs_window)
         self.logs_frame.add(self.logs_window)
@@ -273,28 +222,6 @@ class GUI_Controller:
 #        gtk.main()
 #        return
 #
-class ServersModel:
-    """ The model class holds the information we want to display """
-    def __init__(self):
-        """ Sets up and populates our gtk.TreeStore """
-        """!!!Rewrite to recursive!!!!"""
-        self.tree_store = gtk.TreeStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_BOOLEAN )
-        # places the global people data into the list
-        # we form a simple tree.
-        for item in sorted(logs.keys()):
-            parent = self.tree_store.append( None, (item, None) )
-            for subitem in sorted(logs[item].keys()):
-                child = self.tree_store.append( parent, (subitem,None) )
-                for subsubitem in logs[item][subitem]:
-                    self.tree_store.append( child, (subsubitem,None) )
-        return
-    def get_model(self):
-        """ Returns the model """
-        if self.tree_store:
-            return self.tree_store
-        else:
-            return None
 
 class LogsModel:
     """ The model class holds the information we want to display """
@@ -316,54 +243,6 @@ class LogsModel:
         else:
             return None
 
-class DisplayServersModel:
-    """ Displays the Info_Model model in a view """
-    def make_view( self, model ):
-        """ Form a view for the Tree Model """
-        self.view = gtk.TreeView( model )
-        # setup the text cell renderer and allows these
-        # cells to be edited.
-        self.renderer = gtk.CellRendererText()
-        self.renderer.set_property( 'editable', False )
-        #self.renderer.connect( 'edited', self.col0_edited_cb, model )
-
-        # The toggle cellrenderer is setup and we allow it to be
-        # changed (toggled) by the user.
-        self.renderer1 = gtk.CellRendererToggle()
-        self.renderer1.set_property('activatable', True)
-        self.renderer1.connect( 'toggled', self.col1_toggled_cb, model )
-        # Connect column0 of the display with column 0 in our list model
-        # The renderer will then display whatever is in column 0 of
-        # our model .
-        self.column0 = gtk.TreeViewColumn("Server", self.renderer, text=0)
-        # The columns active state is attached to the second column
-        # in the model.  So when the model says True then the button
-        # will show as active e.g on.
-        self.column1 = gtk.TreeViewColumn("Show", self.renderer1 )
-        self.column1.add_attribute( self.renderer1, "active", 1)
-        self.view.append_column( self.column0 )
-        self.view.append_column( self.column1 )
-        return self.view
-    #def col0_edited_cb( self, cell, path, new_text, model ):
-    #    """
-    #    Called when a text cell is edited.  It puts the new text
-    #    in the model so that it is displayed properly.
-    #    """
-    #    print "Change '%s' to '%s'" % (model[path][0], new_text)
-    #    model[path][0] = new_text
-    #    return
-    def col1_toggled_cb( self, cell, path, model ):
-        """
-        Sets the toggled state on the toggle button to true or false.
-
-	!!!Rewrite to recursive!!!!
-        """
-        state = model[path][1] = not model[path][1]
-        for child in model[path].iterchildren():
-            child[1] = state
-            for subchild in child.iterchildren():
-                subchild[1] = state
-        return
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
@@ -431,28 +310,6 @@ class DisplayLogsModel:
         (model, iter) = selection.get_selected()
         print model.get_value(iter, 0)
         return
-
-#class LogWorker(threading.Thread):
-#    stopthread = threading.Event()
-#
-#    def __init__(self, params):
-#        super(LogWorker,self).__init__(self)
-#        self.params = params
-#
-#    def run(self):
-#        pass
-#        #for 
-#        #   if ( self.stopthread.isSet() ):
-#        #       self.stopthread.clear()
-#        #       break   
-#        #   progress
-#        #   getlogs
-#        #self.stopthread.clear()
-#        #
-#    
-            
-    
-
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()
