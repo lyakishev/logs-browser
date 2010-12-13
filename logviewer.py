@@ -64,7 +64,6 @@ class GUI_Controller:
         self.last_date_combo.append_text('hours')
         self.last_date_combo.append_text('days')
         self.last_date_combo.set_active(1)
-        
         now = datetime.datetime.now()
         self.from_hours_adjustment = gtk.Adjustment(value=now.hour, lower=0, upper=23, step_incr=1)
         self.from_minute_adjustment =gtk.Adjustment(value=now.minute, lower=0, upper=59, step_incr=1)
@@ -119,6 +118,7 @@ class GUI_Controller:
         self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         self.logs_view = LogsDisplay.make_view( self.logs_model )
         self.logs_window.add_with_viewport(self.logs_view)
+        self.ntb = gtk.Notebook()
         self.evt_type_filter.connect('toggled', self.evt_type_sens)
         self.quantity_filter.connect('toggled', self.quantity_sens)
         self.date_filter.connect('toggled', self.date_sens)
@@ -259,7 +259,11 @@ class GUI_Controller:
         #self.control_box.pack_start(self.progress_table, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logs_frame, True, True)
-        self.root.add(self.main_box)
+        self.ev_label = gtk.Label("EventLogs")
+        self.file_label = gtk.Label("FileLogs")
+        self.ntb.append_page(self.main_box, tab_label=self.ev_label)
+        self.ntb.append_page(self.file_main_box, tab_label=self.file_label)
+        self.root.add(self.ntb)
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
