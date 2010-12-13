@@ -43,3 +43,32 @@ class DateTimeWidget(gtk.Table):
                 self.seconds_spin.get_value_as_int()
             )
 
+    def set_sens(self, sens):
+        for child in [self.hours_spin, \
+                      self.minutes_spin, \
+                      self.seconds_spin, \
+                      self.year_entry, \
+                      self.now_btn]:
+            child.set_sensitive(sens)
+
+class FromToFilter(gtk.HBox):
+    def __init__(self):
+        super(FromToFilter, self).__init__()
+        self.from_radio = gtk.RadioButton(label="From")
+        self.to_check = gtk.CheckButton("To")
+        self.to_check.set_active(False)
+        self.from_date = DateTimeWidget()
+        self.to_date = DateTimeWidget()
+        self.pack_start(self.from_radio, False, False)
+        self.pack_start(self.from_date, False, False)
+        self.pack_start(self.to_check, False, False)
+        self.pack_start(self.to_date, False, False)
+        self.to_check.connect("toggled", self.to_date_sens)
+        self.to_date_sens()
+
+    def to_date_sens(self, *args):
+        if self.to_check.get_active():
+            self.to_date.set_sens(True)
+        else:
+            self.to_date.set_sens(False)
+

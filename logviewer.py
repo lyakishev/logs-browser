@@ -9,7 +9,7 @@ from servers_log import logs
 import datetime
 import threading
 from logworker import *
-from widgets.date_time import DateTimeWidget
+from widgets.date_time import FromToFilter
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -65,15 +65,9 @@ class GUI_Controller:
         self.last_date_combo.append_text('hours')
         self.last_date_combo.append_text('days')
         self.last_date_combo.set_active(1)
-        
-        self.fromto_box = gtk.HBox()
-        self.from_date = DateTimeWidget()
-        self.to_date = DateTimeWidget()
 
-        self.from_label = gtk.RadioButton(self.last_date_radio, label="From")
-        self.to_label = gtk.CheckButton("To")
-        self.to_label.set_active(True)
-        #self.to_label.connect("toggled", self.to_date_sens)
+        self.fromto_box = FromToFilter()
+        self.fromto_box.from_radio.set_group(self.last_date_radio)
 
         self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
@@ -130,35 +124,6 @@ class GUI_Controller:
     #            frame.set_sensitive(False)
     #        else:
     #            frame.set_sensitive(True)
-                
-
-    def set_now_from(self, *args):
-        now = datetime.datetime.now()
-        self.fromhours_spin.set_value(now.hour)
-        self.fromminutes_spin.set_value(now.minute)
-        self.fromseconds_spin.set_value(now.second)
-        self.fromyear_entry.set_text(now.strftime("%d.%m.%Y"))
-
-    def set_now_to(self, *args):
-        now = datetime.datetime.now()
-        self.tohours_spin.set_value(now.hour)
-        self.tominutes_spin.set_value(now.minute)
-        self.toseconds_spin.set_value(now.second)
-        self.toyear_entry.set_text(now.strftime("%d.%m.%Y"))
-        
-    #def to_date_sens(self, *args): #may do with descriptors
-    #    if self.to_label.get_active():
-    #        self.toyear_entry.set_sensitive(True)
-    #        self.tohours_spin.set_sensitive(True)
-    #        self.tominutes_spin.set_sensitive(True)
-    #        self.toseconds_spin.set_sensitive(True)
-    #        self.to_now_btn.set_sensitive(True)
-    #    else:
-    #        self.toyear_entry.set_sensitive(False)
-    #        self.tohours_spin.set_sensitive(False)
-    #        self.tominutes_spin.set_sensitive(False)
-    #        self.toseconds_spin.set_sensitive(False)
-    #        self.to_now_btn.set_sensitive(False)
 
     def evt_type_sens(self, *args): #may do with descriptors
         if self.evt_type_filter.get_active():
@@ -219,12 +184,6 @@ class GUI_Controller:
         self.content_table.attach(self.notlike_label,0,1,1,2, xoptions=0, yoptions=0)
         self.content_table.attach(self.like_entry,1,2,0,1)
         self.content_table.attach(self.notlike_entry,1,2,1,2)
-
-        self.fromto_box.pack_start(self.from_label, False, False)
-        self.fromto_box.pack_start(self.from_date, False, False)
-        self.fromto_box.pack_start(self.to_label, False, False)
-        self.fromto_box.pack_start(self.to_date, False, False)
-
 
         self.tree_frame.add(self.eventlogs_window)
         self.logs_frame.add(self.logs_window)
