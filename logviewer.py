@@ -77,82 +77,22 @@ class GUI_Controller:
         self.filter_box.pack_start(self.date_filter, False, False)
         self.filter_box.pack_start(self.quantity_filter, False, False)
         self.filter_box.pack_start(self.content_filter, False, False)
-
         self.tree_frame.add(self.eventlogs_window)
         self.logs_frame.add(self.logs_window)
-        #self.action_frame.add(self.action_box)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
         self.control_box.pack_start(self.tree_frame, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
-        #self.control_box.pack_start(self.event_frame, False, False)
-        #self.control_box.pack_start(self.action_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
-        #self.control_box.pack_start(self.progress, False, False)
-        #self.progress_table.attach(self.progress,0,1,0,1)
-        #self.progress_table.attach(self.stop_all_btn,1,2,0,1,xoptions=0,yoptions=0)
-        #self.progress_table.attach(self.pulse_progress,0,1,1,2)
-        #self.progress_table.attach(self.stop_current_btn,1,2,1,2,xoptions=0,yoptions=0)
         self.control_box.pack_start(self.progress, False, False)
-        #self.control_box.pack_start(self.progress_table, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logs_frame, True, True)
         self.root.add(self.main_box)
-
-    def parse_like_entry(self):
-        strng = self.like_entry.get_text()
-        
-        def parse(token):
-            if token in ["AND", "OR", "NOT"]:
-                return t.lower()
-            elif token in [")","("]:
-                return token
-            elif not token:
-                return token
-            else:
-                return "'"+t.strip()+"'"+" in l['msg']"
-        
-        if_expr = ' '.join([parse(t) for t in re.split("(AND|OR|NOT|\)|\()",
-            strng)])
-        return if_expr
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
         gtk.main_quit()
         return
-
-    def get_dates(self):
-        '''Define start_date and end_date'''
-        if self.last_date_radio.get_active():
-            end_date = datetime.datetime.now()
-            dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
-            active = self.last_date_combo.get_active()
-            delta = self.last_date_spin.get_value()/dateunit[active]
-            start_date = end_date-datetime.timedelta(delta)
-        elif self.from_label.get_active():
-            st_date = datetime.datetime.strptime(self.fromyear_entry.get_text(),
-                                                    '%d.%m.%Y')
-            start_date = datetime.datetime(
-                st_date.year, st_date.month, st_date.day,
-                self.fromhours_spin.get_value_as_int(),
-                self.fromminutes_spin.get_value_as_int(),
-                self.fromseconds_spin.get_value_as_int()
-            )
-            if self.to_label.get_active():
-                e_date = datetime.datetime.strptime(self.toyear_entry.get_text(),
-                                                    '%d.%m.%Y')
-                end_date = datetime.datetime(
-                    e_date.year, e_date.month, e_date.day,
-                    self.tohours_spin.get_value_as_int(),
-                    self.tominutes_spin.get_value_as_int(),
-                    self.toseconds_spin.get_value_as_int()
-                )
-            else:
-                end_date = datetime.datetime.now()
-        return (start_date, end_date)
-
-    def get_cont(self):
-        return (self.parse_like_entry(),self.notlike_entry.get_text())
 
     def get_quant(self):
         return self.last_spinbutton.get_value()
@@ -191,12 +131,6 @@ class GUI_Controller:
         #self.progress.set_text("Complete")
         #self.progress.set_fraction(1.0)
 
-    def get_event_types(self):
-        types = []
-        for t in self.evt_checkboxes:
-            if self.evt_checkboxes[t].get_active() == True:
-                types.append(t)
-        return types
 
     def get_active_servers(self):
         logs_for_process = []

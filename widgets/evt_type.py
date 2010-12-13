@@ -15,3 +15,10 @@ class EventTypeFilter(CommonFilter):
         for chb in self.evt_checkboxes.itervalues():
             self.event_box.pack_start(chb, False, False, 1)
         self.add(self.event_box)
+
+    def get_event_types(self):
+        types = []
+        for t in self.evt_checkboxes:
+            if self.evt_checkboxes[t].get_active() == True:
+                types.append(t)
+        return types

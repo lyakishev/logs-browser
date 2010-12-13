@@ -89,6 +89,14 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_spin, False, False)
         self.pack_start(self.last_date_combo, False, False)
 
+    def get_date(self):
+        end_date = datetime.datetime.now()
+        dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
+        active = self.last_date_combo.get_active()
+        delta = self.last_date_spin.get_value()/dateunit[active]
+        start_date = end_date-datetime.timedelta(delta)
+        return (start_date, end_date)
+
 class DateFilter(CommonFilter):
     def __init__(self):
         super(DateFilter, self).__init__("Date")
