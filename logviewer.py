@@ -13,6 +13,7 @@ from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.evt_type import ContentFilter
 from widgets.quantity import QuantityFilter
+from widgets.log_window import LogWindow
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -207,43 +208,21 @@ class DisplayLogsModel:
         self.view.connect( 'row-activated', self.show_log)
 
         return self.view
-    #def col0_edited_cb( self, cell, path, new_text, model ):
-    #    """
-    #    Called when a text cell is edited.  It puts the new text
-    #    in the model so that it is displayed properly.
-    #    """
-    #    print "Change '%s' to '%s'" % (model[path][0], new_text)
-    #    model[path][0] = new_text
-    #    return
+
     def show_log( self, path, column, params):
         selection = path.get_selection()
         (model, iter) = selection.get_selected()
-        popup = gtk.Window()
-        popup.set_title("Log")
-        popup.set_default_size(640,480)
-        scr = gtk.ScrolledWindow()
-        scr.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        popup_frame = gtk.Frame("Log")
-        log_text = gtk.TextView()
-        log_text.set_editable(False)
-        log_text.set_wrap_mode(gtk.WRAP_WORD)
         msg = model.get_value(iter, 5).decode("string-escape")
         msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
         msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), msg)
-        log_text.get_buffer().set_text("%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
+        txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
             model.get_value(iter, 0),
             model.get_value(iter, 1),
             model.get_value(iter, 2),
             model.get_value(iter, 3),
             model.get_value(iter, 4),
-            msg))
-        popup_frame.add(scr)
-        scr.add(log_text)
-        popup.add(popup_frame)
-        popup.show_all()
-        selection = path.get_selection()
-        (model, iter) = selection.get_selected()
-        print model.get_value(iter, 0)
+            msg)
+        log_w = LogWindow(txt)
         return
 
 if __name__ == '__main__':
