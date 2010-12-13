@@ -21,6 +21,28 @@ class EventServersModel:
         else:
             return None
 
+#def build_tree(nodes):
+#    # create empty tree to fill
+#    tree = {}
+#
+#    # fill in tree starting with roots (those with no parent)
+#    build_tree_recursive(tree, None, nodes)
+#
+#    return tree
+#
+#def build_tree_recursive(tree, parent, nodes):
+#    # find children
+#    children  = [n for n in nodes if n.parent == parent]
+#
+#    # build a subtree for each child
+#    for child in children:
+#    	# start new subtree
+#    	tree[child.name] = {}
+#
+#    	# call recursively to build a subtree for current node
+#    	build_tree_recursive(tree[child.name], child, nodes)
+            
+
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
