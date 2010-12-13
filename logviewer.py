@@ -133,26 +133,7 @@ class GUI_Controller:
         #self.progress.set_fraction(1.0)
 
 
-    def get_active_servers(self):
-        logs_for_process = []
-        stands = self.eventlogs_model.iter_children(None)
-        while stands:
-            servers = self.eventlogs_model.iter_children(stands)
-            while servers:
-                logs = self.eventlogs_model.iter_children(servers)
-                while logs:
-                    if self.eventlogs_model.get_value(logs, 1) == True:
-                        logs_for_process.append(
-                            [
-                                self.eventlogs_model.get_value(servers,0),
-                                self.eventlogs_model.get_value(logs, 0)
-                            ]
-                        )
-                    logs = self.eventlogs_model.iter_next(logs)
-                servers = self.eventlogs_model.iter_next(servers)
-            stands = self.eventlogs_model.iter_next(stands)
-        return logs_for_process
-
+    
 #    def run(self):
 #        """ run is called to set off the GTK mainloop """
 #        gtk.main()
@@ -178,6 +159,27 @@ class LogsModel:
             return self.list_store
         else:
             return None
+
+    def get_active_servers(self):
+        """Make it recursive!!!"""
+        logs_for_process = []
+        stands = self.list_store.iter_children(None)
+        while stands:
+            servers = self.list_store.iter_children(stands)
+            while servers:
+                logs = self.list_store.iter_children(servers)
+                while logs:
+                    if self.list_store.get_value(logs, 1) == True:
+                        logs_for_process.append(
+                            [
+                                self.list_store.get_value(servers,0),
+                                self.list_store.get_value(logs, 0)
+                            ]
+                        )
+                    logs = self.list_store.iter_next(logs)
+                servers = self.list_store.iter_next(servers)
+            stands = self.list_store.iter_next(stands)
+        return logs_for_process
 
 
 class DisplayLogsModel:
