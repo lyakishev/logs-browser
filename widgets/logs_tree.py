@@ -1,10 +1,41 @@
-class EventServersModel:
-    """ The model class holds the information we want to display """
+class ServersModel:
     def __init__(self):
+        self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
+                                         gobject.TYPE_BOOLEAN )
+    def get_model(self):
+        """ Returns the model """
+        if self.treestore:
+            return self.treestore
+        else:
+
+    def get_active_servers(self):
+        """Make it recursive!!!"""
+        logs_for_process = []
+        stands = self.treestore.iter_children(None)
+        while stands:
+            servers = self.treestore.iter_children(stands)
+            while servers:
+                logs = self.treestore.iter_children(servers)
+                while logs:
+                    if self.treestore.get_value(logs, 1) == True:
+                        logs_for_process.append(
+                            [
+                                self.treestore.get_value(servers,0),
+                                self.treestore.get_value(logs, 0)
+                            ]
+                        )
+                    logs = self.treestore.iter_next(logs)
+                servers = self.treestore.iter_next(servers)
+            stands = self.treestore.iter_next(stands)
+        return logs_for_process
+
+
+class EventServersModel(ServersModel):
+    """ The model class holds the information we want to display """
+    def __init__(self, logs):
+        super(EventServersModel, self).__init__()
         """ Sets up and populates our gtk.TreeStore """
         """!!!Rewrite to recursive!!!!"""
-        self.tree_store = gtk.TreeStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_BOOLEAN )
         # places the global people data into the list
         # we form a simple tree.
         for item in sorted(logs.keys()):
@@ -13,13 +44,31 @@ class EventServersModel:
                 child = self.tree_store.append( parent, (subitem,None) )
                 for subsubitem in logs[item][subitem]:
                     self.tree_store.append( child, (subsubitem,None) )
-        return
-    def get_model(self):
-        """ Returns the model """
-        if self.tree_store:
-            return self.tree_store
-        else:
-            return None
+
+class FileServersModel(ServersModel):
+    def __init__(self, logs):
+        super(FileServersModel, self).__init__()
+        for i in range(1,13):
+            parents={}
+            #server_name = '%s-%0.2d' % (stand, i)
+            server_name = r'\\nag-tc-%0.2d\forislog' % i
+            server = treestore.append(None, [server_name, ""])
+            for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
+                for subdir in dirs:
+                    parents[os.path.join(root, subdir)] = treestore.append(parents.get(root, server), [subdir,""])
+            for item in files:
+                try:
+                    pf = filename.parseString(item)
+                    name = pf['logname']+pf['logname2']
+                    print name
+                    if not fls.get(name, None):
+                        treestore.append(parents.get(root, server), [name, item])
+                except ParseException:
+                    print "---------------------"
+                    print item
+                    print "---------------------"
+
+
 
 #def build_tree(nodes):
 #    # create empty tree to fill
@@ -41,7 +90,20 @@ class EventServersModel:
 #
 #    	# call recursively to build a subtree for current node
 #    	build_tree_recursive(tree[child.name], child, nodes)
-            
+
+
+##os.path.getmtime(fname)))
+#left_inter = end_date < file_end_date and end_date>file_start_date
+#right_inter = start_date>file_start_date and start_date<file_end_date
+#if left_inter:
+#    parse
+#elif right_inter:
+#    parse
+#elif
+#def datetime_intersect():
+#    return (t1start <= t2start and t2start <= t1end) or \
+#           (t2start <= t1start and t1start <= t2end)
+
 
 
 class DisplayServersModel:
@@ -85,8 +147,3 @@ class DisplayServersModel:
             for subchild in child.iterchildren():
                 subchild[1] = state
         return
-
-class LogsTree(gtk.Frame):
-    def __init__(self):
-        super(EventLogsTree, self).__init__(label="Logs")
-
