@@ -67,6 +67,9 @@ logs = {
    },
     "local": {
         "user-pc": ["Application", "System"]
-    }
+    },
+    "kog-app": {
+        "kog-app-01": ["Application", "CRM.Gateway", "CRM_Interfaces", "FORIS.Catalogues", "FORIS.Common", "Foris.PasswordSecurity", "FORIS.Production", "FORIS.Sales", "FORIS.ScratchCards", "FORIS.ScratchCards.Activation", "Foris.SelfCare", "FORIS.TelCRM.GUI", "Foris.TelCRM.Marketing", "Foris.TelCrm.RequestManagement", "FORIS.TelCRM.Sales", "ForwardedEvents", "Marti.CommunityManagementUI", "Marti.OrderCatalogueUI", "Microsoft-Windows-EventCollector/Operational", "Microsoft-Windows-Forwarding/Operational", "PLUGINS", "Production", "System", "TelCRM.Amd", "TelCRM.Marketing", "TelCRM.Production", "TelCRM.WindowsServices", "Windows PowerShell"]
+        }
 }
 
