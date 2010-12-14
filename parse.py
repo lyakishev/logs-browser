@@ -68,12 +68,12 @@ filename=Optional(date_time+sep)+logname("logname")+Optional(date_time)+Optional
 #print filename.parseString("foris_catalogue_admin-101208.log") #! this is date??
 #print filename.parseString("11122010000003-SMSCON_SMSCON_01_data.log") #nag-tc-05 MG
 
-sep = Literal(".") | Literal(",")
-dtinfile = Word(nums, exact=2)+Literal(".")+\
-           Word(nums,exact=2)+Literal(".")+\
-           Word(nums, exact=4)+\
-           Word(nums, max=2)+Literal(":")+\
-           Word(nums, max=2)+Literal(":")+\
+sep = Literal(".") | Literal(",") | Literal("-")
+dtinfile = Word(nums, exact=4)+sep+\
+           Word(nums,exact=2)+sep+\
+           Word(nums, exact=2)+\
+           Word(nums, max=2)+sep+\
+           Word(nums, max=2)+sep+\
            Word(nums, max=2)+sep+Word(nums)
 msg=SkipTo(dtinfile | StringEnd())
 file_log=dtinfile('datetime')+msg('msg')

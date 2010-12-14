@@ -89,4 +89,5 @@ def getFileLogs(path):
 if __name__ == "__main__":
     import pdb
     pdb.set_trace()
-    print len(getEventLogsLast(None, 'Application' , list(evt_dict.itervalues()), 3))
+    print list(getFileLogs(r"\\nag-tc-01\forislog\MoveNextFromWaitingService.exe.config.log"))
+    #print len(getEventLogsLast(None, 'Application' , list(evt_dict.itervalues()), 3))
