@@ -67,16 +67,6 @@ logs = {
    },
     "local": {
         "user-pc": ["Application", "System"]
-    },
-    "umc-test-2": {
-        "msk-app-v190": ["Application", "CRM.Gateway", "CRM_Interfaces", "FirscallVCardServiceLog",
-"FORIS.Catalogues", "FORIS.Common", "FORIS.Production", "FORIS.Sales",
-"FORIS.ScratchCards", "FORIS.ScratchCards.Activation", "Foris.SelfCare",
-"FORIS.TelCRM.GUI", "Foris.TelCRM.Marketing", "FORIS.TelCRM.RequestManagement",
-"FORIS.TelCRM.Sales", "FORIS_Security", "Marti.CommunityManagementUI",
-"Marti.OrderCatalogueUI", "MGALog", "PackageUI", "PrepMntr Log", "PrepServ
-Log", "System", "TelCRM.CustomerManagement", "TelCRM.Production",
-"TelCRM.WindowsServices"]
     }
 }
 

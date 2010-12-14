@@ -72,6 +72,12 @@ class FromToOption(gtk.HBox):
             self.to_date.set_sens(True)
         else:
             self.to_date.set_sens(False)
+    
+    def get_dates(self):
+        return (self.from_date.get_datetime(),self.to_date.get_datetime())
+
+    def get_active(self):
+        return self.from_radio.get_active()
 
 class LastDateOption(gtk.HBox):
     def __init__(self):
@@ -89,13 +95,16 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_spin, False, False)
         self.pack_start(self.last_date_combo, False, False)
 
-    def get_date(self):
+    def get_dates(self):
         end_date = datetime.datetime.now()
         dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
         active = self.last_date_combo.get_active()
         delta = self.last_date_spin.get_value()/dateunit[active]
         start_date = end_date-datetime.timedelta(delta)
         return (start_date, end_date)
+
+    def get_active(self):
+        return self.last_date_radio.get_active()
 
 class DateFilter(CommonFilter):
     def __init__(self):
@@ -107,5 +116,13 @@ class DateFilter(CommonFilter):
         self.add(self.date_box)
         self.date_box.pack_start(self.last_option, False, False)
         self.date_box.pack_start(self.fromto_option, False, False)
+        self.set_start_active(True)
+
+    @property
+    def get_dates(self):
+        if self.last_option.get_active():
+            return self.last_option.get_dates()
+        elif self.fromto_option.get_active():
+            return self.fromto_option.get_dates()
 
 

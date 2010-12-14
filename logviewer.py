@@ -11,9 +11,10 @@ import threading
 from logworker import *
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
-from widgets.evt_type import ContentFilter
+from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.log_window import LogWindow
+from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -39,12 +40,8 @@ class GUI_Controller:
         self.button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
-        #self.progress_table = gtk.Table(2,2,False)
         self.progress = gtk.ProgressBar()
         self.progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        #self.pulse_progress = gtk.ProgressBar()
-        #self.pulse_progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        #self.stop_current_btn = gtk.Button('X')
         self.stop_all_btn = gtk.Button('Stop')
         self.stop_all_btn.connect('clicked', self.stop_all)
         self.allstop = threading.Event()
@@ -53,10 +50,8 @@ class GUI_Controller:
         self.eventlogs_window = gtk.ScrolledWindow()
         self.eventlogs_window.set_policy(gtk.POLICY_NEVER,
                                             gtk.POLICY_AUTOMATIC)
-        # Get the model and attach it to the view
         self.eventlogs_model = ServersStore.get_model()
         self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
-        # Add our view into the main window
         self.eventlogs_window.add_with_viewport(self.eventlogs_view)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
@@ -95,12 +90,9 @@ class GUI_Controller:
         gtk.main_quit()
         return
 
-    def get_quant(self):
-        return self.last_spinbutton.get_value()
-
     def show_logs(self, params):
         self.stop_evt.clear()
-        evlogs = self.get_active_servers()
+        evlogs = ServersStore.get_active_servers()
         if evlogs:
             self.logs_model.clear()
             self.progress.set_fraction(0.0)
@@ -108,13 +100,13 @@ class GUI_Controller:
             evl_count = len(evlogs)
             frac = 1.0/(evl_count)
             fltr = {}
-            fltr['types'] = self.evt_type_filter.get_active() and self.get_event_types() or []
-            fltr['date'] = self.date_filter.get_active() and self.get_dates() or ()
-            fltr['content'] = self.content_filter.get_active() and self.get_cont() or ("","")
-            fltr['last'] = self.quantity_filter.get_active() and self.get_quant() or 0
+            fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
+            fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
+            fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()
-            self.sens_list=[self.evt_type_frame,self.date_frame,
-                self.content_frame,self.quantity_frame,self.show_button]
+            self.sens_list=[self.evt_type_filter,self.date_filter,
+                self.content_filter,self.quantity_filter,self.show_button]
             for sl in self.sens_list:
                     sl.set_sensitive(False)
             for comp, log in evlogs:
@@ -206,7 +198,7 @@ class DisplayLogsModel:
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()
-    ServersStore = ServersModel()
+    ServersStore = EventServersModel(logs)
     LogsStore = LogsModel()
     ServersDisplay = DisplayServersModel()
     LogsDisplay = DisplayLogsModel()

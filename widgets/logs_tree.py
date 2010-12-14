@@ -1,4 +1,8 @@
-class ServersModel:
+import pygtk
+pygtk.require("2.0")
+import gtk, gobject, gio
+
+class ServersModel(object):
     def __init__(self):
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
                                          gobject.TYPE_BOOLEAN )
@@ -7,6 +11,7 @@ class ServersModel:
         if self.treestore:
             return self.treestore
         else:
+            return None
 
     def get_active_servers(self):
         """Make it recursive!!!"""
@@ -39,11 +44,11 @@ class EventServersModel(ServersModel):
         # places the global people data into the list
         # we form a simple tree.
         for item in sorted(logs.keys()):
-            parent = self.tree_store.append( None, (item, None) )
+            parent = self.treestore.append( None, (item, None) )
             for subitem in sorted(logs[item].keys()):
-                child = self.tree_store.append( parent, (subitem,None) )
+                child = self.treestore.append( parent, (subitem,None) )
                 for subsubitem in logs[item][subitem]:
-                    self.tree_store.append( child, (subsubitem,None) )
+                    self.treestore.append( child, (subsubitem,None) )
 
 class FileServersModel(ServersModel):
     def __init__(self, logs):

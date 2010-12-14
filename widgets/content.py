@@ -2,6 +2,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 from common_filter import CommonFilter
+import re
 
 class ContentFilter(CommonFilter):
     def __init__(self):
@@ -15,23 +16,25 @@ class ContentFilter(CommonFilter):
         self.content_table.attach(self.notlike_label,0,1,1,2, xoptions=0, yoptions=0)
         self.content_table.attach(self.like_entry,1,2,0,1)
         self.content_table.attach(self.notlike_entry,1,2,1,2)
-        self.add(content_table)
+        self.add(self.content_table)
+        self.set_start_active(False)
 
     def parse_like_entry(self):
         strng = self.like_entry.get_text()
-            def parse(token):
-                if token in ["AND", "OR", "NOT"]:
-                    return t.lower()
-                elif token in [")","("]:
-                    return token
-                elif not token:
-                    return token
-                else:
-                    return "'"+t.strip()+"'"+" in l['msg']"
+        def parse(token):
+            if token in ["AND", "OR", "NOT"]:
+                return t.lower()
+            elif token in [")","("]:
+                return token
+            elif not token:
+                return token
+            else:
+                return "'"+t.strip()+"'"+" in l['msg']"
         if_expr = ' '.join([parse(t) for t in re.split("(AND|OR|NOT|\)|\()",\
             strng)])
         return if_expr
 
+    @property
     def get_cont(self):
         return (self.parse_like_entry(),self.notlike_entry.get_text())
 
