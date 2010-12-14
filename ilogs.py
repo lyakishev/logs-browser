@@ -61,19 +61,6 @@ wndw.show_all()
 gtk.main()
 
 
-#def parse_logs(filename):
-#    f=open(fillename, 'r')
-#    s=f.read()
-#    log = {}
-#    for l in log.scanString(s)
-#        yield {'the_time': l['datetime'],
-#                'msg': l['msg'],
-#                'logtype': "",
-#                'source' : "",
-#                'computer' : ""
-#        }
-#
-#
 #if date_of_change < start_date:
 #    pass
 #elif date_from_filename < start_date:

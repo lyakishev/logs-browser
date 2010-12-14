@@ -7,6 +7,7 @@ import pywintypes
 import datetime
 import re
 import time
+from parse import file_log
  
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -73,10 +74,19 @@ def getEventLog(ev_obj, server, logtype):
     log['the_time'] = dtdate
     return log
 
+def getFileLogs(path):
+    f = open(path, 'r')
+    s = f.read()
+    f.close()
+    for log in file_log.scanString(s):
+        yield {'the_time': log['datetime'],
+                'msg': log['msg'],
+                'logtype': "",
+                'source': path,
+                'computer': ""
+        }
+
 if __name__ == "__main__":
     import pdb
     pdb.set_trace()
     print len(getEventLogsLast(None, 'Application' , list(evt_dict.itervalues()), 3))
-    
- 
-

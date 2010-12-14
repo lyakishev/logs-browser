@@ -15,7 +15,6 @@ def parse_date(d):
     return dformat
 
 def hour_to_date(d):
-    #pdb.set_trace()
     if d.get('hour', 0):
         return d['date']+timedelta(int(d['hour'])/24.)
     elif d.get('time', 0):
@@ -24,7 +23,6 @@ def hour_to_date(d):
     else:
         return d['date']
 
-#sep = Literal(".") | Literal("_")
 sep = Suppress(Literal("_") | Literal("-") | Literal("."))
 date_with_full_year = (Word( nums, exact=4)  + Optional(sep) +\
     Word(nums, exact=2) + Optional(sep) + Word(nums, exact=2))
@@ -69,15 +67,15 @@ filename=Optional(date_time+sep)+logname("logname")+Optional(date_time)+Optional
 ##print filename.parseString("4_3_0.000005.log") #???
 #print filename.parseString("foris_catalogue_admin-101208.log") #! this is date??
 #print filename.parseString("11122010000003-SMSCON_SMSCON_01_data.log") #nag-tc-05 MG
-##nag-tc-06
-##for f in os.listdir("/home/user"):
-##    try:
-##        print os.path.getmtime(os.path.join("/home/user",f))
-##    except:
-##        pass
-#
-#dtinfile = Word(nums, exact=2)+Literal(".")+Word(nums,exact=2)+Literal(".")+Word(nums, exact=4)+Word(nums, max=2)+Literal(":")+Word(nums, max=2)+Literal(":")+Word(nums, max=2)
-#msg=SkipTo(dtinfile | StringEnd())
-#log=dtinfile+msg
+
+sep = Literal(".") | Literal(",")
+dtinfile = Word(nums, exact=2)+Literal(".")+\
+           Word(nums,exact=2)+Literal(".")+\
+           Word(nums, exact=4)+\
+           Word(nums, max=2)+Literal(":")+\
+           Word(nums, max=2)+Literal(":")+\
+           Word(nums, max=2)+sep+Word(nums)
+msg=SkipTo(dtinfile | StringEnd())
+file_log=dtinfile('datetime')+msg('msg')
 #log.searchString(fileread) #scanString - generator, parseFile
 
