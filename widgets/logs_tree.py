@@ -45,7 +45,7 @@ class ServersModel(object):
             treewalk(root)
             root = self.treestore.iter_next(root)
 
-        print log_for_process
+        return log_for_process
 
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """

@@ -66,8 +66,8 @@ class GUI_Controller:
         return
 
     def stop_all(self, *args):
-        ServersStore.test()
-        #self.stop_evt.set()
+        #ServersStore.test()
+        self.stop_evt.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -98,7 +98,7 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        evlogs = ServersStore.get_active_servers()
+        evlogs = [[s[1], s[0]] for s in ServersStore.get_active_servers()]
         if evlogs:
             self.logs_model.clear()
             self.progress.set_fraction(0.0)
