@@ -169,7 +169,8 @@ class DisplayLogsModel:
         # our model .
         self.renderers = []
         self.columns = []
-        for r, header in enumerate(['Date','Computer', 'Log', 'Type', 'Source', 'Message']):
+        for r, header in enumerate(['Date','Computer', 'Log', 'Type',\
+            'Source', 'Message', 'bgcolor']):
             self.renderers.append(gtk.CellRendererText())
             self.renderers[r].set_property( 'editable', False )
             self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
@@ -179,7 +180,7 @@ class DisplayLogsModel:
         # will show as active e.g on.
         for cid, col in enumerate(self.columns):
             self.view.append_column( col )
-            if col.get_title() == "Message":
+            if col.get_title() == "Message" or col.get_title() == "bgcolor":
                 col.set_visible(False)
             else:
                 col.set_sort_column_id(cid)
@@ -187,8 +188,16 @@ class DisplayLogsModel:
 
         return self.view
 
+
     def show_log( self, path, column, params):
+        import pdb
+        pdb.set_trace()
+        print type(self)
+        print type(path)
+        print type(column)
+        print type(params)
         selection = path.get_selection()
+        print type(selection)
         (model, iter) = selection.get_selected()
         msg = model.get_value(iter, 5).decode("string-escape")
         msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
