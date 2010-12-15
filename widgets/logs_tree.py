@@ -1,11 +1,22 @@
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
+import os
+from parse import filename
+from pyparsing import ParseException
+import threading
 
 class ServersModel(object):
     def __init__(self):
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
                                          gobject.TYPE_BOOLEAN )
+
+        FillThread=threading.Thread(target=self.fill_model)
+        FillThread.start()
+
+    def fill_model(self):
+        pass
+
     def get_model(self):
         """ Returns the model """
         if self.treestore:
@@ -38,40 +49,50 @@ class ServersModel(object):
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
     def __init__(self, logs):
+        self.logs=logs
         super(EventServersModel, self).__init__()
         """ Sets up and populates our gtk.TreeStore """
         """!!!Rewrite to recursive!!!!"""
         # places the global people data into the list
         # we form a simple tree.
-        for item in sorted(logs.keys()):
+
+    def fill_model(self):
+        for item in sorted(self.logs.keys()):
             parent = self.treestore.append( None, (item, None) )
-            for subitem in sorted(logs[item].keys()):
+            for subitem in sorted(self.logs[item].keys()):
                 child = self.treestore.append( parent, (subitem,None) )
-                for subsubitem in logs[item][subitem]:
+                for subsubitem in self.logs[item][subitem]:
                     self.treestore.append( child, (subsubitem,None) )
 
 class FileServersModel(ServersModel):
-    def __init__(self, logs):
+    def __init__(self):
         super(FileServersModel, self).__init__()
+
+    def fill_model(self):
+        fls={}
         for i in range(1,13):
             parents={}
-            #server_name = '%s-%0.2d' % (stand, i)
-            server_name = r'\\nag-tc-%0.2d\forislog' % i
-            server = treestore.append(None, [server_name, ""])
+            server_name = '%s-%0.2d' % ("nag-tc", i)
+            server = self.treestore.append(None, [server_name, ""])
             for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
                 for subdir in dirs:
-                    parents[os.path.join(root, subdir)] = treestore.append(parents.get(root, server), [subdir,""])
-            for item in files:
-                try:
-                    pf = filename.parseString(item)
-                    name = pf['logname']+pf['logname2']
-                    print name
-                    if not fls.get(name, None):
-                        treestore.append(parents.get(root, server), [name, item])
-                except ParseException:
-                    print "---------------------"
-                    print item
-                    print "---------------------"
+                    gtk.gdk.threads_enter()
+                    parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
+                        [subdir,None])
+                    gtk.gdk.threads_leave()
+                for item in files:
+                    try:
+                        pf = filename.parseString(item)
+                        name = pf['logname']+pf['logname2']
+                        if not fls.get(name, None):
+                            gtk.gdk.threads_enter()
+                            self.treestore.append(parents.get(root, server), [name, None])
+                            gtk.gdk.threads_leave()
+                            fls[name]=item
+                    except:
+                        print "---------------------"
+                        print item
+                        print "---------------------"
 
 
 
