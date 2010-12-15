@@ -28,7 +28,7 @@ class LogWorker(threading.Thread):
         self.content_like_func = fltr['content'][0] and self.f_likecont or self.ret_self
         self.content_notlike_func = fltr['content'][1] and self.f_notlikecont or self.ret_self
         #self.last_func = fltr['last'] and self.f_last or (lambda l, c: l)
-        self.f1 = (self.date_generator(self.date_func, getEventLogs(self.comp, self.log, self.evt)))
+        self.f1 = (self.date_generator(self.date_func, getEventLogs(self.comp, self.log)))
         self.f2 = (self.type_func(l) for l in self.f1)
         self.f3 = (self.content_notlike_func(l) for l in (self.content_like_func(l1) for l1 in self.f2))
         #self.f4 = (self.last_func(l, i) for i,l inself.f3)
@@ -84,8 +84,8 @@ class LogWorker(threading.Thread):
         semaphore.acquire()
         #print "%s %s acquire" % (self.log, self.comp)
         for l in self.for_c:
-            #if self.evt.isSet():
-            #    break
+            if self.evt.isSet():
+                break
            # if ( self.stopthread.isSet() ):
            #     self.stopthread.clear()
            #     break

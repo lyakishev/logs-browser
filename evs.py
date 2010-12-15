@@ -7,7 +7,7 @@ import pywintypes
 import datetime
 import re
 import time
-from parse import file_log
+#from parse import file_log
  
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -20,7 +20,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 
 
-def getEventLogs(server, logtype, stopper):
+def getEventLogs(server, logtype):
     try:
         hand = win32evtlog.OpenEventLog(server,logtype)  #!!!!!!
     except pywintypes.error:
@@ -28,13 +28,6 @@ def getEventLogs(server, logtype, stopper):
         return
     flags = win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ #!!!!!!
     while 1:
-        if stopper.isSet():
-            try:
-                win32evtlog.CloseEventLog(hand)
-            except pywintypes.error:
-                pass
-            finally:
-                break
         try:
             events=win32evtlog.ReadEventLog(hand,flags,0)
         except pywintypes.error:

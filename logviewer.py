@@ -66,7 +66,8 @@ class GUI_Controller:
         return
 
     def stop_all(self, *args):
-        self.stop_evt.set()
+        ServersStore.test()
+        #self.stop_evt.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -169,8 +170,7 @@ class DisplayLogsModel:
         # our model .
         self.renderers = []
         self.columns = []
-        for r, header in enumerate(['Date','Computer', 'Log', 'Type',\
-            'Source', 'Message', 'bgcolor']):
+        for r, header in enumerate(['Date','Computer', 'Log', 'Type', 'Source', 'Message']):
             self.renderers.append(gtk.CellRendererText())
             self.renderers[r].set_property( 'editable', False )
             self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
@@ -180,7 +180,7 @@ class DisplayLogsModel:
         # will show as active e.g on.
         for cid, col in enumerate(self.columns):
             self.view.append_column( col )
-            if col.get_title() == "Message" or col.get_title() == "bgcolor":
+            if col.get_title() == "Message":
                 col.set_visible(False)
             else:
                 col.set_sort_column_id(cid)
@@ -188,16 +188,8 @@ class DisplayLogsModel:
 
         return self.view
 
-
     def show_log( self, path, column, params):
-        import pdb
-        pdb.set_trace()
-        print type(self)
-        print type(path)
-        print type(column)
-        print type(params)
         selection = path.get_selection()
-        print type(selection)
         (model, iter) = selection.get_selected()
         msg = model.get_value(iter, 5).decode("string-escape")
         msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
