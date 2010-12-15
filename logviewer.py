@@ -66,7 +66,8 @@ class GUI_Controller:
         return
 
     def stop_all(self, *args):
-        self.stop_evt.set()
+        ServersStore.test()
+        #self.stop_evt.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)

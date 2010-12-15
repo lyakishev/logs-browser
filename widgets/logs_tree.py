@@ -2,14 +2,15 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import os
-from parse import filename
-from pyparsing import ParseException
+#from parse import filename
+#from pyparsing import ParseException
 import threading
 
 class ServersModel(object):
     def __init__(self):
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_BOOLEAN )
+                                         gobject.TYPE_BOOLEAN,
+                                         gobject.TYPE_STRING )
 
         FillThread=threading.Thread(target=self.fill_model)
         FillThread.start()
@@ -25,26 +26,26 @@ class ServersModel(object):
             return None
 
     def get_active_servers(self):
-        """Make it recursive!!!"""
-        logs_for_process = []
-        stands = self.treestore.iter_children(None)
-        while stands:
-            servers = self.treestore.iter_children(stands)
-            while servers:
-                logs = self.treestore.iter_children(servers)
-                while logs:
-                    if self.treestore.get_value(logs, 1) == True:
-                        logs_for_process.append(
-                            [
-                                self.treestore.get_value(servers,0),
-                                self.treestore.get_value(logs, 0)
-                            ]
-                        )
-                    logs = self.treestore.iter_next(logs)
-                servers = self.treestore.iter_next(servers)
-            stands = self.treestore.iter_next(stands)
-        return logs_for_process
+        log_for_process = []
+        def treewalk(iters):
+            if self.treestore.get_value(iters, 2) == 'f' \
+                and self.treestore.get_value(iters, 1):
+                cur_log = [self.treestore.get_value(iters, 0)]
+                parent = self.treestore.iter_parent(iters)
+                while parent:
+                    cur_log.append(self.treestore.get_value(parent,0))
+                    parent = self.treestore.iter_parent(parent)
+                log_for_process.append(cur_log)
+            it = self.treestore.iter_children(iters)
+            while it:
+                treewalk(it)
+                it = self.treestore.iter_next(it)
+        root = self.treestore.iter_children(None)
+        while root:
+            treewalk(root)
+            root = self.treestore.iter_next(root)
 
+        print log_for_process
 
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
@@ -58,11 +59,11 @@ class EventServersModel(ServersModel):
 
     def fill_model(self):
         for item in sorted(self.logs.keys()):
-            parent = self.treestore.append( None, (item, None) )
+            parent = self.treestore.append( None, (item, None, 'd') )
             for subitem in sorted(self.logs[item].keys()):
-                child = self.treestore.append( parent, (subitem,None) )
+                child = self.treestore.append( parent, (subitem, None, 'd') )
                 for subsubitem in self.logs[item][subitem]:
-                    self.treestore.append( child, (subsubitem,None) )
+                    self.treestore.append( child, (subsubitem, None, 'f') )
 
 class FileServersModel(ServersModel):
     def __init__(self):
@@ -148,6 +149,7 @@ class DisplayServersModel:
         self.renderer1 = gtk.CellRendererToggle()
         self.renderer1.set_property('activatable', True)
         self.renderer1.connect( 'toggled', self.col1_toggled_cb, model )
+        self.renderer2 = gtk.CellRendererText()
         # Connect column0 of the display with column 0 in our list model
         # The renderer will then display whatever is in column 0 of
         # our model .
@@ -157,19 +159,21 @@ class DisplayServersModel:
         # will show as active e.g on.
         self.column1 = gtk.TreeViewColumn("Show", self.renderer1 )
         self.column1.add_attribute( self.renderer1, "active", 1)
+        self.column2 = gtk.TreeViewColumn("Type", self.renderer2 )
+        self.column2.set_visible(False)
         self.view.append_column( self.column0 )
         self.view.append_column( self.column1 )
+        self.view.append_column( self.column2 )
         return self.view
 
     def col1_toggled_cb( self, cell, path, model ):
         """
         Sets the toggled state on the toggle button to true or false.
-
-	!!!Rewrite to recursive!!!!
         """
         state = model[path][1] = not model[path][1]
-        for child in model[path].iterchildren():
-            child[1] = state
-            for subchild in child.iterchildren():
-                subchild[1] = state
+        def walk(child):
+            for ch in child.iterchildren():
+                ch[1] = state
+                walk(ch)
+        walk(model[path])
         return
