@@ -87,7 +87,7 @@ class GUI_Controller:
         self.ev_label = gtk.Label("EventLogs")
         self.file_label = gtk.Label("FileLogs")
         self.ntb.append_page(self.main_box, tab_label=self.ev_label)
-        self.ntb.append_page(self.file_main_box, tab_label=self.file_label)
+        #self.ntb.append_page(self.file_main_box, tab_label=self.file_label)
         self.root.add(self.ntb)
 
     def destroy_cb(self, *kw):
@@ -177,10 +177,12 @@ class DisplayLogsModel:
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
-        for col in self.columns:
+        for cid, col in enumerate(self.columns):
             self.view.append_column( col )
             if col.get_title() == "Message":
                 col.set_visible(False)
+            else:
+                col.set_sort_column_id(cid)
         self.view.connect( 'row-activated', self.show_log)
 
         return self.view
