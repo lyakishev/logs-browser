@@ -70,29 +70,31 @@ class FileServersModel(ServersModel):
 
     def fill_model(self):
         fls={}
-        for i in range(1,13):
-            parents={}
-            server_name = '%s-%0.2d' % ("nag-tc", i)
-            server = self.treestore.append(None, [server_name, ""])
-            for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
-                for subdir in dirs:
-                    gtk.gdk.threads_enter()
-                    parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                        [subdir,None])
-                    gtk.gdk.threads_leave()
-                for item in files:
-                    try:
-                        pf = filename.parseString(item)
-                        name = pf['logname']+pf['logname2']
-                        if not fls.get(name, None):
-                            gtk.gdk.threads_enter()
-                            self.treestore.append(parents.get(root, server), [name, None])
-                            gtk.gdk.threads_leave()
-                            fls[name]=item
-                    except:
-                        print "---------------------"
-                        print item
-                        print "---------------------"
+        for stand in ("nag-tc", "msk-func", "kog-app"):
+            stiter = self.treestore.append(None, [stand, None])
+            for i in range(1,13):
+                parents={}
+                server_name = '%s-%0.2d' % (stand, i)
+                server = self.treestore.append(stiter, [server_name, None])
+                for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
+                    for subdir in dirs:
+                        gtk.gdk.threads_enter()
+                        parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
+                            [subdir,None])
+                        gtk.gdk.threads_leave()
+                    for item in files:
+                        try:
+                            pf = filename.parseString(item)
+                            name = pf['logname']+pf['logname2']
+                            if not fls.get(name, None):
+                                gtk.gdk.threads_enter()
+                                self.treestore.append(parents.get(root, server), [name, None])
+                                gtk.gdk.threads_leave()
+                                fls[name]=item
+                        except:
+                            print "---------------------"
+                            print item
+                            print "---------------------"
 
 
 

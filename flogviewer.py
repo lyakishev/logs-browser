@@ -209,4 +209,3 @@ if __name__ == '__main__':
     gtk.gdk.threads_enter()
     gtk.main()
     gtk.gdk.threads_leave()
-    
