@@ -2,8 +2,8 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import os
-#from parse import filename
-#from pyparsing import ParseException
+from parse import filename
+from pyparsing import ParseException
 import threading
 
 class ServersModel(object):
@@ -72,16 +72,16 @@ class FileServersModel(ServersModel):
     def fill_model(self):
         fls={}
         for stand in ("nag-tc", "msk-func", "kog-app"):
-            stiter = self.treestore.append(None, [stand, None])
+            stiter = self.treestore.append(None, [stand, None, 'd'])
             for i in range(1,13):
                 parents={}
                 server_name = '%s-%0.2d' % (stand, i)
-                server = self.treestore.append(stiter, [server_name, None])
+                server = self.treestore.append(stiter, [server_name, None, 'd'])
                 for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
                     for subdir in dirs:
                         gtk.gdk.threads_enter()
                         parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                            [subdir,None])
+                            [subdir,None, 'd'])
                         gtk.gdk.threads_leave()
                     for item in files:
                         try:
@@ -89,7 +89,7 @@ class FileServersModel(ServersModel):
                             name = pf['logname']+pf['logname2']
                             if not fls.get(name, None):
                                 gtk.gdk.threads_enter()
-                                self.treestore.append(parents.get(root, server), [name, None])
+                                self.treestore.append(parents.get(root, server), [name, None, 'f'])
                                 gtk.gdk.threads_leave()
                                 fls[name]=item
                         except:

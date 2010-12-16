@@ -7,7 +7,7 @@ import pywintypes
 import datetime
 import re
 import time
-#from parse import file_log
+from parse import file_log
  
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
