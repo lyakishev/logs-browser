@@ -106,16 +106,59 @@ class LastDateOption(gtk.HBox):
     def get_active(self):
         return self.last_date_radio.get_active()
 
+class ThisOption(gtk.HBox):
+    def __init__(self):
+        super(ThisOption, self).__init__()
+        self.this_date_radio = gtk.RadioButton(label='This')
+        self.this_date_combo = gtk.combo_box_new_text()
+        self.this_date_combo.append_text('hour')
+        self.this_date_combo.append_text('day')
+        self.this_date_combo.append_text('week')
+        self.this_date_combo.append_text('month')
+        self.this_date_combo.set_active(0)
+        self.pack_start(self.this_date_radio, False, False)
+        self.pack_start(self.this_date_combo, False, False)
+
+    def get_dates(self):
+        end_date = datetime.datetime.now()
+        start_hour = datetime.datetime(end_date.year,
+            end_date.month,
+            end_date.day,
+            end_date.hour
+        )
+        start_day = datetime.datetime(end_date.year,
+            end_date.month,
+            end_date.day
+        )
+        start_month = datetime.datetime(end_date.year,
+            end_date.month, 1
+        )
+        start_week = datetime.datetime(end_date.year,
+            end_date.month,
+            end_date.day-end_date.weekday()
+        )
+        this_date = [start_hour, start_day, start_week, start_month]
+        start_date = this_date[self.this_date_combo.get_active()]
+        print start_date
+        print end_date
+        return (start_date, end_date)
+
+    def get_active(self):
+        return self.this_date_radio.get_active()
+
 class DateFilter(CommonFilter):
     def __init__(self):
         super(DateFilter, self).__init__("Date")
         self.date_box = gtk.VBox()
         self.last_option = LastDateOption()
         self.fromto_option = FromToOption()
+        self.this_option = ThisOption()
         self.fromto_option.from_radio.set_group(self.last_option.last_date_radio)
+        self.this_option.this_date_radio.set_group(self.last_option.last_date_radio)
         self.add(self.date_box)
         self.date_box.pack_start(self.last_option, False, False)
         self.date_box.pack_start(self.fromto_option, False, False)
+        self.date_box.pack_start(self.this_option, False, False)
         self.set_start_active(True)
 
     @property
@@ -124,5 +167,7 @@ class DateFilter(CommonFilter):
             return self.last_option.get_dates()
         elif self.fromto_option.get_active():
             return self.fromto_option.get_dates()
+        elif self.this_option.get_active():
+            return self.this_option.get_dates()
 
 

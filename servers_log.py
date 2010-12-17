@@ -70,6 +70,7 @@ logs = {
     },
     "kog-app": {
         "kog-app-01": ["Application", "CRM.Gateway", "CRM_Interfaces", "FORIS.Catalogues", "FORIS.Common", "Foris.PasswordSecurity", "FORIS.Production", "FORIS.Sales", "FORIS.ScratchCards", "FORIS.ScratchCards.Activation", "Foris.SelfCare", "FORIS.TelCRM.GUI", "Foris.TelCRM.Marketing", "Foris.TelCrm.RequestManagement", "FORIS.TelCRM.Sales", "ForwardedEvents", "Marti.CommunityManagementUI", "Marti.OrderCatalogueUI", "Microsoft-Windows-EventCollector/Operational", "Microsoft-Windows-Forwarding/Operational", "PLUGINS", "Production", "System", "TelCRM.Amd", "TelCRM.Marketing", "TelCRM.Production", "TelCRM.WindowsServices", "Windows PowerShell"]
-        }
+        },
+    "umc-test-2": { "msk-app-v0190": ["Application", "CRM.Gateway", "CRM_Interfaces", "FirscallVCardServiceLog", "FORIS.Catalogues", "FORIS.Common", "FORIS.Production", "FORIS.Sales", "FORIS.ScratchCards", "FORIS.ScratchCards.Activation", "Foris.SelfCare", "FORIS.TelCRM.GUI", "Foris.TelCRM.Marketing", "FORIS.TelCRM.RequestManagement", "FORIS.TelCRM.Sales", "FORIS_Security", "Marti.CommunityManagementUI", "Marti.OrderCatalogueUI", "MGALog", "PackageUI", "PrepMntr Log", "PrepServ Log", "System", "TelCRM.CustomerManagement", "TelCRM.Production", "TelCRM.WindowsServices"]
+    }
 }
-
