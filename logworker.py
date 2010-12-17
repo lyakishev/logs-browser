@@ -3,6 +3,11 @@ import threading
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
+from parse import filename
+from pyparsing import ParseException
+import os
+import time
+import datetime
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
@@ -114,3 +119,48 @@ class LogWorker(threading.Thread):
             self.progress.set_fraction(curr_frac)
         gtk.gdk.threads_leave()
                 #print l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']
+
+def datetime_intersect(t1start, t1end, t2start, t2end):
+    return (t1start <= t2start and t2start <= t1end) or \
+           (t2start <= t1start and t1start <= t2end)
+
+
+class FileLogWorker():
+    def __init__(self, files, fltr):
+        self.files = files
+        self.fltr = fltr
+
+    def get_files(self):
+        for key, value in self.files.iteritems():
+            for f in os.listdir(key):
+                fullf = os.path.join(key,f)
+                if os.path.isfile(fullf):
+                    try:
+                        pf = filename.parseString(f)
+                    except ParseException:
+                        continue
+                    if pf['logname']+pf['logname2'] in value:
+                        ed = time.localtime(os.path.getmtime(fullf))
+                        f_end_date = datetime.datetime(ed.tm_year,
+                            ed.tm_mon,
+                            ed.tm_mday,
+                            ed.tm_hour,
+                            ed.tm_min,
+                            ed.tm_sec)
+                        sd = time.localtime(os.path.getctime(fullf))
+                        f_start_date = datetime.datetime(sd.tm_year,
+                            sd.tm_mon,
+                            sd.tm_mday,
+                            sd.tm_hour,
+                            sd.tm_min,
+                            sd.tm_sec)
+                        if datetime_intersect(self.fltr['date'][0],
+                                                self.fltr['date'][1],
+                                                f_start_date, f_end_date):
+                            self.process(fullf)
+
+    def process(self, path):
+        f = open(path, 'r')
+        s='\n'.join(f.readlines[:3])
+        print s
+        f.close()

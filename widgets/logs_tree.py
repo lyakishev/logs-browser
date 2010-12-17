@@ -97,7 +97,7 @@ class FileServersModel(ServersModel):
                             print "---------------------"
                             print item
                             print "---------------------"
-    
+
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
         new_srvs = []
@@ -109,7 +109,10 @@ class FileServersModel(ServersModel):
         for k,g in groupby(new_srvs, lambda x: x[0]):
             folders[k]=[fl[1] for fl in list(g)]
 
-        print folders
+        return folders
+
+
+        #print folders
 
 
 
@@ -145,9 +148,6 @@ class FileServersModel(ServersModel):
 #elif right_inter:
 #    parse
 #elif
-#def datetime_intersect():
-#    return (t1start <= t2start and t2start <= t1end) or \
-#           (t2start <= t1start and t1start <= t2end)
 
 
 

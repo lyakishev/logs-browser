@@ -65,7 +65,7 @@ class GUI_Controller:
 
     def stop_all(self, *args):
         #self.stop_evt.set()
-        ServersStore.prepare_files_for_parse()
+        print ServersStore.prepare_files_for_parse()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -94,29 +94,27 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        evlogs = ServersStore.get_active_servers()
-        if evlogs:
+        flogs = ServersStore.prepare_files_for_parse()
+        if flogs:
             self.logs_model.clear()
             self.progress.set_fraction(0.0)
             self.progress.set_text("Working...")
-            evl_count = len(evlogs)
-            frac = 1.0/(evl_count)
+            #fl_count = len(flogs)
+            #frac = 1.0/(fl_count)
             fltr = {}
-            fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
+            #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
-            fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
-            fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
+            #fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
+            #fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()
-            self.sens_list=[self.evt_type_filter,self.date_filter,
-                self.content_filter,self.quantity_filter,self.show_button]
-            for sl in self.sens_list:
-                    sl.set_sensitive(False)
-            for comp, log in evlogs:
+            #self.sens_list=[self.evt_type_filter,self.date_filter,
+            #    self.content_filter,self.quantity_filter,self.show_button]
+            #for sl in self.sens_list:
+            #        sl.set_sensitive(False)
+            #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-                self.worker = LogWorker(comp, log, fltr, self.logs_model,
-                                            self.progress, frac, self.sens_list,
-                                            self.stop_evt)
-                self.worker.start()
+            self.worker = FileLogWorker(flogs, fltr)
+            self.worker.get_files()
 
        # gtk.gdk.threads_leave()
 
