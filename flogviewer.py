@@ -65,11 +65,7 @@ class GUI_Controller:
 
     def stop_all(self, *args):
         #self.stop_evt.set()
-        srvs = ServersStore.get_active_servers()
-        print srvs
-        for i in srvs:
-            print i
-            print "\\\\"+i[-2]+"\\forislog\\"+"\\".join(reversed(i[1:-2]))
+        ServersStore.prepare_files_for_parse()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)

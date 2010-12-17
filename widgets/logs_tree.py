@@ -5,6 +5,7 @@ import os
 from parse import filename
 from pyparsing import ParseException
 import threading
+from itertools import groupby
 
 class ServersModel(object):
     def __init__(self):
@@ -96,6 +97,21 @@ class FileServersModel(ServersModel):
                             print "---------------------"
                             print item
                             print "---------------------"
+    
+    def prepare_files_for_parse(self):
+        srvs = self.get_active_servers()
+        new_srvs = []
+        for i in srvs:
+             new_srvs.append(["\\\\"+i[-2]+"\\forislog\\"+"\\".join(reversed(i[1:-2])),
+                             i[0]])
+        folders = {}
+
+        for k,g in groupby(new_srvs, lambda x: x[0]):
+            folders[k]=[fl[1] for fl in list(g)]
+
+        print folders
+
+
 
 
 
