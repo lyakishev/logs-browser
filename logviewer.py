@@ -15,6 +15,7 @@ from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.log_window import LogWindow
 from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
+from widgets.logs_list import DisplayServersModel, LogsModel
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -136,73 +137,6 @@ class GUI_Controller:
 #        gtk.main()
 #        return
 #
-
-class LogsModel:
-    """ The model class holds the information we want to display """
-    def __init__(self):
-        """ Sets up and populates our gtk.TreeStore """
-        """!!!Rewrite to recursive!!!!"""
-        self.list_store = gtk.ListStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING )
-        # places the global people data into the list
-        # we form a simple tree.
-    def get_model(self):
-        """ Returns the model """
-        if self.list_store:
-            return self.list_store
-        else:
-            return None
-
-class DisplayLogsModel:
-    """ Displays the Info_Model model in a view """
-    def make_view( self, model ):
-        """ Form a view for the Tree Model """
-        self.view = gtk.TreeView( model )
-        # setup the text cell renderer and allows these
-        # cells to be edited.
-
-        # Connect column0 of the display with column 0 in our list model
-        # The renderer will then display whatever is in column 0 of
-        # our model .
-        self.renderers = []
-        self.columns = []
-        for r, header in enumerate(['Date','Computer', 'Log', 'Type', 'Source', 'Message']):
-            self.renderers.append(gtk.CellRendererText())
-            self.renderers[r].set_property( 'editable', False )
-            self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
-                                text=r))
-        # The columns active state is attached to the second column
-        # in the model.  So when the model says True then the button
-        # will show as active e.g on.
-        for cid, col in enumerate(self.columns):
-            self.view.append_column( col )
-            if col.get_title() == "Message":
-                col.set_visible(False)
-            else:
-                col.set_sort_column_id(cid)
-        self.view.connect( 'row-activated', self.show_log)
-
-        return self.view
-
-    def show_log( self, path, column, params):
-        selection = path.get_selection()
-        (model, iter) = selection.get_selected()
-        msg = model.get_value(iter, 5).decode("string-escape")
-        msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
-        msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), msg)
-        txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
-            model.get_value(iter, 0),
-            model.get_value(iter, 1),
-            model.get_value(iter, 2),
-            model.get_value(iter, 3),
-            model.get_value(iter, 4),
-            msg)
-        log_w = LogWindow(txt)
-        return
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()
