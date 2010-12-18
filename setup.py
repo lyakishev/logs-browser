@@ -4,7 +4,9 @@ import py2exe
 setup(
     name = 'Log-Viewer',
     description = 'Tool for collect logs',
+    author='Lyakishev Andrey',
     version = '2.0',
+    packages=['widgets'],
 
     windows = [
                   {

@@ -58,6 +58,9 @@ class GUI_Controller:
         self.root.show_all()
         self.stop_evt = threading.Event()
         return
+    
+    def test(self, *args):
+        print "Click"
 
     def stop_all(self, *args):
         self.stop_evt.set()

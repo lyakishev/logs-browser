@@ -92,6 +92,7 @@ class LogListWindow(gtk.Frame):
     def __init__(self):
         super(LogListWindow, self).__init__()
         self.logs_store = LogsModel()
+        self.logs_store.get_model().set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         self.logs_view= DisplayLogsModel(self.logs_store.get_model())
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)

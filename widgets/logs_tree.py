@@ -10,6 +10,7 @@ from itertools import groupby
 class ServersModel(object):
     def __init__(self):
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
+                                         gobject.TYPE_STRING,
                                          gobject.TYPE_BOOLEAN,
                                          gobject.TYPE_STRING )
 
@@ -29,8 +30,8 @@ class ServersModel(object):
     def get_active_servers(self):
         log_for_process = []
         def treewalk(iters):
-            if self.treestore.get_value(iters, 2) == 'f' \
-                and self.treestore.get_value(iters, 1):
+            if self.treestore.get_value(iters, 3) == 'f' \
+                and self.treestore.get_value(iters, 2):
                 cur_log = [self.treestore.get_value(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
@@ -60,11 +61,11 @@ class EventServersModel(ServersModel):
 
     def fill_model(self):
         for item in sorted(self.logs.keys()):
-            parent = self.treestore.append( None, (item, None, 'd') )
+            parent = self.treestore.append( None, (item, gtk.STOCK_DIRECTORY, None, 'd') )
             for subitem in sorted(self.logs[item].keys()):
-                child = self.treestore.append( parent, (subitem, None, 'd') )
+                child = self.treestore.append( parent, (subitem, gtk.STOCK_DIRECTORY, None, 'd') )
                 for subsubitem in self.logs[item][subitem]:
-                    self.treestore.append( child, (subsubitem, None, 'f') )
+                    self.treestore.append( child, (subsubitem, gtk.STOCK_FILE, None, 'f') )
 
 class FileServersModel(ServersModel):
     def __init__(self):
@@ -77,12 +78,12 @@ class FileServersModel(ServersModel):
             for i in range(1,13):
                 parents={}
                 server_name = '%s-%0.2d' % (stand, i)
-                server = self.treestore.append(stiter, [server_name, None, 'd'])
+                server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
                 for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
                     for subdir in dirs:
                         gtk.gdk.threads_enter()
                         parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                            [subdir,None, 'd'])
+                            [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
                         gtk.gdk.threads_leave()
                     for item in files:
                         try:
@@ -90,7 +91,7 @@ class FileServersModel(ServersModel):
                             name = pf['logname']+pf['logname2']
                             if not fls.get(name, None):
                                 gtk.gdk.threads_enter()
-                                self.treestore.append(parents.get(root, server), [name, None, 'f'])
+                                self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
                                 gtk.gdk.threads_leave()
                                 fls[name]=item
                         except:
@@ -160,6 +161,7 @@ class DisplayServersModel:
         # cells to be edited.
         self.renderer = gtk.CellRendererText()
         self.renderer.set_property( 'editable', False )
+        self.stockrenderer = gtk.CellRendererPixbuf()
         #self.renderer.connect( 'edited', self.col0_edited_cb, model )
 
         # The toggle cellrenderer is setup and we allow it to be
@@ -171,12 +173,16 @@ class DisplayServersModel:
         # Connect column0 of the display with column 0 in our list model
         # The renderer will then display whatever is in column 0 of
         # our model .
-        self.column0 = gtk.TreeViewColumn("Path", self.renderer, text=0)
+        self.column0 = gtk.TreeViewColumn("Path")
+        self.column0.pack_start(self.stockrenderer, False)
+        self.column0.pack_start(self.renderer, True)
+        self.column0.set_attributes(self.stockrenderer, stock_id=1)
+        self.column0.set_attributes(self.renderer, text=0)
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
         self.column1 = gtk.TreeViewColumn("Show", self.renderer1 )
-        self.column1.add_attribute( self.renderer1, "active", 1)
+        self.column1.add_attribute( self.renderer1, "active", 2)
         self.column2 = gtk.TreeViewColumn("Type", self.renderer2 )
         self.column2.set_visible(False)
         self.view.append_column( self.column0 )
@@ -188,10 +194,10 @@ class DisplayServersModel:
         """
         Sets the toggled state on the toggle button to true or false.
         """
-        state = model[path][1] = not model[path][1]
+        state = model[path][2] = not model[path][2]
         def walk(child):
             for ch in child.iterchildren():
-                ch[1] = state
+                ch[2] = state
                 walk(ch)
         walk(model[path])
         return
