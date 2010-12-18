@@ -14,7 +14,7 @@ from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
-from widgets.logs_list import DisplayServersModel, LogsModel
+from widgets.logs_list import LogListWindow
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
