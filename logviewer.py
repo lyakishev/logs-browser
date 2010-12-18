@@ -146,6 +146,7 @@ class LogsModel:
                                          gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
+                                         gobject.TYPE_STRING,
                                          gobject.TYPE_STRING )
         # places the global people data into the list
         # we form a simple tree.
@@ -155,6 +156,14 @@ class LogsModel:
             return self.list_store
         else:
             return None
+
+    def highlight(self, pattern):
+        for row in self.list_store:
+            if pattern in row[5]:
+                row[6] = "#FF0000"
+            else:
+                row[6] = "#FFFFFF"
+        
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
@@ -187,6 +196,12 @@ class DisplayLogsModel:
         self.view.connect( 'row-activated', self.show_log)
 
         return self.view
+    
+    def repaint(self):
+        for col, ren in zip(self.columns, self.renderers):
+            col.set_attributrs(ren, cell_background=6)
+        
+            
 
 
     def show_log( self, path, column, params):
