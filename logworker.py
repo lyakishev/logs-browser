@@ -91,7 +91,8 @@ class LogWorker(threading.Thread):
            #     break
             if l:
                 gtk.gdk.threads_enter()
-                self.model.append((l['the_time'], l['computer'], l['logtype'], l['evt_type'], l['source'], l['msg']))
+                self.model.append((l['the_time'], l['computer'], l['logtype'], \
+                    l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
                 #myGUI.run()
                 gtk.gdk.threads_leave()
         #print "%s %s release" % (self.log, self.comp)
