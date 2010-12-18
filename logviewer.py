@@ -13,7 +13,6 @@ from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
-from widgets.log_window import LogWindow
 from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
 from widgets.logs_list import DisplayServersModel, LogsModel
 
@@ -54,20 +53,13 @@ class GUI_Controller:
         self.eventlogs_model = ServersStore.get_model()
         self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
         self.eventlogs_window.add_with_viewport(self.eventlogs_view)
-        self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
-        self.logs_model = LogsStore.get_model()
-        self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
-        self.logs_view = LogsDisplay.make_view( self.logs_model )
-        self.logs_window.add_with_viewport(self.logs_view)
-        self.ntb = gtk.Notebook()
+        self.logframe = LogListWindow()
         self.build_interface()
         self.root.show_all()
         self.stop_evt = threading.Event()
         return
 
     def stop_all(self, *args):
-        #ServersStore.test()
         self.stop_evt.set()
 
     def build_interface(self):
@@ -77,7 +69,6 @@ class GUI_Controller:
         self.filter_box.pack_start(self.quantity_filter, False, False)
         self.filter_box.pack_start(self.content_filter, False, False)
         self.tree_frame.add(self.eventlogs_window)
-        self.logs_frame.add(self.logs_window)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
         self.control_box.pack_start(self.tree_frame, True, True)
@@ -85,12 +76,8 @@ class GUI_Controller:
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progress, False, False)
         self.main_box.pack_start(self.control_box, False, False)
-        self.main_box.pack_start(self.logs_frame, True, True)
-        self.ev_label = gtk.Label("EventLogs")
-        self.file_label = gtk.Label("FileLogs")
-        self.ntb.append_page(self.main_box, tab_label=self.ev_label)
-        #self.ntb.append_page(self.file_main_box, tab_label=self.file_label)
-        self.root.add(self.ntb)
+        self.main_box.pack_start(self.logframe, True, True)
+        self.root.add(self.main_box)
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
@@ -101,7 +88,7 @@ class GUI_Controller:
         self.stop_evt.clear()
         evlogs = [[s[1], s[0]] for s in ServersStore.get_active_servers()]
         if evlogs:
-            self.logs_model.clear()
+            self.logframe.logs_store.list_store.clear()
             self.progress.set_fraction(0.0)
             self.progress.set_text("Working...")
             evl_count = len(evlogs)
@@ -118,7 +105,7 @@ class GUI_Controller:
                     sl.set_sensitive(False)
             for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-                self.worker = LogWorker(comp, log, fltr, self.logs_model,
+                self.worker = LogWorker(comp, log, fltr, self.logframe.logs_store.list_store,
                                             self.progress, frac, self.sens_list,
                                             self.stop_evt)
                 self.worker.start()
@@ -141,9 +128,7 @@ class GUI_Controller:
 if __name__ == '__main__':
     gtk.gdk.threads_init()
     ServersStore = EventServersModel(logs)
-    LogsStore = LogsModel()
     ServersDisplay = DisplayServersModel()
-    LogsDisplay = DisplayLogsModel()
     myGUI = GUI_Controller()
     gtk.gdk.threads_enter()
     gtk.main()
