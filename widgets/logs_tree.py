@@ -15,8 +15,6 @@ class ServersModel(object):
                                          gobject.TYPE_BOOLEAN,
                                          gobject.TYPE_STRING )
 
-        FillThread=threading.Thread(target=self.fill_model)
-        FillThread.start()
         self.model_filter = self.treestore.filter_new()
 
     def fill_model(self):
@@ -59,6 +57,8 @@ class EventServersModel(ServersModel):
     def __init__(self, logs):
         self.logs=logs
         super(EventServersModel, self).__init__()
+        self.fill_model()
+
         """ Sets up and populates our gtk.TreeStore """
         """!!!Rewrite to recursive!!!!"""
         # places the global people data into the list
@@ -76,36 +76,43 @@ class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
 
-    def fill_model(self):
-        fls={}
         for stand in ("nag-tc", "msk-func", "kog-app"):
-            stiter = self.treestore.append(None, [stand, None, 'd'])
-            for i in range(1,13):
-                parents={}
-                server_name = '%s-%0.2d' % (stand, i)
-                server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
-                for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
-                    if not dirs and not (glob.glob(root+r"\*.txt") or glob.glob(root+'\*.log')):
-                        continue
-                    else:
-                        for subdir in dirs:
-                            gtk.gdk.threads_enter()
-                            parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                                [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                            gtk.gdk.threads_leave()
-                        for item in files:
-                            try:
-                                pf = filename.parseString(item)
-                                name = pf['logname']+pf['logname2']
-                                if not fls.get(name, None):
-                                    gtk.gdk.threads_enter()
-                                    self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
-                                    gtk.gdk.threads_leave()
-                                    fls[name]=item
-                            except:
-                                print "---------------------"
-                                print item
-                                print "---------------------"
+            thread = threading.Thread(target=self.fill_model, args=(stand,))
+            thread.start()
+
+    def fill_model(self, stand):
+        fls={}
+        gtk.gdk.threads_enter()
+        stiter = self.treestore.append(None, [stand, None, 'd'])
+        gtk.gdk.threads_leave()
+        for i in range(1,13):
+            parents={}
+            server_name = '%s-%0.2d' % (stand, i)
+            gtk.gdk.threads_enter()
+            server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
+            gtk.gdk.threads_leave()
+            for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
+                if not dirs and not (glob.glob(root+r"\*.txt") or glob.glob(root+'\*.log')):
+                    continue
+                else:
+                    for subdir in dirs:
+                        gtk.gdk.threads_enter()
+                        parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
+                            [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
+                        gtk.gdk.threads_leave()
+                    for item in files:
+                        try:
+                            pf = filename.parseString(item)
+                            name = pf['logname']+pf['logname2']
+                            if not fls.get(name, None):
+                                gtk.gdk.threads_enter()
+                                self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
+                                gtk.gdk.threads_leave()
+                                fls[name]=item
+                        except:
+                            print "---------------------"
+                            print item
+                            print "---------------------"
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()

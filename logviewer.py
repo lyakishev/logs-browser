@@ -92,7 +92,9 @@ class GUI_Controller:
             frac = 1.0/(evl_count)
             fltr = {}
             fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
-            fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            fltr['date'] = self.date_filter.get_active() and \
+                self.date_filter.get_dates or (datetime.datetime.min, \
+                datetime.datetime.max)
             fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()
