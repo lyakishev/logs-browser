@@ -13,7 +13,7 @@ from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
-from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
+from widgets.logs_tree import ServersTree
 from widgets.logs_list import LogListWindow
 
 class GUI_Controller:
@@ -47,13 +47,8 @@ class GUI_Controller:
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
-        self.eventlogs_window = gtk.ScrolledWindow()
-        self.eventlogs_window.set_policy(gtk.POLICY_NEVER,
-                                            gtk.POLICY_AUTOMATIC)
-        self.eventlogs_model = ServersStore.get_model()
-        self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
-        self.eventlogs_window.add_with_viewport(self.eventlogs_view)
         self.logframe = LogListWindow()
+        self.serversw = ServersTree(logs)
         self.build_interface()
         self.root.show_all()
         self.stop_evt = threading.Event()
@@ -71,10 +66,9 @@ class GUI_Controller:
         self.filter_box.pack_start(self.date_filter, False, False)
         self.filter_box.pack_start(self.quantity_filter, False, False)
         self.filter_box.pack_start(self.content_filter, False, False)
-        self.tree_frame.add(self.eventlogs_window)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
-        self.control_box.pack_start(self.tree_frame, True, True)
+        self.control_box.pack_start(self.serversw, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progress, False, False)
@@ -130,8 +124,6 @@ class GUI_Controller:
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()
-    ServersStore = EventServersModel(logs)
-    ServersDisplay = DisplayServersModel()
     myGUI = GUI_Controller()
     gtk.gdk.threads_enter()
     gtk.main()

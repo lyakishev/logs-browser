@@ -6,6 +6,7 @@ from parse import filename
 from pyparsing import ParseException
 import threading
 from itertools import groupby
+import glob
 
 class ServersModel(object):
     def __init__(self):
@@ -16,16 +17,20 @@ class ServersModel(object):
 
         FillThread=threading.Thread(target=self.fill_model)
         FillThread.start()
+        self.model_filter = self.treestore.filter_new()
 
     def fill_model(self):
         pass
 
     def get_model(self):
         """ Returns the model """
-        if self.treestore:
-            return self.treestore
+        if self.model_filter:
+            return self.model_filter
         else:
             return None
+
+    #def visible_func(self, model, treeiter):
+        
 
     def get_active_servers(self):
         log_for_process = []
@@ -80,24 +85,27 @@ class FileServersModel(ServersModel):
                 server_name = '%s-%0.2d' % (stand, i)
                 server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
                 for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
-                    for subdir in dirs:
-                        gtk.gdk.threads_enter()
-                        parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                            [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                        gtk.gdk.threads_leave()
-                    for item in files:
-                        try:
-                            pf = filename.parseString(item)
-                            name = pf['logname']+pf['logname2']
-                            if not fls.get(name, None):
-                                gtk.gdk.threads_enter()
-                                self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
-                                gtk.gdk.threads_leave()
-                                fls[name]=item
-                        except:
-                            print "---------------------"
-                            print item
-                            print "---------------------"
+                    if not dirs and not (glob.glob(root+r"\*.txt") or glob.glob(root+'\*.log')):
+                        continue
+                    else:
+                        for subdir in dirs:
+                            gtk.gdk.threads_enter()
+                            parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
+                                [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
+                            gtk.gdk.threads_leave()
+                        for item in files:
+                            try:
+                                pf = filename.parseString(item)
+                                name = pf['logname']+pf['logname2']
+                                if not fls.get(name, None):
+                                    gtk.gdk.threads_enter()
+                                    self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
+                                    gtk.gdk.threads_leave()
+                                    fls[name]=item
+                            except:
+                                print "---------------------"
+                                print item
+                                print "---------------------"
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
@@ -154,7 +162,7 @@ class FileServersModel(ServersModel):
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
-    def make_view( self, model ):
+    def __init__( self, model ):
         """ Form a view for the Tree Model """
         self.view = gtk.TreeView( model )
         # setup the text cell renderer and allows these
@@ -188,7 +196,7 @@ class DisplayServersModel:
         self.view.append_column( self.column0 )
         self.view.append_column( self.column1 )
         self.view.append_column( self.column2 )
-        return self.view
+        #return self.view
 
     def col1_toggled_cb( self, cell, path, model ):
         """
@@ -201,3 +209,51 @@ class DisplayServersModel:
                 walk(ch)
         walk(model[path])
         return
+
+def tree_model_iter_children(model, treeiter):
+    it = model.iter_children(treeiter)
+    while it:
+        yield it
+        it = model.iter_next(it)
+
+def tree_model_pre_order(model, treeiter):
+    yield treeiter
+    for childiter in tree_model_iter_children(model, treeiter):
+        for it in tree_model_pre_order(model, childiter):
+            yield it
+
+class ServersTree(gtk.Frame):
+    def __init__(self, logs):
+        super(ServersTree, self).__init__()
+        self.model = EventServersModel(logs)
+        self.view = DisplayServersModel(self.model.get_model())
+        self.logs_window = gtk.ScrolledWindow()
+        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+        self.logs_window.add_with_viewport(self.view.view)
+        self.hide_log = gtk.Entry()
+        self.box = gtk.VBox()
+        self.add(self.box)
+        self.box.pack_start(self.logs_window, True, True)
+        self.box.pack_start(self.hide_log, False, False)
+        self.hide_log.connect("changed", self.on_advanced_entry_changed)
+        self.model.get_model().set_visible_func(self.visible_func)
+
+
+    def on_advanced_entry_changed(self, widget):
+        self.model.get_model().refilter()
+        if not widget.get_text():
+            self.view.view.collapse_all()
+        else:
+            self.view.view.expand_all()
+
+    def visible_func(self, model, treeiter):
+        search_string = self.hide_log.get_text()
+        for it in tree_model_pre_order(model, treeiter):
+            try:
+                if search_string in model[it][0]:
+                    return True
+            except:
+                pass
+        return False
+
+        
