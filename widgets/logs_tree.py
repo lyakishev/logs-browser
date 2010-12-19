@@ -202,12 +202,15 @@ class DisplayServersModel:
         """
         Sets the toggled state on the toggle button to true or false.
         """
-        state = model[path][2] = not model[path][2]
+        true_model = model.get_model()
+        true_path = model.convert_path_to_child_path(path)
+        state = true_model[true_path][2] = not true_model[true_path][2]
         def walk(child):
             for ch in child.iterchildren():
                 ch[2] = state
                 walk(ch)
-        walk(model[path])
+        walk(true_model[true_path])
+        #model.refilter()
         return
 
 def tree_model_iter_children(model, treeiter):

@@ -83,7 +83,7 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        evlogs = [[s[1], s[0]] for s in ServersStore.get_active_servers()]
+        evlogs = [[s[1], s[0]] for s in self.serversw.model.get_active_servers()]
         if evlogs:
             self.logframe.logs_store.list_store.clear()
             self.progress.set_fraction(0.0)
