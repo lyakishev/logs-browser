@@ -28,17 +28,17 @@ def getEventLogs(server, logtype):
         return
     flags = win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ #!!!!!!
     while 1:
-        try:
-            events=win32evtlog.ReadEventLog(hand,flags,0)
-        except pywintypes.error:
-            print "Zzzzz...."
-            time.sleep(2)
+        while 1:
             try:
+                #print hand
                 events=win32evtlog.ReadEventLog(hand,flags,0)
-            except:
-                print "After sleep error: %s %s" % (server, logtype)
-                events = None
-            #return
+            except pywintypes.error:
+                print "Pause %s %s" % (server, logtype)
+                hand.Detach() #need?
+                time.sleep(1)
+                hand = win32evtlog.OpenEventLog(server,logtype)  #!!!!!!
+            else:
+                break
 	if events:
 		for ev_obj in events:
 			yield getEventLog(ev_obj, server, logtype)
@@ -47,7 +47,8 @@ def getEventLogs(server, logtype):
                     win32evtlog.CloseEventLog(hand)
                 except pywintypes.error:
                     pass
-		return
+                finally:
+                    return
 
 
 def getEventLog(ev_obj, server, logtype):

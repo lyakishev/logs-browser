@@ -127,13 +127,6 @@ class FileServersModel(ServersModel):
 
         return folders
 
-
-        #print folders
-
-
-
-
-
 #def build_tree(nodes):
 #    # create empty tree to fill
 #    tree = {}
