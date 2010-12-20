@@ -12,7 +12,7 @@ from itertools import ifilter, islice
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
-lock = threading.Lock()
+#lock = threading.Lock()
 
 
 class LogWorker(threading.Thread):
@@ -67,11 +67,12 @@ class LogWorker(threading.Thread):
                     l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
                 gtk.gdk.threads_leave()
         semaphore.release()
-        lock.acquire()
+        #lock.acquire()
         gtk.gdk.threads_enter()
         curr_frac = self.progress.get_fraction() + self.frac
         gtk.gdk.threads_leave()
         if curr_frac>=1.0:
+            print curr_frac
             gtk.gdk.threads_enter()
             self.progress.set_fraction(1.0)
             self.progress.set_text("Complete")
@@ -82,7 +83,7 @@ class LogWorker(threading.Thread):
             gtk.gdk.threads_enter()
             self.progress.set_fraction(curr_frac)
             gtk.gdk.threads_leave()
-        lock.release()
+        #lock.release()
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \

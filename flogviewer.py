@@ -15,6 +15,7 @@ from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.log_window import LogWindow
 from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
+from widgets.logs_list import LogListWindow
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -33,7 +34,7 @@ class GUI_Controller:
         self.content_filter = ContentFilter()
 
 
-        self.logs_frame = gtk.Frame(label="Logs")
+        self.logframe = LogListWindow()
         self.button_box = gtk.HButtonBox()
         self.button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
@@ -51,12 +52,6 @@ class GUI_Controller:
         self.eventlogs_model = ServersStore.get_model()
         self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
         self.eventlogs_window.add_with_viewport(self.eventlogs_view)
-        self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
-        self.logs_model = LogsStore.get_model()
-        self.logs_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
-        self.logs_view = LogsDisplay.make_view( self.logs_model )
-        self.logs_window.add_with_viewport(self.logs_view)
         self.ntb = gtk.Notebook()
         self.build_interface()
         self.root.show_all()
@@ -80,7 +75,7 @@ class GUI_Controller:
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progress, False, False)
         self.main_box.pack_start(self.control_box, False, False)
-        self.main_box.pack_start(self.logs_frame, True, True)
+        self.main_box.pack_start(self.logsframe, True, True)
         self.ev_label = gtk.Label("EventLogs")
         self.file_label = gtk.Label("FileLogs")
         self.ntb.append_page(self.main_box, tab_label=self.ev_label)
