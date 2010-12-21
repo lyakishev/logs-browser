@@ -68,14 +68,25 @@ filename=Optional(date_time+sep)+logname("logname")+Optional(date_time)+Optional
 #print filename.parseString("foris_catalogue_admin-101208.log") #! this is date??
 #print filename.parseString("11122010000003-SMSCON_SMSCON_01_data.log") #nag-tc-05 MG
 
-sep = Literal(".") | Literal(",") | Literal("-")
-dtinfile = Word(nums, exact=4)+sep+\
-           Word(nums,exact=2)+sep+\
-           Word(nums, exact=2)+\
-           Word(nums, max=2)+sep+\
-           Word(nums, max=2)+sep+\
-           Word(nums, max=2)+sep+Word(nums)
+def to_date(d):
+    return datetime(int(d['year']),
+        int(d['month']),
+        int(d['day']),
+        int(d['hour']),
+        int(d['min']),
+        int(d['sec']),
+        1000*int(d['ms'])
+    )
+
+sep = Literal(".") | Literal(",") | Literal("-") | Literal(":")
+dtinfile = Word(nums, exact=4)('year')+sep+\
+           Word(nums,exact=2)('month')+sep+\
+           Word(nums, exact=2)('day')+\
+           Word(nums, max=2)('hour')+sep+\
+           Word(nums, max=2)('min')+sep+\
+           Word(nums, max=2)('sec')+sep+Word(nums)('ms')
+
 msg=SkipTo(dtinfile | StringEnd())
-file_log=dtinfile('datetime')+msg('msg')
-#log.searchString(fileread) #scanString - generator, parseFile
+file_log=dtinfile('datetime').setParseAction(to_date)+msg('msg')
+
 

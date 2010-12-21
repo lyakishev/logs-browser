@@ -28,7 +28,6 @@ class ServersModel(object):
             return None
 
     #def visible_func(self, model, treeiter):
-        
 
     def get_active_servers(self):
         log_for_process = []
@@ -83,7 +82,7 @@ class FileServersModel(ServersModel):
     def fill_model(self, stand):
         fls={}
         gtk.gdk.threads_enter()
-        stiter = self.treestore.append(None, [stand, None, 'd'])
+        stiter = self.treestore.append(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
         gtk.gdk.threads_leave()
         for i in range(1,13):
             parents={}
@@ -93,6 +92,7 @@ class FileServersModel(ServersModel):
             gtk.gdk.threads_leave()
             for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
                 if not dirs and not (glob.glob(root+r"\*.txt") or glob.glob(root+'\*.log')):
+                    print "%s pass"  % root
                     continue
                 else:
                     for subdir in dirs:
@@ -110,9 +110,10 @@ class FileServersModel(ServersModel):
                                 gtk.gdk.threads_leave()
                                 fls[name]=item
                         except:
-                            print "---------------------"
-                            print item
-                            print "---------------------"
+                            pass
+                            #print "---------------------"
+                            #print item
+                            #print "---------------------"
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
@@ -259,4 +260,36 @@ class ServersTree(gtk.Frame):
                 pass
         return False
 
-        
+class FileServersTree(gtk.Frame):
+    def __init__(self):
+        super(FileServersTree, self).__init__()
+        self.model = FileServersModel()
+        self.view = DisplayServersModel(self.model.get_model())
+        self.logs_window = gtk.ScrolledWindow()
+        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+        self.logs_window.add_with_viewport(self.view.view)
+        self.hide_log = gtk.Entry()
+        self.box = gtk.VBox()
+        self.add(self.box)
+        self.box.pack_start(self.logs_window, True, True)
+        self.box.pack_start(self.hide_log, False, False)
+        self.hide_log.connect("changed", self.on_advanced_entry_changed)
+        self.model.get_model().set_visible_func(self.visible_func)
+
+
+    def on_advanced_entry_changed(self, widget):
+        self.model.get_model().refilter()
+        if not widget.get_text():
+            self.view.view.collapse_all()
+        else:
+            self.view.view.expand_all()
+
+    def visible_func(self, model, treeiter):
+        search_string = self.hide_log.get_text()
+        for it in tree_model_pre_order(model, treeiter):
+            try:
+                if search_string in model[it][0]:
+                    return True
+            except:
+                pass
+        return False

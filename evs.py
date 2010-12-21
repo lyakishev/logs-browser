@@ -46,7 +46,7 @@ def getEventLogs(server, logtype):
                 try:
                     win32evtlog.CloseEventLog(hand)
                 except pywintypes.error:
-                    pass
+                    print "Can't close"
                 finally:
                     return
 

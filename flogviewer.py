@@ -13,8 +13,7 @@ from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
-from widgets.log_window import LogWindow
-from widgets.logs_tree import EventServersModel, FileServersModel, DisplayServersModel
+from widgets.logs_tree import FileServersTree
 from widgets.logs_list import LogListWindow
 
 class GUI_Controller:
@@ -25,7 +24,7 @@ class GUI_Controller:
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
         self.root.set_default_size(1200,800)
-        self.tree_frame = gtk.Frame(label="Event Logs")
+        self.tree_frame = gtk.Frame(label="File Logs")
 
         self.filter_frame = gtk.Frame(label="Filter")
         self.filter_box = gtk.VBox()
@@ -34,7 +33,7 @@ class GUI_Controller:
         self.content_filter = ContentFilter()
 
 
-        self.logframe = LogListWindow()
+        self.logs_frame = gtk.Frame(label="Logs")
         self.button_box = gtk.HButtonBox()
         self.button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
@@ -46,13 +45,8 @@ class GUI_Controller:
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
-        self.eventlogs_window = gtk.ScrolledWindow()
-        self.eventlogs_window.set_policy(gtk.POLICY_NEVER,
-                                            gtk.POLICY_AUTOMATIC)
-        self.eventlogs_model = ServersStore.get_model()
-        self.eventlogs_view = ServersDisplay.make_view( self.eventlogs_model )
-        self.eventlogs_window.add_with_viewport(self.eventlogs_view)
-        self.ntb = gtk.Notebook()
+        self.logframe = LogListWindow()
+        self.serversw = FileServersTree()
         self.build_interface()
         self.root.show_all()
         self.stop_evt = threading.Event()
@@ -66,21 +60,15 @@ class GUI_Controller:
         self.filter_frame.add(self.filter_box)
         self.filter_box.pack_start(self.date_filter, False, False)
         self.filter_box.pack_start(self.content_filter, False, False)
-        self.tree_frame.add(self.eventlogs_window)
-        self.logs_frame.add(self.logs_window)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
-        self.control_box.pack_start(self.tree_frame, True, True)
+        self.control_box.pack_start(self.serversw, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progress, False, False)
         self.main_box.pack_start(self.control_box, False, False)
-        self.main_box.pack_start(self.logsframe, True, True)
-        self.ev_label = gtk.Label("EventLogs")
-        self.file_label = gtk.Label("FileLogs")
-        self.ntb.append_page(self.main_box, tab_label=self.ev_label)
-        #self.ntb.append_page(self.file_main_box, tab_label=self.file_label)
-        self.root.add(self.ntb)
+        self.main_box.pack_start(self.logframe, True, True)
+        self.root.add(self.main_box)
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
@@ -89,9 +77,9 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        flogs = ServersStore.prepare_files_for_parse()
+        flogs = self.serversw.model.prepare_files_for_parse()
         if flogs:
-            self.logs_model.clear()
+            self.logframe.logs_store.list_store.clear()
             self.progress.set_fraction(0.0)
             self.progress.set_text("Working...")
             #fl_count = len(flogs)
@@ -108,7 +96,7 @@ class GUI_Controller:
             #        sl.set_sensitive(False)
             #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-            self.worker = FileLogWorker(flogs, fltr)
+            self.worker = FileLogWorker(flogs, fltr, self.logframe.logs_store.list_store)
             self.worker.get_files()
 
        # gtk.gdk.threads_leave()
@@ -126,79 +114,8 @@ class GUI_Controller:
 #        return
 #
 
-class LogsModel:
-    """ The model class holds the information we want to display """
-    def __init__(self):
-        """ Sets up and populates our gtk.TreeStore """
-        """!!!Rewrite to recursive!!!!"""
-        self.list_store = gtk.ListStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING )
-        # places the global people data into the list
-        # we form a simple tree.
-    def get_model(self):
-        """ Returns the model """
-        if self.list_store:
-            return self.list_store
-        else:
-            return None
-
-class DisplayLogsModel:
-    """ Displays the Info_Model model in a view """
-    def make_view( self, model ):
-        """ Form a view for the Tree Model """
-        self.view = gtk.TreeView( model )
-        # setup the text cell renderer and allows these
-        # cells to be edited.
-
-        # Connect column0 of the display with column 0 in our list model
-        # The renderer will then display whatever is in column 0 of
-        # our model .
-        self.renderers = []
-        self.columns = []
-        for r, header in enumerate(['Date','Computer', 'Log', 'Type', 'Source', 'Message']):
-            self.renderers.append(gtk.CellRendererText())
-            self.renderers[r].set_property( 'editable', False )
-            self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
-                                text=r))
-        # The columns active state is attached to the second column
-        # in the model.  So when the model says True then the button
-        # will show as active e.g on.
-        for cid, col in enumerate(self.columns):
-            self.view.append_column( col )
-            if col.get_title() == "Message":
-                col.set_visible(False)
-            else:
-                col.set_sort_column_id(cid)
-        self.view.connect( 'row-activated', self.show_log)
-
-        return self.view
-
-    def show_log( self, path, column, params):
-        selection = path.get_selection()
-        (model, iter) = selection.get_selected()
-        msg = model.get_value(iter, 5).decode("string-escape")
-        msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
-        msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), msg)
-        txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
-            model.get_value(iter, 0),
-            model.get_value(iter, 1),
-            model.get_value(iter, 2),
-            model.get_value(iter, 3),
-            model.get_value(iter, 4),
-            msg)
-        log_w = LogWindow(txt)
-        return
-
 if __name__ == '__main__':
     gtk.gdk.threads_init()
-    ServersStore = FileServersModel()
-    LogsStore = LogsModel()
-    ServersDisplay = DisplayServersModel()
-    LogsDisplay = DisplayLogsModel()
     myGUI = GUI_Controller()
     gtk.gdk.threads_enter()
     gtk.main()

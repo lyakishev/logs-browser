@@ -9,10 +9,12 @@ import os
 import time
 import datetime
 from itertools import ifilter, islice
+import Queue
+from itertools import groupby
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
-#lock = threading.Lock()
+lock = threading.Lock()
 
 
 class LogWorker(threading.Thread):
@@ -61,18 +63,16 @@ class LogWorker(threading.Thread):
            # if ( self.stopthread.isSet() ):
            #     self.stopthread.clear()
            #     break
-            if l:
                 gtk.gdk.threads_enter()
-                self.model.append((l['the_time'], l['computer'], l['logtype'], \
-                    l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
-                gtk.gdk.threads_leave()
+            self.model.append((l['the_time'], l['computer'], l['logtype'], \
+                l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
+            gtk.gdk.threads_leave()
         semaphore.release()
-        #lock.acquire()
+        lock.acquire()
         gtk.gdk.threads_enter()
         curr_frac = self.progress.get_fraction() + self.frac
         gtk.gdk.threads_leave()
-        if curr_frac>=1.0:
-            print curr_frac
+        if curr_frac>=1.0-self.frac/2.:
             gtk.gdk.threads_enter()
             self.progress.set_fraction(1.0)
             self.progress.set_text("Complete")
@@ -83,7 +83,7 @@ class LogWorker(threading.Thread):
             gtk.gdk.threads_enter()
             self.progress.set_fraction(curr_frac)
             gtk.gdk.threads_leave()
-        #lock.release()
+        lock.release()
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
@@ -91,9 +91,10 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
 
 
 class FileLogWorker():
-    def __init__(self, files, fltr):
+    def __init__(self, files, fltr, model):
         self.files = files
         self.fltr = fltr
+        self.model = model
 
     def get_files(self):
         for key, value in self.files.iteritems():
@@ -122,18 +123,24 @@ class FileLogWorker():
                         if datetime_intersect(self.fltr['date'][0],
                                                 self.fltr['date'][1],
                                                 f_start_date, f_end_date):
+                            print(fullf)
                             self.process(fullf)
 
     def process(self, path):
         f = open(path, 'r')
         s = f.read()
         f.close()
-
-        for l in file_log.scanString(s):
-            yield {'the_time' :l['datetime'],
-                    'computer':"",
-                    'logtype':"",
-                    'evt_type':"",
-                    'source':"",
-                    'msg': l['msg']
-            }
+        for k, g in groupby(file_log.scanString(s), key=lambda x: x[0][0]):
+            while gtk.events_pending():
+                gtk.main_iteration()
+            self.model.append((k, "", "", \
+                "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
+                "#FFFFFF"))
+                #i[0][1].decode("cp1251"), "#FFFFFF"))
+            #yield {'the_time' :i[0][0],
+            #        'computer':"",
+            #        'logtype':"",
+            #        'evt_type':"",
+            #        'source':"",
+            #        'msg': i[0][1].decode("cp1251")
+            #}
