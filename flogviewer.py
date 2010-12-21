@@ -15,6 +15,7 @@ from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.logs_tree import FileServersTree
 from widgets.logs_list import LogListWindow
+import Queue
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -76,6 +77,7 @@ class GUI_Controller:
         return
 
     def show_logs(self, params):
+        self.queue = Queue.Queue()
         self.stop_evt.clear()
         flogs = self.serversw.model.prepare_files_for_parse()
         if flogs:
@@ -96,8 +98,12 @@ class GUI_Controller:
             #        sl.set_sensitive(False)
             #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-            self.worker = FileLogWorker(flogs, fltr, self.logframe.logs_store.list_store)
-            self.worker.get_files()
+            self.prepare = FileLogPrepare(flogs, fltr, self.queue)
+            self.prepare.start()
+            for t in range(5):
+                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue)
+                 t.start()
+
 
        # gtk.gdk.threads_leave()
 

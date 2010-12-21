@@ -75,16 +75,20 @@ def to_date(d):
         int(d['hour']),
         int(d['min']),
         int(d['sec']),
-        1000*int(d['ms'])
+        1000*int(d.get('ms', 0))
     )
 
 sep = Literal(".") | Literal(",") | Literal("-") | Literal(":")
-dtinfile = Word(nums, exact=4)('year')+sep+\
+LPAREN = Literal("[")
+RPAREN = Literal("]")
+Level = LPAREN + Word(alphas) + RPAREN
+dtinfile = Optional(Level)+Optional(LPAREN)+Word(nums, exact=4)('year')+sep+\
            Word(nums,exact=2)('month')+sep+\
            Word(nums, exact=2)('day')+\
            Word(nums, max=2)('hour')+sep+\
            Word(nums, max=2)('min')+sep+\
-           Word(nums, max=2)('sec')+sep+Word(nums)('ms')
+           Word(nums, max=2)('sec')+\
+           Optional(sep+Word(nums)('ms'))+Optional(RPAREN)
 
 msg=SkipTo(dtinfile | StringEnd())
 file_log=dtinfile('datetime').setParseAction(to_date)+msg('msg')

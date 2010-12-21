@@ -90,13 +90,14 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
            (t2start <= t1start and t1start <= t2end)
 
 
-class FileLogWorker():
-    def __init__(self, files, fltr, model):
+class FileLogPrepare(threading.Thread):
+    def __init__(self, files, fltr, q):
+        threading.Thread.__init__(self)
         self.files = files
         self.fltr = fltr
-        self.model = model
+        self.queue = q
 
-    def get_files(self):
+    def run(self):
         for key, value in self.files.iteritems():
             for f in os.listdir(key):
                 fullf = os.path.join(key,f)
@@ -123,24 +124,31 @@ class FileLogWorker():
                         if datetime_intersect(self.fltr['date'][0],
                                                 self.fltr['date'][1],
                                                 f_start_date, f_end_date):
-                            print(fullf)
-                            self.process(fullf)
+                            self.queue.put(fullf)
 
-    def process(self, path):
-        f = open(path, 'r')
-        s = f.read()
-        f.close()
-        for k, g in groupby(file_log.scanString(s), key=lambda x: x[0][0]):
-            while gtk.events_pending():
-                gtk.main_iteration()
-            self.model.append((k, "", "", \
-                "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
-                "#FFFFFF"))
-                #i[0][1].decode("cp1251"), "#FFFFFF"))
-            #yield {'the_time' :i[0][0],
-            #        'computer':"",
-            #        'logtype':"",
-            #        'evt_type':"",
-            #        'source':"",
-            #        'msg': i[0][1].decode("cp1251")
-            #}
+class FileLogWorker(threading.Thread):
+    def __init__(self, model, q):
+        threading.Thread.__init__(self)
+        self.queue = q
+        self.model = model
+
+    def run(self):
+        while True:
+            path = self.queue.get()
+            print path
+            f = open(path, 'r')
+            s = f.read()
+            f.close()
+            for k, g in groupby(file_log.scanString(s), key=lambda x: x[0][0]):
+                self.model.append((k, "", "", \
+                    "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
+                    "#FFFFFF"))
+            self.queue.task_done()
+                    #i[0][1].decode("cp1251"), "#FFFFFF"))
+                #yield {'the_time' :i[0][0],
+                #        'computer':"",
+                #        'logtype':"",
+                #        'evt_type':"",
+                #        'source':"",
+                #        'msg': i[0][1].decode("cp1251")
+                #}
