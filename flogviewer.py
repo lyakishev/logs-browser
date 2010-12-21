@@ -79,7 +79,7 @@ class GUI_Controller:
     def show_logs(self, params):
         self.queue = Queue.Queue()
         self.stop_evt.clear()
-        flogs = self.serversw.model.prepare_files_for_parse()
+        flogs = self.serversw.model.prepare_files_for_parse(self.queue)
         if flogs:
             self.logframe.logs_store.list_store.clear()
             self.progress.set_fraction(0.0)
@@ -98,8 +98,6 @@ class GUI_Controller:
             #        sl.set_sensitive(False)
             #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-            self.prepare = FileLogPrepare(flogs, fltr, self.queue)
-            self.prepare.start()
             for t in range(5):
                  t = FileLogWorker(self.logframe.logs_store.list_store,self.queue, fltr)
                  t.start()

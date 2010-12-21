@@ -11,6 +11,7 @@ import datetime
 from itertools import ifilter, islice
 import Queue
 from itertools import groupby
+from collections import deque
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
@@ -90,23 +91,24 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
            (t2start <= t1start and t1start <= t2end)
 
 
-class FileLogPrepare(threading.Thread):
-    def __init__(self, files, fltr, q):
+class FileLogWorker(threading.Thread):
+    def __init__(self, model, q, fltr):
         threading.Thread.__init__(self)
-        self.files = files
+        self.model = model
         self.fltr = fltr
         self.queue = q
 
-    def run(self):
-        for key, value in self.files.iteritems():
-            for f in os.listdir(key):
+    def prepare(self):
+        while 1:
+            root, fls = q.get()
+            for f in os.listdir(root):
                 fullf = os.path.join(key,f)
                 if os.path.isfile(fullf):
                     try:
                         pf = filename.parseString(f)
                     except ParseException:
                         continue
-                    if pf['logname']+pf['logname2'] in value:
+                    if pf['logname']+pf['logname2'] in fls:
                         ed = time.localtime(os.path.getmtime(fullf))
                         f_end_date = datetime.datetime(ed.tm_year,
                             ed.tm_mon,
@@ -124,36 +126,41 @@ class FileLogPrepare(threading.Thread):
                         if datetime_intersect(self.fltr['date'][0],
                                                 self.fltr['date'][1],
                                                 f_start_date, f_end_date):
-                            self.queue.put(fullf)
+                            yield fullf
 
-class FileLogWorker(threading.Thread):
-    def __init__(self, model, q, fltr):
-        threading.Thread.__init__(self)
-        self.queue = q
-        self.model = model
-        self.fltr = fltr
-
-    def run(self):
-        while True:
-            path = self.queue.get()
-            print path
+    def load(self):
+        deq = deque()
+        buf_deq = deque()
+        for path in self.prepare()
             f = open(path, 'r')
-            s = f.read()
+            deq.extend(f.readlines())
             f.close()
-            for k, g in groupby(file_log.scanString(s), key=lambda x: x[0][0]):
-                print k
-                if k<self.fltr['date'][0]:
-                    break
-                if (k<=self.fltr['date'][1] and k>=self.fltr['date'][0]):
-                    self.model.append((k, "", "", \
-                        "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
-                        "#FFFFFF"))
-            self.queue.task_done()
-                    #i[0][1].decode("cp1251"), "#FFFFFF"))
-                #yield {'the_time' :i[0][0],
-                #        'computer':"",
-                #        'logtype':"",
-                #        'evt_type':"",
-                #        'source':"",
-                #        'msg': i[0][1].decode("cp1251")
-                #}
+            while deq:
+                string = deq.pop()
+                parsed_s = file_log.searchString(string)
+                if not parsed_s:
+                    buf_deq.appendleft(string)
+                else:
+                    buf_deq.appendleft(parsed_s['msg'])
+                    msg = "\n".join(buf_deq)
+                    buf_deq.clear()
+                    yield (parsed_s, "", "", path, msg)
+
+    def filter(self):
+        def f_date(self, l):
+            if l['the_time']<self.fltr['date'][0]:
+                raise StopIteration
+            return (l['the_time']<=self.fltr['date'][1] and \
+                l['the_time']>=self.fltr['date'][0])
+
+        for l in (l1 for l1 in self.load() if f_date(l1)):
+            yield l
+
+    def group(self):
+
+
+    def show(self):
+        for l in self.group():
+            self.model.append(l)
+
+
