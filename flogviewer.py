@@ -101,7 +101,7 @@ class GUI_Controller:
             self.prepare = FileLogPrepare(flogs, fltr, self.queue)
             self.prepare.start()
             for t in range(5):
-                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue)
+                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue, fltr)
                  t.start()
 
 

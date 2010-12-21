@@ -82,7 +82,8 @@ sep = Literal(".") | Literal(",") | Literal("-") | Literal(":")
 LPAREN = Literal("[")
 RPAREN = Literal("]")
 Level = LPAREN + Word(alphas) + RPAREN
-dtinfile = Optional(Level)+Optional(LPAREN)+Word(nums, exact=4)('year')+sep+\
+Type = Word(alphas)
+dtinfile = Optional(Level | Type)+Optional(LPAREN)+Word(nums, exact=4)('year')+sep+\
            Word(nums,exact=2)('month')+sep+\
            Word(nums, exact=2)('day')+\
            Word(nums, max=2)('hour')+sep+\

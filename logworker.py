@@ -127,10 +127,11 @@ class FileLogPrepare(threading.Thread):
                             self.queue.put(fullf)
 
 class FileLogWorker(threading.Thread):
-    def __init__(self, model, q):
+    def __init__(self, model, q, fltr):
         threading.Thread.__init__(self)
         self.queue = q
         self.model = model
+        self.fltr = fltr
 
     def run(self):
         while True:
@@ -140,9 +141,13 @@ class FileLogWorker(threading.Thread):
             s = f.read()
             f.close()
             for k, g in groupby(file_log.scanString(s), key=lambda x: x[0][0]):
-                self.model.append((k, "", "", \
-                    "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
-                    "#FFFFFF"))
+                print k
+                if k<self.fltr['date'][0]:
+                    break
+                if (k<=self.fltr['date'][1] and k>=self.fltr['date'][0]):
+                    self.model.append((k, "", "", \
+                        "", path, "\n".join((m[0][1].decode("cp1251") for m in g)),\
+                        "#FFFFFF"))
             self.queue.task_done()
                     #i[0][1].decode("cp1251"), "#FFFFFF"))
                 #yield {'the_time' :i[0][0],
