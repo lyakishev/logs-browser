@@ -55,8 +55,8 @@ class GUI_Controller:
         return
 
     def stop_all(self, *args):
-        #self.stop_evt.set()
-        print ServersStore.prepare_files_for_parse()
+        self.stop_evt.set()
+        #print ServersStore.prepare_files_for_parse()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -103,7 +103,7 @@ class GUI_Controller:
             #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
             for t in range(5):
-                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue, fltr)
+                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue, fltr, self.stop_evt)
                  t.start()
 
 

@@ -13,7 +13,7 @@ class LogWindow:
         self.log_text = gtk.TextView()
         self.log_text.set_editable(False)
         self.log_text.set_wrap_mode(gtk.WRAP_WORD)
-        self.log_text.get_buffer().set_text(txt)
+        self.log_text.get_buffer().set_text(txt.replace("><",">\n<"))
         self.popup_frame.add(self.scr)
         self.scr.add(self.log_text)
         self.popup.add(self.popup_frame)

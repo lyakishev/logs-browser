@@ -121,19 +121,24 @@ def file_preparator(folders, fltr, queue):
 
 
 class FileLogWorker(threading.Thread):
-    def __init__(self, model, q, fltr):
+    def __init__(self, model, q, fltr, stp):
         threading.Thread.__init__(self)
         self.model = model
         self.fltr = fltr
         self.queue = q
         self.deq = deque()
         self.buf_deq = deque()
+        self.stop = stp
 
     def load(self):
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
         while self.deq:
+            if self.stop.isSet():
+                self.deq.clear()
+                self.buf_deq.clear()
+                break
             string = self.deq.pop()
             try:
                 string = string.decode("cp1251")
@@ -144,7 +149,7 @@ class FileLogWorker(threading.Thread):
                 file_log.parseString(string)
             except:
                 try:
-                    print string
+                    print "Cannot parse ",string
                 except:
                     pass
             if not parsed_s:
@@ -153,7 +158,7 @@ class FileLogWorker(threading.Thread):
                 self.buf_deq.appendleft(parsed_s[0][1])
                 msg = "".join(self.buf_deq)
                 self.buf_deq.clear()
-                print parsed_s[0][0]
+                #print parsed_s[0][0]
                 yield (parsed_s[0][0], "", "", "", self.path, msg, "#FFFFFF")
 
     def filter(self):
