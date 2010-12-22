@@ -91,14 +91,14 @@ date_format_1 = Suppress(Optional(LPAREN))+Word(nums, exact=4)('year')+sep+\
            Word(nums, max=2)('sec')+\
            Optional(sep+Word(nums)('ms'))+Suppress(Optional(RPAREN))
 
-#date_format_2 = Word(nums,exact=2)('day')+sep+\
-#                Word(nums,exact=2)('month')+sep+\
-#                Word(nums, exact=4)('year')+\
-#               Word(nums, max=2)('hour')+sep+\
-#               Word(nums, max=2)('min')+sep+\
-#               Word(nums, max=2)('sec')
+date_format_2 = Word(nums,exact=2)('day')+sep+\
+                Word(nums,exact=2)('month')+sep+\
+                Word(nums, exact=4)('year')+\
+               Word(nums, max=2)('hour')+sep+\
+               Word(nums, max=2)('min')+sep+\
+               Word(nums, max=2)('sec')
 #
 msg=SkipTo(StringEnd())
-file_log=StringStart()+Suppress(Optional(Level | Type))+date_format_1('datetime').setParseAction(to_date)+msg('msg')
+file_log=StringStart()+Suppress(Optional(Level | Type))+date_format_2('datetime').setParseAction(to_date)+msg('msg')
 
 
