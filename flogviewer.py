@@ -16,6 +16,7 @@ from widgets.quantity import QuantityFilter
 from widgets.logs_tree import FileServersTree
 from widgets.logs_list import LogListWindow
 import Queue
+import time
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -79,7 +80,7 @@ class GUI_Controller:
     def show_logs(self, params):
         self.queue = Queue.Queue()
         self.stop_evt.clear()
-        flogs = self.serversw.model.prepare_files_for_parse(self.queue)
+        flogs = self.serversw.model.prepare_files_for_parse()
         if flogs:
             self.logframe.logs_store.list_store.clear()
             self.progress.set_fraction(0.0)
@@ -89,6 +90,9 @@ class GUI_Controller:
             fltr = {}
             #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            pr = threading.Thread(target=file_preparator, args=(flogs,fltr,self.queue,))
+            pr.start()
+            time.sleep(0.5)
             #fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             #fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()

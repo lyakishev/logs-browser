@@ -115,15 +115,18 @@ class FileServersModel(ServersModel):
                             #print item
                             #print "---------------------"
 
-    def prepare_files_for_parse(self, q):
+    def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
         new_srvs = []
         for i in srvs:
              new_srvs.append(["\\\\"+i[-2]+"\\forislog\\"+"\\".join(reversed(i[1:-2])),
                              i[0]])
+        folders = {}
 
         for k,g in groupby(new_srvs, lambda x: x[0]):
-            q.put([k, [fl[1] for fl in list(g)])
+            folders[k]=[fl[1] for fl in list(g)]
+
+        return folders
 
 #def build_tree(nodes):
 #    # create empty tree to fill

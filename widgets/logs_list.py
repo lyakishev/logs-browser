@@ -34,7 +34,6 @@ class LogsModel:
                     row[6] = "#FFFFFF"
             else:
                 row[6]="#FFFFFF"
-        
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """

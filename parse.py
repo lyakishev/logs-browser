@@ -83,15 +83,15 @@ LPAREN = Literal("[")
 RPAREN = Literal("]")
 Level = LPAREN + Word(alphas) + RPAREN
 Type = Word(alphas)
-dtinfile = Optional(Level | Type)+Optional(LPAREN)+Word(nums, exact=4)('year')+sep+\
+dtinfile = Suppress(Optional(LPAREN))+Word(nums, exact=4)('year')+sep+\
            Word(nums,exact=2)('month')+sep+\
            Word(nums, exact=2)('day')+\
            Word(nums, max=2)('hour')+sep+\
            Word(nums, max=2)('min')+sep+\
            Word(nums, max=2)('sec')+\
-           Optional(sep+Word(nums)('ms'))+Optional(RPAREN)
+           Optional(sep+Word(nums)('ms'))+Suppress(Optional(RPAREN))
 
-msg=SkipTo(dtinfile | StringEnd())
-file_log=dtinfile('datetime').setParseAction(to_date)+msg('msg')
+msg=SkipTo(StringEnd())
+file_log=StringStart()+Suppress(Optional(Level | Type))+dtinfile('datetime').setParseAction(to_date)+msg('msg')
 
 
