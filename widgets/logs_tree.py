@@ -74,19 +74,25 @@ class EventServersModel(ServersModel):
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
+        stands = []
 
-        for stand in ("nag-tc", "msk-func", "kog-app"):
-            thread = threading.Thread(target=self.fill_model, args=(stand,))
+        stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
+        stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
+        stands.append(["kog-app", ['%s-%0.2d' % ("kog-app", i) for i in range(1,13)]])
+        stands.append(["umc-test-2", ['%s-v%0.4d' % ("msk-app", i) for i in \
+            range(190, 224) if i not in range(197,203) and i not in range(204,221)]])
+
+        for stand, servers in stands:
+            thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
             thread.start()
 
-    def fill_model(self, stand):
+    def fill_model(self, stand, servers):
         fls={}
         gtk.gdk.threads_enter()
         stiter = self.treestore.append(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
         gtk.gdk.threads_leave()
-        for i in range(1,13):
+        for server_name in servers:
             parents={}
-            server_name = '%s-%0.2d' % (stand, i)
             gtk.gdk.threads_enter()
             server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
             gtk.gdk.threads_leave()
@@ -96,11 +102,13 @@ class FileServersModel(ServersModel):
                     continue
                 else:
                     for subdir in dirs:
+                        print subdir
                         gtk.gdk.threads_enter()
                         parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
                             [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
                         gtk.gdk.threads_leave()
                     for item in files:
+                        print item
                         try:
                             pf = filename.parseString(item)
                             name = pf['logname']+pf['logname2']
