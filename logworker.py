@@ -140,12 +140,20 @@ class FileLogWorker(threading.Thread):
             except UnicodeDecodeError:
                 pass
             parsed_s = file_log.searchString(string)
+            try:
+                file_log.parseString(string)
+            except:
+                try:
+                    print string
+                except:
+                    pass
             if not parsed_s:
                 self.buf_deq.appendleft(string)
             else:
                 self.buf_deq.appendleft(parsed_s[0][1])
                 msg = "".join(self.buf_deq)
                 self.buf_deq.clear()
+                print parsed_s[0][0]
                 yield (parsed_s[0][0], "", "", "", self.path, msg, "#FFFFFF")
 
     def filter(self):

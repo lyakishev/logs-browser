@@ -3,6 +3,7 @@ pygtk.require("2.0")
 import gtk, gobject, gio
 import datetime
 from common_filter import CommonFilter
+from net_time import get_true_time
 
 class DateTimeWidget(gtk.Table):
     def __init__(self):
@@ -28,7 +29,7 @@ class DateTimeWidget(gtk.Table):
         self.set_now()
 
     def set_now(self, *args):
-        now = datetime.datetime.now()
+        now = get_true_time()
         self.hours_spin.set_value(now.hour)
         self.minutes_spin.set_value(now.minute)
         self.seconds_spin.set_value(now.second)
@@ -96,7 +97,7 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_combo, False, False)
 
     def get_dates(self):
-        end_date = datetime.datetime.now()
+        end_date = get_true_time()
         dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
         active = self.last_date_combo.get_active()
         delta = self.last_date_spin.get_value()/dateunit[active]
@@ -120,7 +121,7 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_combo, False, False)
 
     def get_dates(self):
-        end_date = datetime.datetime.now()
+        end_date = get_true_time()
         start_hour = datetime.datetime(end_date.year,
             end_date.month,
             end_date.day,
