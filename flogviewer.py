@@ -8,6 +8,7 @@ from servers_log import logs
 #from evs import *
 import datetime
 import threading
+import net_time
 from logworker import *
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
@@ -104,6 +105,8 @@ class GUI_Controller:
             fltr = {}
             #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            if net_time.time_error_flag:
+                net_time.show_time_warning(self.root)
             for thrd in self.threads:
                 thrd.fltr = fltr
             pr = threading.Thread(target=file_preparator, args=(flogs,fltr,self.queue,))

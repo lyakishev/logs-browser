@@ -9,6 +9,7 @@ from servers_log import logs
 import datetime
 import threading
 from logworker import *
+import net_time
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
@@ -92,6 +93,8 @@ class GUI_Controller:
             fltr['date'] = self.date_filter.get_active() and \
                 self.date_filter.get_dates or (datetime.datetime.min, \
                 datetime.datetime.max)
+            if net_time.time_error_flag:
+                net_time.show_time_warning(self.root)
             fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()
