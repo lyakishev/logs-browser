@@ -99,6 +99,6 @@ date_format_2 = Word(nums,exact=2)('day')+sep+\
                Word(nums, max=2)('sec')
 #
 msg=SkipTo(StringEnd())
-file_log=StringStart()+Suppress(Optional(Level | Type))+date_format_2('datetime').setParseAction(to_date)+msg('msg')
+file_log=StringStart()+Suppress(Optional(Level | Type))+date_format_1('datetime').setParseAction(to_date)+msg('msg')
 
 

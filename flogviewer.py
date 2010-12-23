@@ -17,11 +17,13 @@ from widgets.logs_tree import FileServersTree
 from widgets.logs_list import LogListWindow
 import Queue
 import time
+import sys
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
         # setup the main window
+        self.queue = Queue.Queue()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -52,9 +54,22 @@ class GUI_Controller:
         self.build_interface()
         self.root.show_all()
         self.stop_evt = threading.Event()
+        self.init_threads()
         return
 
+    def init_threads(self):
+        self.threads = []
+        for t in range(5):
+             t=FileLogWorker(self.logframe.logs_store.list_store, self.queue, self.stop_evt)
+             self.threads.append(t)
+             t.start()
+
     def stop_all(self, *args):
+        while not self.queue.empty():
+            try:
+                self.queue.get_nowait()
+            except Queue.Empty:
+                break
         self.stop_evt.set()
         #print ServersStore.prepare_files_for_parse()
 
@@ -78,7 +93,6 @@ class GUI_Controller:
         return
 
     def show_logs(self, params):
-        self.queue = Queue.Queue()
         self.stop_evt.clear()
         flogs = self.serversw.model.prepare_files_for_parse()
         if flogs:
@@ -90,9 +104,10 @@ class GUI_Controller:
             fltr = {}
             #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            for thrd in self.threads:
+                thrd.fltr = fltr
             pr = threading.Thread(target=file_preparator, args=(flogs,fltr,self.queue,))
             pr.start()
-            time.sleep(0.5)
             #fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             #fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             #gtk.gdk.threads_init()
@@ -102,9 +117,6 @@ class GUI_Controller:
             #        sl.set_sensitive(False)
             #for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-            for t in range(5):
-                 t = FileLogWorker(self.logframe.logs_store.list_store,self.queue, fltr, self.stop_evt)
-                 t.start()
 
 
        # gtk.gdk.threads_leave()

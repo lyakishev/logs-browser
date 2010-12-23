@@ -121,10 +121,9 @@ def file_preparator(folders, fltr, queue):
 
 
 class FileLogWorker(threading.Thread):
-    def __init__(self, model, q, fltr, stp):
+    def __init__(self, model, q, stp):
         threading.Thread.__init__(self)
         self.model = model
-        self.fltr = fltr
         self.queue = q
         self.deq = deque()
         self.buf_deq = deque()
@@ -145,20 +144,12 @@ class FileLogWorker(threading.Thread):
             except UnicodeDecodeError:
                 pass
             parsed_s = file_log.searchString(string)
-            try:
-                file_log.parseString(string)
-            except:
-                try:
-                    print "Cannot parse ",string
-                except:
-                    pass
             if not parsed_s:
                 self.buf_deq.appendleft(string)
             else:
                 self.buf_deq.appendleft(parsed_s[0][1])
                 msg = "".join(self.buf_deq)
                 self.buf_deq.clear()
-                #print parsed_s[0][0]
                 yield (parsed_s[0][0], "", "", "", self.path, msg, "#FFFFFF")
 
     def filter(self):
@@ -167,7 +158,6 @@ class FileLogWorker(threading.Thread):
                 if l[0]<self.fltr['date'][0]:
                     raise StopIteration
             except TypeError:
-                print l
                 raise StopIteration
             return (l[0]<=self.fltr['date'][1] and \
                 l[0]>=self.fltr['date'][0])
@@ -184,10 +174,7 @@ class FileLogWorker(threading.Thread):
 
     def run(self):
         while 1:
-            try:
-                self.path = self.queue.get_nowait()
-            except Queue.Empty:
-                break
+            self.path = self.queue.get()
             for l in self.group():
                 gtk.gdk.threads_enter()
                 self.model.append(l)
