@@ -87,17 +87,7 @@ class DisplayLogsModel:
     def show_log( self, path, column, params):
         selection = path.get_selection()
         (model, iter) = selection.get_selected()
-        msg = model.get_value(iter, 5).decode("string-escape")
-        msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), msg, flags=re.DOTALL)
-        msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), msg)
-        txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
-            model.get_value(iter, 0),
-            model.get_value(iter, 1),
-            model.get_value(iter, 2),
-            model.get_value(iter, 3),
-            model.get_value(iter, 4),
-            msg)
-        log_w = LogWindow(txt)
+        log_w = LogWindow(model, iter, selection)
         return
 
 

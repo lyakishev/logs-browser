@@ -8,21 +8,77 @@ import xml.dom.minidom
 xml_re=re.compile(r"((<\?xml.+>);?)+")
 
 class LogWindow:
-    def __init__(self, txt):
+    def __init__(self, model, iter, sel):
+        self.model = model
+        self.selection = sel
+        self.iter = iter
         self.popup = gtk.Window()
         self.popup.set_title("Log")
         self.popup.set_default_size(640,480)
+        self.box = gtk.VBox()
+        self.info_box = gtk.HBox()
+        self.info_label = gtk.Label()
+        self.info_box.pack_start(self.info_label)
+        self.updown_btns = gtk.VButtonBox()
+        self.up = gtk.Button(stock=gtk.STOCK_GO_UP)
+        self.up.connect("clicked", self.show_next)
+        self.down = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+        self.down.connect("clicked", self.show_prev)
+        self.updown_btns.pack_start(self.up)
+        self.updown_btns.pack_start(self.down)
+        self.info_box.pack_start(self.updown_btns)
         self.scr = gtk.ScrolledWindow()
         self.scr.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.popup_frame = gtk.Frame("Log")
         self.log_text = gtk.TextView()
         self.log_text.set_editable(False)
-        self.log_text.set_wrap_mode(gtk.WRAP_CHAR)
-        self.log_text.get_buffer().set_text(self.pretty_xml(txt))
-        self.popup_frame.add(self.scr)
+        self.log_text.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.scr.add(self.log_text)
-        self.popup.add(self.popup_frame)
+        self.popup.add(self.box)
+        self.box.pack_start(self.info_box, False, False, padding=10)
+        self.box.pack_start(self.scr)
+        self.fill()
         self.popup.show_all()
+
+    def fill(self):
+        self.msg = self.model.get_value(self.iter, 5).decode("string-escape")
+        self.msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), self.msg, flags=re.DOTALL)
+        self.msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), self.msg)
+        self.txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
+            self.model.get_value(self.iter, 0),
+            self.model.get_value(self.iter, 1),
+            self.model.get_value(self.iter, 2),
+            self.model.get_value(self.iter, 3),
+            self.model.get_value(self.iter, 4),
+            self.msg)
+        self.info_label.set_markup("<big><b>%s</b></big>\n%s\n%s" % \
+            (self.model.get_value(self.iter,0),\
+            self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
+            self.model.get_value(self.iter,4)))
+        self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
+
+    def show_prev(self, *args):
+        path = self.model.get_string_from_iter(self.iter)
+        if path == 0:
+            return None
+        prevPath = int(path)+1
+        self.selection.select_path(prevPath)
+        try:
+            self.iter = self.model.get_iter_from_string(str(prevPath))
+        except ValueError:
+            pass
+        self.fill()
+
+    def show_next(self, *args):
+        path = self.model.get_string_from_iter(self.iter)
+        if path == 0:
+            return None
+        prevPath = int(path) -1
+        self.selection.select_path(prevPath)
+        try:
+            self.iter = self.model.get_iter_from_string(str(prevPath))
+        except ValueError:
+            pass
+        self.fill()
 
     def pretty_xml(self,text):
         def xml_pretty(m):
