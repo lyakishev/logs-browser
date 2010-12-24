@@ -5,7 +5,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 
-true_time_re = re.compile(r"\d{2}\.\d{2}.\d{4}\s\d{2}:\d{2}:\d{2}")
+true_time_re = re.compile(r"\d{2}\.\d{2}.\d{4}\s\d{1,2}:\d{2}:\d{2}")
 
 TimeDelta = timedelta(0)
 time_error_flag = 0
@@ -34,4 +34,3 @@ def show_time_warning(parent):
             " seconds." % TimeDelta.seconds)
     md.run()
     md.destroy()
-    

@@ -12,10 +12,13 @@ from itertools import ifilter, islice
 import Queue
 from itertools import groupby
 from collections import deque
+import re
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
 lock = threading.Lock()
+
+error_flag = re.compile(r"^at")
 
 
 class LogWorker(threading.Thread):
@@ -130,9 +133,11 @@ class FileLogWorker(threading.Thread):
         self.stop = stp
 
     def load(self):
+        import pdb
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
+        at = [0,0]
         while self.deq:
             if self.stop.isSet():
                 self.deq.clear()
@@ -143,14 +148,21 @@ class FileLogWorker(threading.Thread):
                 string = string.decode("cp1251")
             except UnicodeDecodeError:
                 pass
+            if error_flag.search(string.strip()):
+                at[0]+=1
+            if "Exception" in string:
+                at[1]+=1
             parsed_s = file_log.searchString(string)
             if not parsed_s:
                 self.buf_deq.appendleft(string)
             else:
+                l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
+                at[0]=0
+                at[1]=0
                 self.buf_deq.appendleft(parsed_s[0][1])
                 msg = "".join(self.buf_deq)
                 self.buf_deq.clear()
-                yield (parsed_s[0][0], "", "", "", self.path, msg, "#FFFFFF")
+                yield (parsed_s[0][0], "", "", l_type , self.path, msg, "#FFFFFF")
 
     def filter(self):
         def f_date(l):
