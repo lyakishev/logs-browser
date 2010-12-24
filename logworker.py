@@ -93,6 +93,33 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
            (t2start <= t1start and t1start <= t2end)
 
+def get_m_time(path):
+    deq = deque()
+    f = open(path, 'r')
+    deq.extend(f.readlines())
+    f.close()
+    while deq:
+        string = deq.pop()
+        try:
+            string = string.decode("cp1251")
+        except UnicodeDecodeError:
+            pass
+        try:
+            parsed_s = file_log.parseString(string)
+            dt = parsed_s.get('datetime', None)
+        except:
+            pass
+        else:
+            if dt:
+                return dt
+    ed = time.localtime(os.path.getmtime(path))
+    return datetime.datetime(ed.tm_year,
+                    ed.tm_mon,
+                    ed.tm_mday,
+                    ed.tm_hour,
+                    ed.tm_min,
+                    ed.tm_sec)
+
 def file_preparator(folders, fltr, queue):
     for key, value in folders.iteritems():
         for f in os.listdir(key):
@@ -103,13 +130,7 @@ def file_preparator(folders, fltr, queue):
                 except ParseException:
                     continue
                 if pf['logname']+pf['logname2'] in value:
-                    ed = time.localtime(os.path.getmtime(fullf))
-                    f_end_date = datetime.datetime(ed.tm_year,
-                        ed.tm_mon,
-                        ed.tm_mday,
-                        ed.tm_hour,
-                        ed.tm_min,
-                        ed.tm_sec)
+                    f_end_date = get_m_time(fullf)
                     sd = time.localtime(os.path.getctime(fullf))
                     f_start_date = datetime.datetime(sd.tm_year,
                         sd.tm_mon,
@@ -133,7 +154,6 @@ class FileLogWorker(threading.Thread):
         self.stop = stp
 
     def load(self):
-        import pdb
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()

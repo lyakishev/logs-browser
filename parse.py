@@ -69,14 +69,7 @@ filename=Optional(date_time+sep)+logname("logname")+Optional(date_time)+Optional
 #print filename.parseString("11122010000003-SMSCON_SMSCON_01_data.log") #nag-tc-05 MG
 
 def to_date(d):
-    return datetime(int(d['year']),
-        int(d['month']),
-        int(d['day']),
-        int(d['hour']),
-        int(d['min']),
-        int(d['sec']),
-        1000*int(d.get('ms', 0))
-    )
+    return datetime(int(d['year']),int(d['month']),int(d['day']),int(d['hour']),int(d['min']),int(d['sec']),1000*int(d.get('ms', 0)))
 
 sep = Literal(".") | Literal(",") | Literal("-") | Literal(":")
 LPAREN = Literal("[")
@@ -99,6 +92,6 @@ date_format_2 = Word(nums,exact=2)('day')+sep+\
                Word(nums, max=2)('sec')
 #
 msg=SkipTo(StringEnd())
-file_log=StringStart()+Suppress(Optional(Level | Type))+date_format_1('datetime').setParseAction(to_date)+msg('msg')
+file_log=StringStart()+Suppress(Optional(Level | Type))+(date_format_1 | date_format_2)('datetime').setParseAction(to_date)+msg('msg')
 
 
