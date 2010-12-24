@@ -25,10 +25,25 @@ class LogsModel:
         else:
             return None
 
+    def parse_like(self, text, what):
+        def parse(token):
+            if token in ["AND", "OR", "NOT"]:
+                return t.lower()
+            elif token in [")","("]:
+                return token
+            elif not token:
+                return token
+            else:
+                return "'"+t.strip()+"'"+" in %s" % what
+        if_expr = ' '.join([parse(t).lower() for t in re.split("(AND|OR|NOT|\)|\()",\
+            text)])
+        return if_expr
+
+
     def highlight(self, pattern):
         for row in self.list_store:
             if pattern:
-                if pattern in row[5]:
+                if eval(self.parse_like(pattern, "row[5].lower()")):
                     row[6] = "#FF0000"
                 else:
                     row[6] = "#FFFFFF"

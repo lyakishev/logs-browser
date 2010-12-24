@@ -27,9 +27,12 @@ class LogWindow:
     def pretty_xml(self,text):
         def xml_pretty(m):
             new_xml = []
-            for xml_gr in m.groups():
-                utf16xml = xml_gr.encode("utf-16")
-                new_xml.append(xml.dom.minidom.parseString(utf16xml).toprettyxml())
-            return ";\n".join(new_xml)
+            try:
+                for xml_gr in m.groups():
+                    utf16xml = xml_gr.encode("utf-16")
+                    new_xml.append(xml.dom.minidom.parseString(utf16xml).toprettyxml())
+                return ";\n".join(new_xml)
+            except:
+                return "".join(m.groups())
 
         return xml_re.sub(xml_pretty, text)
