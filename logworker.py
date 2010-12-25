@@ -13,6 +13,7 @@ import Queue
 from itertools import groupby
 from collections import deque
 import re
+import multiprocessing
 
 max_connections = 5
 semaphore = threading.BoundedSemaphore(value=max_connections)
@@ -144,14 +145,15 @@ def file_preparator(folders, fltr, queue):
                         queue.put(fullf)
 
 
-class FileLogWorker(threading.Thread):
-    def __init__(self, model, q, stp):
-        threading.Thread.__init__(self)
-        self.model = model
-        self.queue = q
+class FileLogWorker(multiprocessing.Process):
+    def __init__(self, in_q, out_q, stp, fltr):
+        multiprocessing.Process.__init__(self)
+        self.in_queue = in_q
+        self.out_queue = out_q
         self.deq = deque()
         self.buf_deq = deque()
         self.stop = stp
+        self.fltr = fltr
 
     def load(self):
         f = open(self.path, 'r')
@@ -159,7 +161,7 @@ class FileLogWorker(threading.Thread):
         f.close()
         at = [0,0]
         while self.deq:
-            if self.stop.isSet():
+            if self.stop.is_set():
                 self.deq.clear()
                 self.buf_deq.clear()
                 break
@@ -206,10 +208,21 @@ class FileLogWorker(threading.Thread):
 
     def run(self):
         while 1:
-            self.path = self.queue.get()
+            self.path = self.in_queue.get()
             for l in self.group():
-                gtk.gdk.threads_enter()
-                self.model.append(l)
-                gtk.gdk.threads_leave()
+                self.out_queue.put(l)
+
+class LogListFiller(threading.Thread):
+    def __init__(self, q, model):
+        threading.Thread.__init__(self)
+        self.queue = q
+        self.model = model
+
+    def run(self):
+        while 1:
+            l = self.queue.get()
+            gtk.gdk.threads_enter()
+            self.model.append(l)
+            gtk.gdk.threads_leave()
 
 

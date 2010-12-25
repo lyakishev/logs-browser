@@ -7,24 +7,27 @@ import gtk, gobject, gio
 from servers_log import logs
 #from evs import *
 import datetime
-import threading
+#import threading
 import net_time
 from logworker import *
+import logworker
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.logs_tree import FileServersTree
 from widgets.logs_list import LogListWindow
-import Queue
+#import Queue
 import time
 import sys
+from multiprocessing import Process, Queue, Event, Manager
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
         # setup the main window
-        self.queue = Queue.Queue()
+        self.proc_queue = Queue()
+        self.list_queue = Queue()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -54,21 +57,25 @@ class GUI_Controller:
         self.serversw = FileServersTree()
         self.build_interface()
         self.root.show_all()
-        self.stop_evt = threading.Event()
+        self.stop_evt = Event()
         self.init_threads()
         return
 
     def init_threads(self):
+        self.manager = Manager()
+        self.LOGS_FILTER = self.manager.dict()
         self.threads = []
-        for t in range(5):
-             t=FileLogWorker(self.logframe.logs_store.list_store, self.queue, self.stop_evt)
+        for t in range(4):
+             t=FileLogWorker(self.proc_queue,self.list_queue,self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
+        self.filler = LogListFiller(self.list_queue, self.logframe.logs_store.list_store)
+        self.filler.start()
 
     def stop_all(self, *args):
-        while not self.queue.empty():
+        while not self.proc_queue.empty():
             try:
-                self.queue.get_nowait()
+                self.proc_queue.get_nowait()
             except Queue.Empty:
                 break
         self.stop_evt.set()
@@ -102,14 +109,13 @@ class GUI_Controller:
             self.progress.set_text("Working...")
             #fl_count = len(flogs)
             #frac = 1.0/(fl_count)
-            fltr = {}
             #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
-            fltr['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
-            for thrd in self.threads:
-                thrd.fltr = fltr
-            pr = threading.Thread(target=file_preparator, args=(flogs,fltr,self.queue,))
+            #for thrd in self.threads:
+            #    thrd.fltr = fltr
+            pr = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
             pr.start()
             #fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             #fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
