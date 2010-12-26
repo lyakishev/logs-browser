@@ -16,8 +16,8 @@ from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.logs_tree import FileServersTree
-from widgets.logs_list import LogListWindow
 #import Queue
+from widgets.logs_notebook import LogsNotebook
 import time
 import sys
 from multiprocessing import Process, Queue, Event, Manager
@@ -53,7 +53,7 @@ class GUI_Controller:
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
-        self.logframe = LogListWindow()
+        self.logframe = LogsNotebook()
         self.serversw = FileServersTree()
         self.build_interface()
         self.root.show_all()
@@ -69,7 +69,7 @@ class GUI_Controller:
              t=FileLogWorker(self.proc_queue,self.list_queue,self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
-        self.filler = LogListFiller(self.list_queue, self.logframe.logs_store.list_store)
+        self.filler = LogListFiller(self.list_queue)
         self.filler.start()
 
     def stop_all(self, *args):
@@ -106,7 +106,8 @@ class GUI_Controller:
         self.stop_evt.clear()
         flogs = self.serversw.model.prepare_files_for_parse()
         if flogs:
-            self.logframe.logs_store.list_store.clear()
+            self.logframe.get_current_loglist.clear()
+            self.filler.model = self.logframe.get_current_loglist
             self.progress.set_fraction(0.0)
             self.progress.set_text("Working...")
             #fl_count = len(flogs)

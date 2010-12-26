@@ -213,10 +213,9 @@ class FileLogWorker(multiprocessing.Process):
                 self.out_queue.put(l)
 
 class LogListFiller(threading.Thread):
-    def __init__(self, q, model):
+    def __init__(self, q):
         threading.Thread.__init__(self)
         self.queue = q
-        self.model = model
 
     def run(self):
         while 1:
