@@ -28,6 +28,7 @@ class GUI_Controller:
         # setup the main window
         self.proc_queue = Queue()
         self.list_queue = Queue()
+        self.evt_queue = Queue()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -54,7 +55,18 @@ class GUI_Controller:
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
         self.logframe = LogsNotebook()
-        self.serversw = FileServersTree()
+        self.serversw1 = FileServersTree()
+        self.serversw1.show()
+        self.serversw2 = ServersTree(logs)
+        self.serversw2.show()
+        self.log_ntb = gtk.Notebook()
+        self.file_label = gtk.Label("Filelogs")
+        self.evt_label = gtk.Label("Eventlogs")
+        self.file_label.show()
+        self.evt_label.show()
+        self.log_ntb.append_page(self.serversw2, self.evt_label)
+        self.log_ntb.append_page(self.serversw1, self.file_label)
+        self.log_ntb.show_all()
         self.build_interface()
         self.root.show_all()
         self.stop_evt = Event()
@@ -69,6 +81,8 @@ class GUI_Controller:
              t=FileLogWorker(self.proc_queue,self.list_queue,self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
+        self.event_process = LogWorker(self.evt_queue, self.list_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process.start()
         self.filler = LogListFiller(self.list_queue)
         self.filler.start()
 
@@ -89,7 +103,7 @@ class GUI_Controller:
         self.filter_box.pack_start(self.content_filter, False, False)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
-        self.control_box.pack_start(self.serversw, True, True)
+        self.control_box.pack_start(self.log_ntb, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progress, False, False)
@@ -104,47 +118,25 @@ class GUI_Controller:
 
     def show_logs(self, params):
         self.stop_evt.clear()
-        flogs = self.serversw.model.prepare_files_for_parse()
-        if flogs:
+        flogs = self.serversw1.model.prepare_files_for_parse()
+        evlogs = [[s[1], s[0]] for s in self.serversw2.model.get_active_servers()]
+        if flogs or evlogs:
             self.logframe.get_current_loglist.clear()
             self.filler.model = self.logframe.get_current_loglist
-            self.progress.set_fraction(0.0)
-            self.progress.set_text("Working...")
             #fl_count = len(flogs)
             #frac = 1.0/(fl_count)
-            #fltr['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
+
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
+            self.LOGS_FILTER['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
-            #for thrd in self.threads:
-            #    thrd.fltr = fltr
-            pr = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
-            pr.start()
-            #fltr['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
-            #fltr['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
-            #gtk.gdk.threads_init()
-            #self.sens_list=[self.evt_type_filter,self.date_filter,
-            #    self.content_filter,self.quantity_filter,self.show_button]
-            #for sl in self.sens_list:
-            #        sl.set_sensitive(False)
-            #for comp, log in evlogs:
-            #    gtk.gdk.threads_enter()
+            self.LOGS_FILTER['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
+            self.LOGS_FILTER['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
 
-
-       # gtk.gdk.threads_leave()
-
-
-		#self.progress.set_fraction(frac/evl_count)
-        #        frac+=1
-        #self.progress.set_text("Complete")
-        #self.progress.set_fraction(1.0)
-
-
-#    def run(self):
-#        """ run is called to set off the GTK mainloop """
-#        gtk.main()
-#        return
-#
+            pr1 = Process(target=evl_preparator, args=(evlogs,sef.evt_queue,))
+            pr1.start()
+            pr2 = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
+            pr2.start()
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()
