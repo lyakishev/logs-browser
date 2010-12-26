@@ -73,11 +73,13 @@ class GUI_Controller:
         self.filler.start()
 
     def stop_all(self, *args):
-        while not self.proc_queue.empty():
-            try:
-                self.proc_queue.get_nowait()
-            except Queue.Empty:
-                break
+        def queue_clear():
+            while not self.proc_queue.empty():
+                try:
+                    self.proc_queue.get_nowait()
+                except Queue.Empty:
+                    break
+        threading.Thread(target=queue_clear).start()
         self.stop_evt.set()
         #print ServersStore.prepare_files_for_parse()
 

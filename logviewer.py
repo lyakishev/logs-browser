@@ -15,7 +15,7 @@ from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
 from widgets.logs_tree import ServersTree
-from widgets.logs_list import LogListWindow
+from widgets.logs_notebook import LogsNotebook
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -48,7 +48,7 @@ class GUI_Controller:
         self.allstop = threading.Event()
         self.main_box = gtk.HBox()
         self.control_box = gtk.VBox()
-        self.logframe = LogListWindow()
+        self.logframe = LogsNotebook()
         self.serversw = ServersTree(logs)
         self.build_interface()
         self.root.show_all()
@@ -83,7 +83,7 @@ class GUI_Controller:
         self.stop_evt.clear()
         evlogs = [[s[1], s[0]] for s in self.serversw.model.get_active_servers()]
         if evlogs:
-            self.logframe.logs_store.list_store.clear()
+            self.logframe.get_current_loglist.clear()
             self.progress.set_fraction(0.0)
             self.progress.set_text("Working...")
             evl_count = len(evlogs)
@@ -104,7 +104,7 @@ class GUI_Controller:
                     sl.set_sensitive(False)
             for comp, log in evlogs:
             #    gtk.gdk.threads_enter()
-                self.worker = LogWorker(comp, log, fltr, self.logframe.logs_store.list_store,
+                self.worker = LogWorker(comp, log, fltr, self.logframe.get_current_loglist,
                                             self.progress, frac, self.sens_list,
                                             self.stop_evt)
                 self.worker.start()
