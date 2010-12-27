@@ -29,6 +29,7 @@ class GUI_Controller:
         self.proc_queue = Queue()
         self.list_queue = Queue()
         self.evt_queue = Queue()
+        self.compl_queue = Queue()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -67,6 +68,8 @@ class GUI_Controller:
         self.log_ntb.append_page(self.serversw2, self.evt_label)
         self.log_ntb.append_page(self.serversw1, self.file_label)
         self.log_ntb.show_all()
+        self.progressbar = gtk.ProgressBar()
+        self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.build_interface()
         self.root.show_all()
         self.stop_evt = Event()
@@ -76,11 +79,11 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
-        self.event_process = LogWorker(self.evt_queue, self.list_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
         self.event_process.start()
         self.threads = []
         for t in range(3):
-             t=FileLogWorker(self.proc_queue,self.list_queue,self.stop_evt, self.LOGS_FILTER)
+             t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
         self.filler = LogListFiller(self.list_queue)
@@ -106,7 +109,7 @@ class GUI_Controller:
         self.control_box.pack_start(self.log_ntb, True, True)
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
-        self.control_box.pack_start(self.progress, False, False)
+        self.control_box.pack_start(self.progressbar, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logframe, True, True)
         self.root.add(self.main_box)
@@ -116,6 +119,20 @@ class GUI_Controller:
         gtk.main_quit()
         return
 
+    def progress(self, frac, q):
+        self.progressbar.set_fraction(0.0)
+        self.progressbar.set_text("Working")
+        while 1:
+            curr = self.progressbar.get_fraction()
+            if curr>=1.0-frac/2.:
+                self.progressbar.set_fraction(1.0)
+                self.progressbar.set_text("Complete")
+                break
+            piece = q.get()
+            gtk.gdk.threads_enter()
+            self.progressbar.set_fraction(curr+frac)
+            gtk.gdk.threads_leave()
+
     def show_logs(self, params):
         self.stop_evt.clear()
         flogs = self.serversw1.model.prepare_files_for_parse()
@@ -123,9 +140,8 @@ class GUI_Controller:
         if flogs or evlogs:
             self.logframe.get_current_loglist.clear()
             self.filler.model = self.logframe.get_current_loglist
-            #fl_count = len(flogs)
-            #frac = 1.0/(fl_count)
-
+            fl_count = len(flogs)+len(evlogs)
+            frac = 1.0/(fl_count)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
             self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
@@ -137,6 +153,10 @@ class GUI_Controller:
             pr1.start()
             pr2 = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
             pr2.start()
+            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac, ))
+            pr3.start()
+
+
 
 if __name__ == '__main__':
     gtk.gdk.threads_init()

@@ -56,13 +56,14 @@ def getEventLog(ev_obj, server, logtype):
 
 
 class LogWorker(threading.Thread):
-    def __init__(self, in_q, out_q, stp, fltr):
+    def __init__(self, in_q, out_q, c_q, stp, fltr):
         super(LogWorker,self).__init__()
         self.ret_self = lambda l: True
         self.fltr = fltr
         self.stop = stp
         self.in_queue = in_q
         self.out_queue = out_q
+        self.completed_queue = c_q
 
     def f_date(self, l):
         if l['the_time']<self.fltr['date'][0]:
@@ -129,6 +130,7 @@ class LogWorker(threading.Thread):
             for l in self.filter():
                 self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
                     l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
+            self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
@@ -182,7 +184,7 @@ def file_preparator(folders, fltr, queue):
 
 
 class FileLogWorker(multiprocessing.Process):
-    def __init__(self, in_q, out_q, stp, fltr):
+    def __init__(self, in_q, out_q, c_q, stp, fltr):
         multiprocessing.Process.__init__(self)
         self.in_queue = in_q
         self.out_queue = out_q
@@ -190,6 +192,7 @@ class FileLogWorker(multiprocessing.Process):
         self.buf_deq = deque()
         self.stop = stp
         self.fltr = fltr
+        self.completed_queue = c_q
 
     def load(self):
         cdate = os.path.getctime(self.path)
@@ -250,6 +253,7 @@ class FileLogWorker(multiprocessing.Process):
             self.path = self.in_queue.get()
             for l in self.group():
                 self.out_queue.put(l)
+            self.completed_queue.put(1)
 
 class LogListFiller(threading.Thread):
     def __init__(self, q):
