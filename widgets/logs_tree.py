@@ -2,11 +2,12 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import os
-from parse import filename
+from parse import parse_filename
 from pyparsing import ParseException
 import threading
 from itertools import groupby
 import glob
+import datetime
 
 class ServersModel(object):
     def __init__(self):
@@ -87,41 +88,36 @@ class FileServersModel(ServersModel):
             thread.start()
 
     def fill_model(self, stand, servers):
-        fls={}
+        dt = datetime.datetime.now()
+        tsappend = self.treestore.append
+        walk = os.walk
+        opjoin = os.path.join
         gtk.gdk.threads_enter()
-        stiter = self.treestore.append(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
+        stiter = tsappend(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
         gtk.gdk.threads_leave()
         for server_name in servers:
             parents={}
             gtk.gdk.threads_enter()
-            server = self.treestore.append(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
+            server = tsappend(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
             gtk.gdk.threads_leave()
-            for root, dirs, files in os.walk(r'\\%s\forislog' % server_name):
-                if not dirs and not (glob.glob(root+r"\*.txt") or glob.glob(root+'\*.log')):
-                    print "%s pass"  % root
-                    continue
-                else:
-                    for subdir in dirs:
-                        print subdir
-                        gtk.gdk.threads_enter()
-                        parents[os.path.join(root, subdir)] = self.treestore.append(parents.get(root, server), \
-                            [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                        gtk.gdk.threads_leave()
-                    for item in files:
-                        print item
-                        try:
-                            pf = filename.parseString(item)
-                            name = pf['logname']+pf['logname2']
-                            if not fls.get(name, None):
-                                gtk.gdk.threads_enter()
-                                self.treestore.append(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
-                                gtk.gdk.threads_leave()
-                                fls[name]=item
-                        except:
-                            pass
-                            #print "---------------------"
-                            #print item
-                            #print "---------------------"
+            for root, dirs, files in walk(r'\\%s\forislog' % server_name):
+                for subdir in dirs:
+                    gtk.gdk.threads_enter()
+                    parents[opjoin(root, subdir)] = tsappend(parents.get(root, server), \
+                        [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
+                    gtk.gdk.threads_leave()
+                fls=[]#{}
+                for item in files:
+                    name, ext = parse_filename(item)
+                    if name and ext in ('txt', 'log'):
+                        #if not fls.get(name, None):
+                        if name not in fls:
+                            gtk.gdk.threads_enter()
+                            tsappend(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
+                            gtk.gdk.threads_leave()
+                            fls.append(name)
+
+        print stand, '  ', datetime.datetime.now() - dt
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()

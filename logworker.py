@@ -3,7 +3,7 @@ import threading
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
-from parse import filename, file_log
+from parse import parse_filename, file_log
 from pyparsing import ParseException
 import os
 import time
@@ -19,6 +19,7 @@ import win32evtlog
 import win32evtlogutil
 import winerror
 import pywintypes
+import threading
 
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -54,14 +55,14 @@ def getEventLog(ev_obj, server, logtype):
     return log
 
 
-class LogWorker(multiprocessing.Process):
+class LogWorker(threading.Thread):
     def __init__(self, in_q, out_q, stp, fltr):
-        multiprocessing.Process.__init__(self)
+        super(LogWorker,self).__init__()
         self.ret_self = lambda l: True
         self.fltr = fltr
         self.stop = stp
         self.in_queue = in_q
-        self.out_queue = in_q
+        self.out_queue = out_q
 
     def f_date(self, l):
         if l['the_time']<self.fltr['date'][0]:
@@ -126,7 +127,8 @@ class LogWorker(multiprocessing.Process):
         while 1:
             self.server, self.logtype = self.in_queue.get()
             for l in self.filter():
-                self.out_queue.put(l)
+                self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
+                    l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
@@ -161,18 +163,15 @@ def get_m_time(path):
 
 def evl_preparator(evlogs, queue):
     for i in evlogs:
-        queue.put()
+        queue.put(i)
 
 def file_preparator(folders, fltr, queue):
     for key, value in folders.iteritems():
         for f in os.listdir(key):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
-                try:
-                    pf = filename.parseString(f)
-                except ParseException:
-                    continue
-                if pf['logname']+pf['logname2'] in value:
+                pfn, ext = parse_filename(f)
+                if pfn in value and ext.lower() in ('txt','log'):
                     f_end_date = get_m_time(fullf)
                     sd = time.localtime(os.path.getctime(fullf))
                     f_start_date = datetime.datetime(sd.tm_year,
@@ -232,8 +231,10 @@ class FileLogWorker(multiprocessing.Process):
         def f_date(l):
             try:
                 if l[0]<self.fltr['date'][0]:
+                    self.deq.clear()
                     raise StopIteration
             except TypeError:
+                self.deq.clear()
                 raise StopIteration
             return (l[0]<=self.fltr['date'][1] and \
                 l[0]>=self.fltr['date'][0])
@@ -244,7 +245,7 @@ class FileLogWorker(multiprocessing.Process):
     def group(self):
         for k, g in groupby(self.filter(), lambda x: [x[0],x[1],x[2],x[3],x[4]]):
             yield (k[0], k[1], k[2], k[3], k[4],\
-                "".join((m[5] for m in g)),
+                "".join(reversed([m[5] for m in g])),
                 "#FFFFFF")
 
 

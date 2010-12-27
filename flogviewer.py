@@ -15,7 +15,7 @@ from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
 from widgets.content import ContentFilter
 from widgets.quantity import QuantityFilter
-from widgets.logs_tree import FileServersTree
+from widgets.logs_tree import FileServersTree, ServersTree
 #import Queue
 from widgets.logs_notebook import LogsNotebook
 import time
@@ -76,13 +76,13 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
+        self.event_process = LogWorker(self.evt_queue, self.list_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process.start()
         self.threads = []
-        for t in range(4):
+        for t in range(3):
              t=FileLogWorker(self.proc_queue,self.list_queue,self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
-        self.event_process = LogWorker(self.evt_queue, self.list_queue, self.stop_evt, self.LOGS_FILTER)
-        self.event_process.start()
         self.filler = LogListFiller(self.list_queue)
         self.filler.start()
 
@@ -127,13 +127,13 @@ class GUI_Controller:
             #frac = 1.0/(fl_count)
 
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
-            self.LOGS_FILTER['types'] = self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
+            self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
             self.LOGS_FILTER['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
-            self.LOGS_FILTER['last'] = self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
+            self.LOGS_FILTER['last'] = 0 #self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
 
-            pr1 = Process(target=evl_preparator, args=(evlogs,sef.evt_queue,))
+            pr1 = Process(target=evl_preparator, args=(evlogs,self.evt_queue,))
             pr1.start()
             pr2 = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
             pr2.start()
