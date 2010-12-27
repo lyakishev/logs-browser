@@ -31,7 +31,8 @@ date_format_2 = Word(nums,exact=2)('day')+sep+\
                 Word(nums, exact=4)('year')+\
                Word(nums, max=2)('hour')+sep+\
                Word(nums, max=2)('min')+sep+\
-               Word(nums, max=2)('sec')
+               Word(nums, max=2)('sec')+\
+               Optional(sep+Word(nums)('ms'))
 #
 msg=SkipTo(StringEnd())
 file_log=StringStart()+Suppress(Optional(Level | Type))+(date_format_1 | date_format_2)('datetime').setParseAction(to_date)+msg('msg')

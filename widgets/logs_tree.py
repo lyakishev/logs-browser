@@ -87,6 +87,9 @@ class FileServersModel(ServersModel):
             thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
             thread.start()
 
+        threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
+        threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
+
     def fill_model(self, stand, servers):
         dt = datetime.datetime.now()
         tsappend = self.treestore.append
@@ -98,7 +101,7 @@ class FileServersModel(ServersModel):
         for server_name in servers:
             parents={}
             gtk.gdk.threads_enter()
-            server = tsappend(stiter, [server_name, gtk.STOCK_DIRECTORY, None, 'd'])
+            server = tsappend(stiter, ["\\".join([server_name, "forislog"]), gtk.STOCK_DIRECTORY, None, 'd'])
             gtk.gdk.threads_leave()
             for root, dirs, files in walk(r'\\%s\forislog' % server_name):
                 for subdir in dirs:
@@ -116,14 +119,46 @@ class FileServersModel(ServersModel):
                             tsappend(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
                             gtk.gdk.threads_leave()
                             fls.append(name)
-
         print stand, '  ', datetime.datetime.now() - dt
+
+    def add_custom_logdir(self, path, parent=(None, "custom_dirs")):
+        tsappend = self.treestore.append
+        opjoin = os.path.join
+        gtk.gdk.threads_enter()
+        new_parent = tsappend(parent[0], [parent[1], gtk.STOCK_DIRECTORY, None, 'd'])
+        gtk.gdk.threads_leave()
+        for subdir in [p for p in path.split(os.sep) if p]:
+            gtk.gdk.threads_enter()
+            new_parent = tsappend(new_parent, [subdir, gtk.STOCK_DIRECTORY, None, 'd'])
+            gtk.gdk.threads_leave()
+
+        parents = {}
+        for root, dirs, files in os.walk(path):
+            for subdir in dirs:
+                gtk.gdk.threads_enter()
+                parents[opjoin(root, subdir)] = tsappend(parents.get(root, new_parent), \
+                    [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
+                gtk.gdk.threads_leave()
+            fls=[]#{}
+            for item in files:
+                name, ext = parse_filename(item)
+                if name and ext in ('txt', 'log'):
+                    #if not fls.get(name, None):
+                    if name not in fls:
+                        gtk.gdk.threads_enter()
+                        tsappend(parents.get(root, new_parent), [name, gtk.STOCK_FILE, None, 'f'])
+                        gtk.gdk.threads_leave()
+                        fls.append(name)
+
+
+
+
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
         new_srvs = []
         for i in srvs:
-             new_srvs.append(["\\\\"+i[-2]+"\\forislog\\"+"\\".join(reversed(i[1:-2])),
+            new_srvs.append(["\\\\"+"\\".join(reversed(i[1:-1])),
                              i[0]])
         folders = {}
 

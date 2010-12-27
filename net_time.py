@@ -30,7 +30,7 @@ def show_time_warning(parent):
     md = gtk.MessageDialog(parent,
         gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
         gtk.BUTTONS_CLOSE, "Warning! \nFailed to get a date from the"
-           "server.\nWill use the local time with the adjustment of %d" 
+           "server.\nWill use the local time with the adjustment of %d"
             " seconds." % TimeDelta.seconds)
     md.run()
     md.destroy()
