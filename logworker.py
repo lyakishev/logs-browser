@@ -3,7 +3,7 @@ import threading
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
-from parse import parse_filename, file_log
+from parse import parse_filename, parse_logline
 from pyparsing import ParseException
 import os
 import time
@@ -134,7 +134,7 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
            (t2start <= t1start and t1start <= t2end)
 
-def get_m_time(path):
+def get_m_time(path, cdate):
     deq = deque()
     f = open(path, 'r')
     deq.extend(f.readlines())
@@ -145,15 +145,10 @@ def get_m_time(path):
             string = string.decode("cp1251")
         except UnicodeDecodeError:
             pass
-        try:
-            parsed_s = file_log.parseString(string)
-            dt = parsed_s.get('datetime', None)
-        except:
-            pass
-        else:
-            if dt:
-                return dt
-    ed = time.localtime(os.path.getmtime(path))
+        parsed_s = parse_logline(string,cdate)
+        if parsed_s:
+            return parsed_s[0]
+    ed = cdate
     return datetime.datetime(ed.tm_year,
                     ed.tm_mon,
                     ed.tm_mday,
@@ -171,8 +166,8 @@ def file_preparator(folders, fltr, queue):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
-                if pfn in value and ext.lower() in ('txt','log'):
-                    f_end_date = get_m_time(fullf)
+                if pfn in value and ext in ('txt','log'):
+                    f_end_date = get_m_time(fullf, os.path.getmtime(fullf))
                     sd = time.localtime(os.path.getctime(fullf))
                     f_start_date = datetime.datetime(sd.tm_year,
                         sd.tm_mon,
@@ -197,6 +192,7 @@ class FileLogWorker(multiprocessing.Process):
         self.fltr = fltr
 
     def load(self):
+        cdate = os.path.getctime(self.path)
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
@@ -215,17 +211,17 @@ class FileLogWorker(multiprocessing.Process):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
-            parsed_s = file_log.searchString(string)
+            parsed_s = parse_logline(string, cdate)
             if not parsed_s:
                 self.buf_deq.appendleft(string)
             else:
                 l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
                 at[0]=0
                 at[1]=0
-                self.buf_deq.appendleft(parsed_s[0][1])
+                self.buf_deq.appendleft(parsed_s[1])
                 msg = "".join(self.buf_deq)
                 self.buf_deq.clear()
-                yield (parsed_s[0][0], "", "", l_type , self.path, msg, "#FFFFFF")
+                yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF")
 
     def filter(self):
         def f_date(l):
