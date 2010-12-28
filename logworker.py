@@ -208,10 +208,10 @@ class FileLogWorker(multiprocessing.Process):
                 self.buf_deq.clear()
                 break
             string = self.deq.pop()
-            #try:
-            #    string = string.decode("cp1251")
-            #except UnicodeDecodeError:
-            #    pass
+            try:
+                string = string.decode("cp1251")
+            except UnicodeDecodeError:
+                pass
             if error_flag.search(string.strip()):
                 at[0]+=1
             if "Exception" in string:

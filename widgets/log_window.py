@@ -3,6 +3,7 @@ pygtk.require("2.0")
 import gtk, gobject, gio
 import re
 import xml.dom.minidom
+import os
 
 #xml_re = re.compile("<\?xml(.+)>")
 xml_re=re.compile(r"((<\?xml.+>);?)+")
@@ -16,9 +17,17 @@ class LogWindow:
         self.popup.set_title("Log")
         self.popup.set_default_size(640,480)
         self.box = gtk.VBox()
+        self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
         self.info_label = gtk.Label()
-        self.info_box.pack_start(self.info_label)
+        self.info_button = gtk.Button()
+        self.info_button.set_relief(gtk.RELIEF_NONE)
+        self.info_button.connect('clicked', self.open_file)
+        self.open_label = gtk.Label()
+        self.info_button.add(self.open_label)
+        self.info_box.pack_start(self.open_info_box)
+        self.open_info_box.pack_start(self.info_label)
+        self.open_info_box.pack_start(self.info_button)
         self.updown_btns = gtk.VButtonBox()
         self.up = gtk.Button()
         up_im = gtk.Image()
@@ -45,6 +54,10 @@ class LogWindow:
         self.fill()
         self.popup.show_all()
 
+    def open_file(self, *args):
+        file_to_open = self.model.get_value(self.iter, 4)
+        os.system("notepad "+file_to_open)
+
     def fill(self):
         self.msg = self.model.get_value(self.iter, 5).decode("string-escape")
         self.msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), self.msg, flags=re.DOTALL)
@@ -56,10 +69,11 @@ class LogWindow:
             self.model.get_value(self.iter, 3),
             self.model.get_value(self.iter, 4),
             self.msg)
-        self.info_label.set_markup("<big><b>%s</b></big>\n%s\n%s" % \
+        self.open_label.set_text(self.model.get_value(self.iter,4))
+        self.info_label.set_markup("<big><b>%s</b></big>\n%s\n" % \
             (self.model.get_value(self.iter,0),\
             self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
-            self.model.get_value(self.iter,4)))
+            ))
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
 
     def show_prev(self, *args):
