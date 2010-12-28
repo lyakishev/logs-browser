@@ -163,14 +163,16 @@ def evl_preparator(evlogs, queue):
         queue.put(i)
 
 def file_preparator(folders, fltr, queue):
+    ltime = time.localtime
     for key, value in folders.iteritems():
         for f in os.listdir(key):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
                 if pfn in value and ext in ('txt','log'):
-                    f_end_date = get_m_time(fullf, os.path.getmtime(fullf))
-                    sd = time.localtime(os.path.getctime(fullf))
+                    f_end_date = get_m_time(fullf, \
+                        ltime(os.path.getmtime(fullf)))
+                    sd = ltime(os.path.getctime(fullf))
                     f_start_date = datetime.datetime(sd.tm_year,
                         sd.tm_mon,
                         sd.tm_mday,
@@ -195,7 +197,7 @@ class FileLogWorker(multiprocessing.Process):
         self.completed_queue = c_q
 
     def load(self):
-        cdate = os.path.getctime(self.path)
+        cdate = time.localtime(os.path.getctime(self.path))
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
@@ -206,10 +208,10 @@ class FileLogWorker(multiprocessing.Process):
                 self.buf_deq.clear()
                 break
             string = self.deq.pop()
-            try:
-                string = string.decode("cp1251")
-            except UnicodeDecodeError:
-                pass
+            #try:
+            #    string = string.decode("cp1251")
+            #except UnicodeDecodeError:
+            #    pass
             if error_flag.search(string.strip()):
                 at[0]+=1
             if "Exception" in string:
