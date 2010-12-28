@@ -21,6 +21,7 @@ from widgets.logs_notebook import LogsNotebook
 import time
 import sys
 from multiprocessing import Process, Queue, Event, Manager
+from Queue import Empty as qEmpty
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -48,8 +49,6 @@ class GUI_Controller:
         self.button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
-        self.progress = gtk.ProgressBar()
-        self.progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.stop_all_btn = gtk.Button('Stop')
         self.stop_all_btn.connect('clicked', self.stop_all)
         self.allstop = threading.Event()
@@ -94,8 +93,17 @@ class GUI_Controller:
             while not self.proc_queue.empty():
                 try:
                     self.proc_queue.get_nowait()
-                except Queue.Empty:
+                except qEmpty:
                     break
+                else:
+                    self.compl_queue.put(1)
+            while not self.evt_queue.empty():
+                try:
+                    self.evt_queue.get_nowait()
+                except qEmpty:
+                    break
+                else:
+                    self.compl_queue.put(1)
         threading.Thread(target=queue_clear).start()
         self.stop_evt.set()
         #print ServersStore.prepare_files_for_parse()
@@ -119,12 +127,12 @@ class GUI_Controller:
         gtk.main_quit()
         return
 
-    def progress(self, frac, q):
+    def progress(self, q, frac):
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working")
         while 1:
             curr = self.progressbar.get_fraction()
-            if curr>=1.0-frac/2.:
+            if curr>(1.0-frac/2.):
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
                 break
@@ -153,7 +161,7 @@ class GUI_Controller:
             pr1.start()
             pr2 = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
             pr2.start()
-            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac, ))
+            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac,))
             pr3.start()
 
 
