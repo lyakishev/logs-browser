@@ -71,6 +71,7 @@ def hcluster(rows, distance=pearson):
     clust=[bicluster(rows[i],id=i) for i in xrange(len(rows))]
 
     while len(clust)>1:
+        print len(clust)
         lowestpair=(0,1)
         closest=distance(clust[0].vec, clust[1].vec)
 
@@ -104,14 +105,14 @@ def hcluster(rows, distance=pearson):
 
 def printclust(clust,labels=None,n=0):
     for i in range(n):
-        print ' '
-        if clust.id<0:
-            print '-'
+        print ' ',
+    if clust.id<0:
+        print '-',clust.distance
+    else:
+        if labels==None:
+            print clust.id
         else:
-            if labels==None:
-                print clust.id
-            else:
-                print labels[clust.id]
-        if clust.left!=None: printclust(clust.left,labels=labels,n=n+1)
-        if clust.right!=None: printclust(clust.right,labels=labels,n=n+1)
+            print labels[clust.id]
+    if clust.left!=None: printclust(clust.left,labels=labels,n=n+1)
+    if clust.right!=None: printclust(clust.right,labels=labels,n=n+1)
 
