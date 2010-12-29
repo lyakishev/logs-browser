@@ -1,7 +1,10 @@
+#! -*- coding: utf8 -*-
+
 import re
+import rpdb2
 
 def getwords(msg):
-    words=re.compile(r'\W+').split(msg)
+    words=re.compile(r'\W+', re.U).split(msg.decode('utf8'))
     return [word.lower() for word in words if word]
 
 def getwordcounts(row):
@@ -14,27 +17,27 @@ def getwordcounts(row):
 
     return wc
 
-apcount = {}
-for row in list_store:
-    wc = getwordcounts(row)
-    wordcounts[row] = wc
-    for word, count in wc.iteritems():
-        apcount.setdefault(word,0):
-        if count>1:
-            apcount[word]+=1
-
-wordlist=[]
-for w,bc in apcount.iteritems():
-    frac=float(bc)/len([r for r in list_store])
-    if 0.1 < frac < 0.5:
-        wordlist.append(w)
-
-all_words = {}
-for row, wd in wordcounts:
-    all_words[row]={}
-    for word in wordlist:
-        all_words[row][word]=wd.get(word, 0)
-
+#apcount = {}
+#for row in list_store:
+#    wc = getwordcounts(row)
+#    wordcounts[row] = wc
+#    for word, count in wc.iteritems():
+#        apcount.setdefault(word,0)
+#        if count>1:
+#            apcount[word]+=1
+#
+#wordlist=[]
+#for w,bc in apcount.iteritems():
+#    frac=float(bc)/len([r for r in list_store])
+#    if 0.1 < frac < 0.5:
+#        wordlist.append(w)
+#
+#all_words = {}
+#for row, wd in wordcounts:
+#    all_words[row]={}
+#    for word in wordlist:
+#        all_words[row][word]=wd.get(word, 0)
+#
 
 def pearson(v1, v2):
     sum1=sum(v1)
@@ -54,7 +57,7 @@ def pearson(v1, v2):
     return 1.0-num/den
 
 class bicluster:
-    def __init__(self, vec, left=None, right=None, distance=0.0, id=None)
+    def __init__(self, vec, left=None, right=None, distance=0.0, id=None):
         self.left=left
         self.right=right
         self.vec=vec
@@ -74,8 +77,8 @@ def hcluster(rows, distance=pearson):
         for i in xrange(len(clust)):
             for j in xrange(i+1, len(clust)):
                 if (clust[i].id, clust[j].id) not in distances:
-                    distances[(clust[i].id, clust[j].id)]=
-                    distance(clust[i].id, clust[j].id)
+                    distances[(clust[i].id, clust[j].id)]=\
+                        distance(clust[i].id, clust[j].id)
 
                 d=distances[(clust[i].id, clust[j].id)]
 
@@ -98,14 +101,3 @@ def hcluster(rows, distance=pearson):
         clust.append(newcluster)
 
     return clust[0]
-
-
-        
-    
-    
-    
-
-
-
-
-    

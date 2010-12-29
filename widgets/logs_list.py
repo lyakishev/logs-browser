@@ -3,6 +3,8 @@ pygtk.require("2.0")
 import gtk, gobject, gio
 from widgets.log_window import LogWindow
 import re
+from data_mining import *
+import rpdb2
 
 class LogsModel:
     """ The model class holds the information we want to display """
@@ -110,11 +112,49 @@ class LogListWindow(gtk.Frame):
         self.box.pack_start(self.hl_log, False, False)
         self.hl_log.connect("changed", self.highlight)
 
+        self.test_button = gtk.Button("Clusters")
+        self.test_button.connect("clicked", self.test_clusters)
+        self.box.pack_start(self.test_button, False, False)
+
     def highlight(self, params):
         self.logs_store.highlight(params.get_text())
         self.logs_view.repaint()
 
+    def test_clusters(self, args):
+        apcount = {}
+        wordcounts = {}
+        for row in self.logs_store.get_model():
+            wc = getwordcounts(row)
+            wordcounts[row] = wc
+            for word, count in wc.iteritems():
+                apcount.setdefault(word,0)
+                if count>1:
+                    apcount[word]+=1
+        wordlist=[]
+        #rpdb2.start_embedded_debugger('123')
+        for w,bc in apcount.iteritems():
+            frac=float(bc)/len([r for r in self.logs_store.get_model()])
+            if 0.1 < frac < 0.5:
+                wordlist.append(w)
 
+        all_words = {}
+        for row, wd in wordcounts.iteritems():
+            all_words[row]=[]
+            for word in wordlist:
+                all_words[row].append(wd.get(word, 0))
+
+        print all_words
+        for word in wordlist:
+            try:
+                print word
+            except:
+                try:
+                    print word.decode('cp1251')
+                except:
+                    try:
+                        print word.decode('utf8')
+                    except:
+                        print word.decode('cp866')
 
 
 
