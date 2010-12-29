@@ -205,7 +205,7 @@ class FileLogWorker(multiprocessing.Process):
                 self.deq.clear()
                 self.buf_deq.clear()
                 break
-            string = self.deq.pop()
+            string = self.deq.pop().decode('cp1251', 'replace')
             if error_flag.search(string.strip()):
                 at[0]+=1
             if "Exception" in string:

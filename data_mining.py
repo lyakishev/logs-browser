@@ -1,10 +1,10 @@
 #! -*- coding: utf8 -*-
 
 import re
-import rpdb2
+from math import sqrt
 
 def getwords(msg):
-    words=re.compile(r'\W+', re.U).split(msg.decode('utf8'))
+    words=re.compile(r'\W+', re.U).split(msg)
     return [word.lower() for word in words if word]
 
 def getwordcounts(row):
@@ -49,7 +49,7 @@ def pearson(v1, v2):
     pSum=sum([v1[i]*v2[i] for i in range(len(v1))])
 
     num=pSum-((sum1*sum2)/len(v1))
-    den=sqrt((sum1Sq-sum1**2/len(v1))*(sumS2q-pow(sum2,2)/len(v1)))
+    den=sqrt((sum1Sq-sum1**2/len(v1))*(sum2Sq-pow(sum2,2)/len(v1)))
 
     if den==0:
         return 0
@@ -78,7 +78,7 @@ def hcluster(rows, distance=pearson):
             for j in xrange(i+1, len(clust)):
                 if (clust[i].id, clust[j].id) not in distances:
                     distances[(clust[i].id, clust[j].id)]=\
-                        distance(clust[i].id, clust[j].id)
+                        distance(clust[i].vec, clust[j].vec)
 
                 d=distances[(clust[i].id, clust[j].id)]
 
@@ -101,3 +101,17 @@ def hcluster(rows, distance=pearson):
         clust.append(newcluster)
 
     return clust[0]
+
+def printclust(clust,labels=None,n=0):
+    for i in range(n):
+        print ' '
+        if clust.id<0:
+            print '-'
+        else:
+            if labels==None:
+                print clust.id
+            else:
+                print labels[clust.id]
+        if clust.left!=None: printclust(clust.left,labels=labels,n=n+1)
+        if clust.right!=None: printclust(clust.right,labels=labels,n=n+1)
+

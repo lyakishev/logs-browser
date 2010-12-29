@@ -137,24 +137,14 @@ class LogListWindow(gtk.Frame):
             if 0.1 < frac < 0.5:
                 wordlist.append(w)
 
-        all_words = {}
+        all_words = []
+        rows=[]
         for row, wd in wordcounts.iteritems():
-            all_words[row]=[]
-            for word in wordlist:
-                all_words[row].append(wd.get(word, 0))
+            rows.append(row)
+            all_words.append([wd.get(word,0) for word in wordlist])
 
-        print all_words
-        for word in wordlist:
-            try:
-                print word
-            except:
-                try:
-                    print word.decode('cp1251')
-                except:
-                    try:
-                        print word.decode('utf8')
-                    except:
-                        print word.decode('cp866')
+        clust = hcluster(all_words)
+        printclust(clust)
 
 
 
