@@ -1,3 +1,5 @@
+#! -*- coding: utf8 -*-
+
 from evs import *
 import threading
 import pygtk
@@ -129,7 +131,7 @@ class LogWorker(threading.Thread):
             self.server, self.logtype = self.in_queue.get()
             for l in self.filter():
                 self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
-                    l['evt_type'], l['source'], l['msg'], "#FFFFFF"))
+                    l['evt_type'], l['source'], l['msg'].decode('unicode-escape'), "#FFFFFF"))
             self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
@@ -143,10 +145,6 @@ def get_m_time(path, cdate):
     f.close()
     while deq:
         string = deq.pop()
-        try:
-            string = string.decode("cp1251")
-        except UnicodeDecodeError:
-            pass
         parsed_s = parse_logline(string,cdate)
         if parsed_s:
             return parsed_s[0]
@@ -208,10 +206,6 @@ class FileLogWorker(multiprocessing.Process):
                 self.buf_deq.clear()
                 break
             string = self.deq.pop()
-            try:
-                string = string.decode("cp1251")
-            except UnicodeDecodeError:
-                pass
             if error_flag.search(string.strip()):
                 at[0]+=1
             if "Exception" in string:

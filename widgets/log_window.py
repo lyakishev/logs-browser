@@ -1,9 +1,12 @@
+#! -*- coding: utf8 -*-
+
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import re
 import xml.dom.minidom
 import os
+import threading
 
 #xml_re = re.compile("<\?xml(.+)>")
 xml_re=re.compile(r"((<\?xml.+>);?)+")
@@ -56,19 +59,17 @@ class LogWindow:
 
     def open_file(self, *args):
         file_to_open = self.model.get_value(self.iter, 4)
-        os.system("notepad "+file_to_open)
+        threading.Thread(target=os.system, args=("notepad "+file_to_open,)).start()
 
     def fill(self):
-        self.msg = self.model.get_value(self.iter, 5).decode("string-escape")
-        self.msg = re.sub(r"u[\"'](.+?)[\"']", lambda m: m.group(1), self.msg, flags=re.DOTALL)
-        self.msg = re.sub(r"\\u\w{4}", lambda m: m.group(0).decode("unicode-escape"), self.msg)
         self.txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
             self.model.get_value(self.iter, 0),
             self.model.get_value(self.iter, 1),
             self.model.get_value(self.iter, 2),
             self.model.get_value(self.iter, 3),
             self.model.get_value(self.iter, 4),
-            self.msg)
+            self.model.get_value(self.iter, 5)
+        )
         self.open_label.set_text(self.model.get_value(self.iter,4))
         self.info_label.set_markup("<big><b>%s</b></big>\n%s\n" % \
             (self.model.get_value(self.iter,0),\
