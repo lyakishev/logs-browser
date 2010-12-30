@@ -40,15 +40,16 @@ class LogsModel:
         return if_expr
 
 
-    def highlight(self, pattern):
+    def highlight(self, pattern, color):
         for row in self.list_store:
+            if row[6] == color:
+                row[6] = "#FFFFFF"
             if pattern:
                 if eval(self.parse_like(pattern, "row[5].lower()")):
-                    row[6] = "#FF0000"
-                else:
-                    row[6] = "#FFFFFF"
-            else:
-                row[6]="#FFFFFF"
+                    row[6] = color
+                #else:
+                #    if row[6] == color:
+                #        row[6] = "#FFFFFF"
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
@@ -101,17 +102,38 @@ class LogListWindow(gtk.Frame):
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.logs_view.view)
-        self.hl_log = gtk.Entry()
-        self.hl_log.set_width_chars(20)
+        self.hl_log_red = gtk.Entry()
+        self.hl_log_red.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FF0000"))
+        self.hl_log_green = gtk.Entry()
+        self.hl_log_green.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#00FF00"))
+        self.hl_log_blue = gtk.Entry()
+        self.hl_log_blue.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#0000FF"))
+        self.hl_log_yellow = gtk.Entry()
+        self.hl_log_yellow.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FFFF00"))
+        self.color_button = gtk.Button("Highlight")
+        self.color_button.connect("clicked", self.highlight)
+
+        self.entry_box=gtk.HBox()
+        self.entry_box.pack_start(self.hl_log_red)
+        self.entry_box.pack_start(self.hl_log_green)
+        self.entry_box.pack_start(self.hl_log_blue)
+        self.entry_box.pack_start(self.hl_log_yellow)
+        self.entry_box.pack_start(self.color_button)
 
         self.box = gtk.VBox()
         self.add(self.box)
         self.box.pack_start(self.logs_window, True, True)
-        self.box.pack_start(self.hl_log, False, False)
-        self.hl_log.connect("changed", self.highlight)
+        self.box.pack_start(self.entry_box, False, False)
+        #self.hl_log_red.connect("changed", self.highlight, "#FF0000")
+        #self.hl_log_green.connect("changed", self.highlight, "#00FF00")
+        #self.hl_log_blue.connect("changed", self.highlight, "#0000FF")
+        #self.hl_log_yellow.connect("changed", self.highlight, "#FFFF00")
 
-    def highlight(self, params):
-        self.logs_store.highlight(params.get_text())
+    def highlight(self, *args):
+        self.logs_store.highlight(self.hl_log_red.get_text(), "#FF0000")
+        self.logs_store.highlight(self.hl_log_green.get_text(), "#00FF00")
+        self.logs_store.highlight(self.hl_log_blue.get_text(), "#0000FF")
+        self.logs_store.highlight(self.hl_log_yellow.get_text(), "#FFFF00")
         self.logs_view.repaint()
 
 
