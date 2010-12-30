@@ -132,14 +132,17 @@ class GUI_Controller:
         self.progressbar.set_text("Working")
         while 1:
             curr = self.progressbar.get_fraction()
-            if curr>(1.0-frac/2.):
+            piece = q.get()
+            if curr+frac>=1.0:
+                gtk.gdk.threads_enter()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
+                gtk.gdk.threads_leave()
                 break
-            piece = q.get()
-            gtk.gdk.threads_enter()
-            self.progressbar.set_fraction(curr+frac)
-            gtk.gdk.threads_leave()
+            else:
+                gtk.gdk.threads_enter()
+                self.progressbar.set_fraction(curr+frac)
+                gtk.gdk.threads_leave()
 
     def show_logs(self, params):
         self.stop_evt.clear()
