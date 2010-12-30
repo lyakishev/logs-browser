@@ -31,6 +31,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 
 error_flag = re.compile(r"^at")
 dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
+descr_re = re.compile(r"<The description for.+?:\s*u'(.+)'\.>", re.DOTALL)
 
 def getEventLog(ev_obj, server, logtype):
     log = {}
@@ -130,8 +131,12 @@ class LogWorker(threading.Thread):
         while 1:
             self.server, self.logtype = self.in_queue.get()
             for l in self.filter():
+                msg = l['msg'].decode('unicode-escape', 'replace').encode('utf8')
+                ds = descr_re.search(msg)
+                if ds:
+                    msg = ds.group(1)
                 self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
-                    l['evt_type'], l['source'], l['msg'].decode('unicode-escape'), "#FFFFFF"))
+                    l['evt_type'], l['source'], msg, "#FFFFFF"))
             self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
