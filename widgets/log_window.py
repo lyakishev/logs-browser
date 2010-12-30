@@ -44,18 +44,60 @@ class LogWindow:
         self.down.connect("clicked", self.show_prev)
         self.updown_btns.pack_start(self.up)
         self.updown_btns.pack_start(self.down)
-        self.info_box.pack_start(self.updown_btns)
+        self.info_box.pack_start(self.updown_btns, False, False, padding=30)
         self.scr = gtk.ScrolledWindow()
         self.scr.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         self.log_text = gtk.TextView()
+        self.txt_buff = self.log_text.get_buffer()
         self.log_text.set_editable(False)
         self.log_text.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.scr.add(self.log_text)
         self.popup.add(self.box)
+        self.hl_log_red = gtk.Entry()
+        self.hl_log_red.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FF0000"))
+        self.red_tag = self.txt_buff.create_tag("red", background="red")
+        self.hl_log_green = gtk.Entry()
+        self.hl_log_green.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#00FF00"))
+        self.green_tag = self.txt_buff.create_tag("green", background="green")
+        self.hl_log_blue = gtk.Entry()
+        self.hl_log_blue.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#0000FF"))
+        self.hl_log_blue.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
+        self.blue_tag = self.txt_buff.create_tag("blue", background="blue", foreground="white")
+        self.hl_log_yellow = gtk.Entry()
+        self.hl_log_yellow.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FFFF00"))
+        self.yellow_tag = self.txt_buff.create_tag("yellow", background="yellow")
+        self.color_button = gtk.Button("Highlight")
+        self.color_button.connect("clicked", self.highlight_all)
+
+        self.entry_box=gtk.HBox()
+        self.entry_box.pack_start(self.hl_log_red)
+        self.entry_box.pack_start(self.hl_log_green)
+        self.entry_box.pack_start(self.hl_log_blue)
+        self.entry_box.pack_start(self.hl_log_yellow)
+        self.entry_box.pack_start(self.color_button)
         self.box.pack_start(self.info_box, False, False, padding=10)
         self.box.pack_start(self.scr)
+        self.box.pack_start(self.entry_box, False,False)
         self.fill()
         self.popup.show_all()
+
+    def highlight(self, entry, tag):
+        search_str = entry.get_text()
+        start_iter = self.txt_buff.get_start_iter()
+        self.txt_buff.remove_tag(tag, start_iter, self.txt_buff.get_end_iter())
+        found = (start_iter,start_iter)
+        while found:
+            found = found[1].forward_search(search_str, 0, None)
+            if found:
+                m_start, m_end = found
+                self.txt_buff.apply_tag(tag, m_start, m_end)
+            else:
+                break
+
+    def highlight_all(self, *args):
+        for e, t in zip([self.hl_log_red,self.hl_log_green,self.hl_log_blue,self.hl_log_yellow],\
+            [self.red_tag,self.green_tag,self.blue_tag,self.yellow_tag]):
+            self.highlight(e,t)
 
     def open_file(self, *args):
         file_to_open = self.model.get_value(self.iter, 4)
@@ -76,6 +118,8 @@ class LogWindow:
             self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
             ))
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
+        self.highlight_all(None)
+
 
     def show_prev(self, *args):
         path = self.model.get_string_from_iter(self.iter)
