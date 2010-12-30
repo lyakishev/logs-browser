@@ -31,6 +31,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 
 error_flag = re.compile(r"^at")
 dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
+uc_re = re.compile(r"\u\w{4}")
 descr_re = re.compile(r"<The description for.+?:\s*u'(.+)'\.>", re.DOTALL)
 
 def getEventLog(ev_obj, server, logtype):
@@ -131,7 +132,10 @@ class LogWorker(threading.Thread):
         while 1:
             self.server, self.logtype = self.in_queue.get()
             for l in self.filter():
-                msg = l['msg'].decode('unicode-escape', 'replace').encode('utf8')
+                if uc_re.search(l['msg']):
+                    msg = l['msg'].decode('unicode-escape')
+                else:
+                    msg = l['msg']
                 ds = descr_re.search(msg)
                 if ds:
                     msg = ds.group(1)
