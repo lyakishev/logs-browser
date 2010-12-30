@@ -108,6 +108,7 @@ class LogListWindow(gtk.Frame):
         self.hl_log_green.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#00FF00"))
         self.hl_log_blue = gtk.Entry()
         self.hl_log_blue.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#0000FF"))
+        self.hl_log_blue.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
         self.hl_log_yellow = gtk.Entry()
         self.hl_log_yellow.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FFFF00"))
         self.color_button = gtk.Button("Highlight")
