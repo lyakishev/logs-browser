@@ -32,7 +32,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 error_flag = re.compile(r"^at")
 dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 uc_re = re.compile(r"\u\w{4}")
-descr_re = re.compile(r"<The description for.+?:\s*u'(.+)'\.>", re.DOTALL)
+descr_re = re.compile(r'''<The description for.+?:\s*u['"](.+)['"]\.>''', re.DOTALL)
 
 def getEventLog(ev_obj, server, logtype):
     log = {}
