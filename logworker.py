@@ -141,24 +141,23 @@ class LogWorker(threading.Thread):
                     msg = ds.group(1)
                 self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
                     l['evt_type'], l['source'], msg, "#FFFFFF"))
-            print "Comp", self.server, self.logtype
             self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
            (t2start <= t1start and t1start <= t2end)
 
-def get_m_time(path, cdate):
-    deq = deque()
-    f = open(path, 'r')
-    deq.extend(f.readlines())
-    f.close()
-    while deq:
-        string = deq.pop()
-        parsed_s = parse_logline(string,cdate)
-        if parsed_s:
-            return parsed_s[0]
-    ed = cdate
+def get_time(path, ed):
+    #deq = deque()
+    #f = open(path, 'r')
+    #deq.extend(f.readlines())
+    #f.close()
+    #while deq:
+    #    string = deq.pop()
+    #    parsed_s = parse_logline(string,cdate)
+    #    if parsed_s:
+    #        return parsed_s[0]
+    #ed = cdate
     return datetime.datetime(ed.tm_year,
                     ed.tm_mon,
                     ed.tm_mday,
@@ -166,11 +165,12 @@ def get_m_time(path, cdate):
                     ed.tm_min,
                     ed.tm_sec)
 
-def evl_preparator(evlogs, queue):
+def queue_filler(evlogs, queue):
     for i in evlogs:
         queue.put(i)
 
-def file_preparator(folders, fltr, queue):
+def file_preparator(folders, fltr):#, queue):
+    flf = []
     ltime = time.localtime
     for key, value in folders.iteritems():
         for f in os.listdir(key):
@@ -178,19 +178,18 @@ def file_preparator(folders, fltr, queue):
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
                 if pfn in value and ext in ('txt','log'):
-                    f_end_date = get_m_time(fullf, \
-                        ltime(os.path.getmtime(fullf)))
-                    sd = ltime(os.path.getctime(fullf))
-                    f_start_date = datetime.datetime(sd.tm_year,
-                        sd.tm_mon,
-                        sd.tm_mday,
-                        sd.tm_hour,
-                        sd.tm_min,
-                        sd.tm_sec)
-                    if datetime_intersect(fltr['date'][0],
-                                            fltr['date'][1],
-                                            f_start_date, f_end_date):
-                        queue.put(fullf)
+                    #f_end_date = get_time(fullf, \
+                    #    ltime(os.path.getmtime(fullf))) #RD log write 8
+                    #    minutes after event
+                    f_start_date = get_time(fullf, \
+                        ltime(os.path.getctime(fullf)))
+                    if f_start_date<=fltr['date'][1]:
+                    #if datetime_intersect(fltr['date'][0],
+                    #                        fltr['date'][1],
+                    #                        f_start_date, f_end_date):
+                        flf.append(fullf)
+                        #queue.put(fullf)
+    return flf
 
 
 class FileLogWorker(multiprocessing.Process):
@@ -206,9 +205,11 @@ class FileLogWorker(multiprocessing.Process):
 
     def load(self):
         cdate = time.localtime(os.path.getctime(self.path))
+        print "          Open and read %s" % self.path
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
+        print "          Comlete open and read %s" % self.path
         at = [0,0]
         while self.deq:
             if self.stop.is_set():
@@ -257,8 +258,10 @@ class FileLogWorker(multiprocessing.Process):
     def run(self):
         while 1:
             self.path = self.in_queue.get()
+            print "      Get %s from queue" % self.path
             for l in self.group():
                 self.out_queue.put(l)
+            print "      Complete %s" % self.path
             self.completed_queue.put(1)
 
 class LogListFiller(threading.Thread):

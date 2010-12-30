@@ -130,10 +130,11 @@ class GUI_Controller:
     def progress(self, q, frac):
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working")
+        check_half_frac=1.0-frac/2.
         while 1:
             curr = self.progressbar.get_fraction()
             piece = q.get()
-            if curr+frac>=1.0:
+            if curr+frac>=check_half_frac:
                 gtk.gdk.threads_enter()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
@@ -151,19 +152,20 @@ class GUI_Controller:
         if flogs or evlogs:
             self.logframe.get_current_loglist.clear()
             self.filler.model = self.logframe.get_current_loglist
-            fl_count = len(flogs)+len(evlogs)
-            frac = 1.0/(fl_count)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
             self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
             self.LOGS_FILTER['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             self.LOGS_FILTER['last'] = 0 #self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
-
-            pr1 = Process(target=evl_preparator, args=(evlogs,self.evt_queue,))
-            pr1.start()
-            pr2 = Process(target=file_preparator, args=(flogs,self.LOGS_FILTER,self.proc_queue,))
-            pr2.start()
+            n_flogs=file_preparator(flogs,self.LOGS_FILTER)
+            fl_count = len(n_flogs)+len(evlogs)
+            print fl_count
+            frac = 1.0/(fl_count)
+            p1=Process(target=queue_filler, args=(evlogs, self.evt_queue,))
+            p1.start()
+            p2=Process(target=queue_filler, args=(n_flogs, self.proc_queue,))
+            p2.start()
             pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac,))
             pr3.start()
 
