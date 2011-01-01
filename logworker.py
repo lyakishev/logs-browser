@@ -5,7 +5,7 @@ import threading
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
-from parse import parse_filename, parse_logline
+from parse import parse_filename, parse_logline_re
 from pyparsing import ParseException
 import os
 import time
@@ -221,7 +221,7 @@ class FileLogWorker(multiprocessing.Process):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
-            parsed_s = parse_logline(string, cdate)
+            parsed_s = parse_logline_re(string, cdate)
             if not parsed_s:
                 self.buf_deq.appendleft(string)
             else:
