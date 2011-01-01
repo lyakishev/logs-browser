@@ -22,6 +22,7 @@ import time
 import sys
 from multiprocessing import Process, Queue, Event, Manager
 from Queue import Empty as qEmpty
+import threading
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -31,6 +32,7 @@ class GUI_Controller:
         self.list_queue = Queue()
         self.evt_queue = Queue()
         self.compl_queue = Queue()
+        self.stp_compl = threading.Event()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -69,6 +71,9 @@ class GUI_Controller:
         self.log_ntb.show_all()
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
+        self.fillprogressbar = gtk.ProgressBar()
+        self.fillprogressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
+        self.fillprogressbar.set_pulse_step(0.1)
         self.build_interface()
         self.root.show_all()
         self.stop_evt = Event()
@@ -85,8 +90,6 @@ class GUI_Controller:
              t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
              self.threads.append(t)
              t.start()
-        self.filler = LogListFiller(self.list_queue)
-        self.filler.start()
 
     def stop_all(self, *args):
         def queue_clear():
@@ -117,6 +120,7 @@ class GUI_Controller:
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progressbar, False, False)
+        self.control_box.pack_start(self.fillprogressbar, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logframe, True, True)
         self.root.add(self.main_box)
@@ -126,31 +130,36 @@ class GUI_Controller:
         gtk.main_quit()
         return
 
-    def progress(self, q, frac):
+    def progress(self, q, frac, fl_count):
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working")
+        counter = 0
         check_half_frac=1.0-frac/2.
         while 1:
             curr = self.progressbar.get_fraction()
             piece = q.get()
-            if curr+frac>=check_half_frac:
+            counter += 1
+            if counter == fl_count:
                 gtk.gdk.threads_enter()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
                 gtk.gdk.threads_leave()
                 break
-            else:
-                gtk.gdk.threads_enter()
-                self.progressbar.set_fraction(curr+frac)
-                gtk.gdk.threads_leave()
+            elif counter == fl_count-1:
+                self.stp_compl.set()
+            gtk.gdk.threads_enter()
+            self.progressbar.set_fraction(curr+frac)
+            gtk.gdk.threads_leave()
 
     def show_logs(self, params):
         self.stop_evt.clear()
+        self.stp_compl.clear()
+        self.cur_view = self.logframe.get_current_view
+        self.cur_model = self.logframe.get_current_loglist
         flogs = self.serversw1.model.prepare_files_for_parse()
         evlogs = [[s[1], s[0]] for s in self.serversw2.model.get_active_servers()]
         if flogs or evlogs:
-            self.logframe.get_current_loglist.clear()
-            self.filler.model = self.logframe.get_current_loglist
+            self.cur_model.clear()
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
             self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
@@ -158,14 +167,16 @@ class GUI_Controller:
             self.LOGS_FILTER['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             self.LOGS_FILTER['last'] = 0 #self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             n_flogs=file_preparator(flogs,self.LOGS_FILTER)
-            fl_count = len(n_flogs)+len(evlogs)
+            fl_count = len(n_flogs)+len(evlogs)+1
             frac = 1.0/(fl_count)
             p1=Process(target=queue_filler, args=(evlogs, self.evt_queue,))
             p1.start()
             p2=Process(target=queue_filler, args=(n_flogs, self.proc_queue,))
             p2.start()
-            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac,))
+            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac, fl_count))
             pr3.start()
+            pr4 = LogListFiller(self.list_queue, self.cur_model, self.cur_view, self.stp_compl, self.compl_queue)#, self.fillprogressbar)
+            pr4.start()
 
 
 

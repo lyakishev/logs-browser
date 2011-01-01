@@ -1,17 +1,13 @@
 #! -*- coding: utf8 -*-
 
-import threading
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
 from parse import parse_filename, parse_logline_re
-from pyparsing import ParseException
 import os
 import time
 import datetime
-from itertools import ifilter, islice
-import Queue
-from itertools import groupby
+from itertools import islice, groupby
 from collections import deque
 import re
 import multiprocessing
@@ -21,6 +17,9 @@ import win32evtlogutil
 import winerror
 import pywintypes
 import threading
+#import codecs
+from operator import itemgetter as ig
+import Queue
 
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -28,7 +27,7 @@ evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_WARNING_TYPE:'WARNING',
       win32con.EVENTLOG_ERROR_TYPE:'ERROR'}
 
-error_flag = re.compile(r"^at")
+#error_flag = re.compile(r"^at")
 dtre = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 uc_re = re.compile(r"\u\w{4}")
 descr_re = re.compile(r'''<The description for.+?:\s*u['"](.+)['"]\.>''', re.DOTALL)
@@ -196,61 +195,57 @@ class FileLogWorker(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.in_queue = in_q
         self.out_queue = out_q
-        self.deq = deque()
-        self.buf_deq = deque()
         self.stop = stp
         self.fltr = fltr
         self.completed_queue = c_q
 
     def load(self):
         cdate = time.localtime(os.path.getctime(self.path))
+        deq = deque()
+        buf_deq = deque()
         f = open(self.path, 'r')
-        self.deq.extend(f.readlines())
+        #f = codecs.open(self.path, 'r', 'cp1251')
+        deq.extend(f.readlines())
         f.close()
         at = [0,0]
-        while self.deq:
+        while deq:
             if self.stop.is_set():
-                self.deq.clear()
-                self.buf_deq.clear()
                 break
-            string = self.deq.pop().decode('cp1251', 'replace')
-            if error_flag.search(string.strip()):
+            string = deq.pop().decode('cp1251', 'replace')
+            if string.strip().startswith("at"):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
             parsed_s = parse_logline_re(string, cdate)
             if not parsed_s:
-                self.buf_deq.appendleft(string)
+                buf_deq.appendleft(string)
             else:
                 l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
-                at[0]=0
-                at[1]=0
-                self.buf_deq.appendleft(parsed_s[1])
-                msg = "".join(self.buf_deq)
-                self.buf_deq.clear()
+                at = [0,0]
+                buf_deq.appendleft(string)
+                msg = "".join(buf_deq)
+                buf_deq.clear()
                 yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF")
 
     def filter(self):
         def f_date(l):
-            try:
-                if l[0]<self.fltr['date'][0]:
-                    self.deq.clear()
-                    raise StopIteration
-            except TypeError:
-                self.deq.clear()
+            ndate = self.fltr['date']
+            #try:
+            if l[0]<ndate[0]:
                 raise StopIteration
-            return (l[0]<=self.fltr['date'][1] and \
-                l[0]>=self.fltr['date'][0])
+            #except TypeError:
+            #    self.deq.clear()
+            #    raise StopIteration
+            return ndate[0]<=l[0]<=ndate[1]
 
         for l in (l1 for l1 in self.load() if f_date(l1)):
             yield l
 
     def group(self):
-        for k, g in groupby(self.filter(), lambda x: [x[0],x[1],x[2],x[3],x[4]]):
+        for k, g in groupby(self.filter(), ig(0,1,2,3,4)):
             yield (k[0], k[1], k[2], k[3], k[4],\
                 "".join(reversed([m[5] for m in g])),
                 "#FFFFFF")
-
 
     def run(self):
         while 1:
@@ -260,15 +255,44 @@ class FileLogWorker(multiprocessing.Process):
             self.completed_queue.put(1)
 
 class LogListFiller(threading.Thread):
-    def __init__(self, q):
+    def __init__(self, q, model, view, stp, comp_q):#, pg):
         threading.Thread.__init__(self)
         self.queue = q
+        self.model = model
+        self.view = view
+        self.c_q = comp_q
+        self.stp = stp
+        self.fpg = pg
+
+    def get_from_queue_wait(self):
+        l = self.queue.get()
+        gtk.gdk.threads_enter()
+        self.model.append(l)
+        #self.fpg.pulse()
+        gtk.gdk.threads_leave()
+
+    def get_from_queue_nowait(self):
+        l = self.queue.get_nowait()
+        gtk.gdk.threads_enter()
+        self.model.append(l)
+        #self.fpg.pulse()
+        gtk.gdk.threads_leave()
+        
 
     def run(self):
+        self.view.freeze_child_notify()
+        self.view.set_model(None)
+        proc_func = self.get_from_queue_wait
         while 1:
-            l = self.queue.get()
-            gtk.gdk.threads_enter()
-            self.model.append(l)
-            gtk.gdk.threads_leave()
+            if self.stp.is_set():
+                proc_func = self.get_from_queue_nowait
+            try:
+                proc_func()
+            except Queue.Empty:
+                break
+        self.view.set_model(self.model)
+        self.view.thaw_child_notify()
+        #self.fpg.set_fraction(0.0)
+        self.c_q.put(1)
 
 
