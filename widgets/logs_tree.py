@@ -77,18 +77,19 @@ class FileServersModel(ServersModel):
         super(FileServersModel, self).__init__()
         stands = []
 
-        stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
-        stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
-        stands.append(["kog-app", ['%s-%0.2d' % ("kog-app", i) for i in range(1,13)]])
-        stands.append(["umc-test-2", ['%s-v%0.4d' % ("msk-app", i) for i in \
-            range(190, 224) if i not in range(197,203) and i not in range(204,221)]])
+        #stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
+        #stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
+        #stands.append(["kog-app", ['%s-%0.2d' % ("kog-app", i) for i in range(1,13)]])
+        #stands.append(["umc-test-2", ['%s-v%0.4d' % ("msk-app", i) for i in \
+        #    range(190, 224) if i not in range(197,203) and i not in range(204,221)]])
 
-        for stand, servers in stands:
-            thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
-            thread.start()
+        #for stand, servers in stands:
+        #    thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
+        #    thread.start()
 
-        threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
-        threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
+        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
+        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
+        threading.Thread(target=self.add_custom_logdir,args=(r"\\VBOXSVR\sharew7\log",)).start()
 
     def fill_model(self, stand, servers):
         dt = datetime.datetime.now()

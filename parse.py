@@ -85,6 +85,7 @@ def parse_logline_re(line, cdate):
                                   int(pd["day%d" %n]),
                                   int(pd["hour%d" %n]),
                                   int(pd["min%d" %n]),
+                                  int(pd["sec%d" %n]),
                                   ms
                     )
                 else:

@@ -106,7 +106,6 @@ class GUI_Controller:
                     self.compl_queue.put(1)
         threading.Thread(target=queue_clear).start()
         self.stop_evt.set()
-        #print ServersStore.prepare_files_for_parse()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -160,7 +159,6 @@ class GUI_Controller:
             self.LOGS_FILTER['last'] = 0 #self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             n_flogs=file_preparator(flogs,self.LOGS_FILTER)
             fl_count = len(n_flogs)+len(evlogs)
-            print fl_count
             frac = 1.0/(fl_count)
             p1=Process(target=queue_filler, args=(evlogs, self.evt_queue,))
             p1.start()

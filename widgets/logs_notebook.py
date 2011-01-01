@@ -51,6 +51,12 @@ class LogsNotebook(gtk.Notebook):
         logsw=self.get_nth_page(self.get_current_page())
         return logsw.logs_store.list_store
 
+    @property
+    def get_current_view(self):
+        logsw=self.get_nth_page(self.get_current_page())
+        return logsw.logs_view.view
+        
+
     def close_tab(self, args):
         self.set_current_page(0)
         child = self.btns.index(args)

@@ -1,6 +1,5 @@
 #! -*- coding: utf8 -*-
 
-from evs import *
 import threading
 import pygtk
 pygtk.require("2.0")
@@ -205,11 +204,9 @@ class FileLogWorker(multiprocessing.Process):
 
     def load(self):
         cdate = time.localtime(os.path.getctime(self.path))
-        print "          Open and read %s" % self.path
         f = open(self.path, 'r')
         self.deq.extend(f.readlines())
         f.close()
-        print "          Comlete open and read %s" % self.path
         at = [0,0]
         while self.deq:
             if self.stop.is_set():
@@ -258,10 +255,8 @@ class FileLogWorker(multiprocessing.Process):
     def run(self):
         while 1:
             self.path = self.in_queue.get()
-            print "      Get %s from queue" % self.path
             for l in self.group():
                 self.out_queue.put(l)
-            print "      Complete %s" % self.path
             self.completed_queue.put(1)
 
 class LogListFiller(threading.Thread):
