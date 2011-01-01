@@ -131,6 +131,7 @@ class GUI_Controller:
         return
 
     def progress(self, q, frac, fl_count):
+        tm = datetime.datetime.now()
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working")
         counter = 0
@@ -150,6 +151,7 @@ class GUI_Controller:
             gtk.gdk.threads_enter()
             self.progressbar.set_fraction(curr+frac)
             gtk.gdk.threads_leave()
+        print datetime.datetime.now()-tm
 
     def show_logs(self, params):
         self.stop_evt.clear()

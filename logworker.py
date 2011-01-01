@@ -262,32 +262,29 @@ class LogListFiller(threading.Thread):
         self.view = view
         self.c_q = comp_q
         self.stp = stp
-        self.fpg = pg
-
-    def get_from_queue_wait(self):
-        l = self.queue.get()
-        gtk.gdk.threads_enter()
-        self.model.append(l)
-        #self.fpg.pulse()
-        gtk.gdk.threads_leave()
-
-    def get_from_queue_nowait(self):
-        l = self.queue.get_nowait()
-        gtk.gdk.threads_enter()
-        self.model.append(l)
-        #self.fpg.pulse()
-        gtk.gdk.threads_leave()
-        
+        #self.fpg = pg
 
     def run(self):
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        proc_func = self.get_from_queue_wait
+        #app = self.model.append
+        app = self.model.insert_after
+        sib = None
+        get = self.queue.get
         while 1:
             if self.stp.is_set():
-                proc_func = self.get_from_queue_nowait
+                break
+            l = get()
+            gtk.gdk.threads_enter()
+            sib = app(sib,l)
+            gtk.gdk.threads_leave()
+        get = self.queue.get_nowait
+        while 1:
             try:
-                proc_func()
+                l = get()
+                gtk.gdk.threads_enter()
+                sib=app(sib, l)
+                gtk.gdk.threads_leave()
             except Queue.Empty:
                 break
         self.view.set_model(self.model)
