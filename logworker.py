@@ -274,10 +274,13 @@ class LogListFiller(threading.Thread):
         while 1:
             if self.stp.is_set():
                 break
-            l = get()
-            gtk.gdk.threads_enter()
-            sib = app(sib,l)
-            gtk.gdk.threads_leave()
+            try:
+                l = get(True, 1)
+                gtk.gdk.threads_enter()
+                sib = app(sib,l)
+                gtk.gdk.threads_leave()
+            except Queue.Empty:
+                pass
         get = self.queue.get_nowait
         while 1:
             try:
