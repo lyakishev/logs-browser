@@ -83,16 +83,15 @@ class LogWindow:
 
     def highlight(self, entry, tag):
         search_str = entry.get_text()
-        start_iter = self.txt_buff.get_start_iter()
-        self.txt_buff.remove_tag(tag, start_iter, self.txt_buff.get_end_iter())
-        found = (start_iter,start_iter)
-        while found:
-            found = found[1].forward_search(search_str, 0, None)
-            if found:
-                m_start, m_end = found
-                self.txt_buff.apply_tag(tag, m_start, m_end)
-            else:
-                break
+        start = self.txt_buff.get_start_iter()
+        end = self.txt_buff.get_end_iter()
+        self.txt_buff.remove_tag(tag, start, end)
+        txt = self.txt_buff.get_text(start, end)
+        fre = re.compile(search_str, re.DOTALL|re.IGNORECASE)
+        for m in fre.finditer(txt):
+            start_iter = self.txt_buff.get_iter_at_offset(m.start())
+            end_iter = self.txt_buff.get_iter_at_offset(m.end())
+            self.txt_buff.apply_tag(tag, start_iter, end_iter)
 
     def highlight_all(self, *args):
         for e, t in zip([self.hl_log_red,self.hl_log_green,self.hl_log_blue,self.hl_log_yellow],\
