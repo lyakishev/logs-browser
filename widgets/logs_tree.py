@@ -3,7 +3,6 @@ pygtk.require("2.0")
 import gtk, gobject, gio
 import os
 from parse import parse_filename
-from pyparsing import ParseException
 import threading
 from itertools import groupby
 import glob
@@ -105,9 +104,10 @@ class FileServersModel(ServersModel):
             server = tsappend(stiter, ["\\".join([server_name, "forislog"]), gtk.STOCK_DIRECTORY, None, 'd'])
             gtk.gdk.threads_leave()
             for root, dirs, files in walk(r'\\%s\forislog' % server_name):
+                true_parent = parents.get(root, server)
                 for subdir in dirs:
                     gtk.gdk.threads_enter()
-                    parents[opjoin(root, subdir)] = tsappend(parents.get(root, server), \
+                    parents[opjoin(root, subdir)] = tsappend(true_parent, \
                         [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
                     gtk.gdk.threads_leave()
                 fls=[]#{}
@@ -117,12 +117,13 @@ class FileServersModel(ServersModel):
                         #if not fls.get(name, None):
                         if name not in fls:
                             gtk.gdk.threads_enter()
-                            tsappend(parents.get(root, server), [name, gtk.STOCK_FILE, None, 'f'])
+                            tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
                             gtk.gdk.threads_leave()
                             fls.append(name)
         print stand, '  ', datetime.datetime.now() - dt
 
     def add_custom_logdir(self, path, parent=(None, "custom_dirs")):
+        tm = datetime.datetime.now()
         tsappend = self.treestore.append
         opjoin = os.path.join
         gtk.gdk.threads_enter()
@@ -135,21 +136,24 @@ class FileServersModel(ServersModel):
 
         parents = {}
         for root, dirs, files in os.walk(path):
+            true_parent = parents.get(root, new_parent)
             for subdir in dirs:
                 gtk.gdk.threads_enter()
-                parents[opjoin(root, subdir)] = tsappend(parents.get(root, new_parent), \
+                parents[opjoin(root, subdir)] = tsappend(true_parent,\
                     [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
                 gtk.gdk.threads_leave()
             fls=[]#{}
+            flsapp=fls.append
             for item in files:
                 name, ext = parse_filename(item)
                 if name and ext in ('txt', 'log'):
                     #if not fls.get(name, None):
                     if name not in fls:
                         gtk.gdk.threads_enter()
-                        tsappend(parents.get(root, new_parent), [name, gtk.STOCK_FILE, None, 'f'])
+                        tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
                         gtk.gdk.threads_leave()
-                        fls.append(name)
+                        flsapp(name)
+        print datetime.datetime.now()-tm
 
 
 

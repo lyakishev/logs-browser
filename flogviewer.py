@@ -23,6 +23,7 @@ import sys
 from multiprocessing import Process, Queue, Event, Manager
 from Queue import Empty as qEmpty
 import threading
+from widgets.status_icon import StatusIcon
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -43,6 +44,7 @@ class GUI_Controller:
         self.filter_box = gtk.VBox()
 
         self.date_filter = DateFilter()
+        self.status = StatusIcon(self.date_filter, self.root)
         self.content_filter = ContentFilter()
 
 
@@ -71,9 +73,6 @@ class GUI_Controller:
         self.log_ntb.show_all()
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        self.fillprogressbar = gtk.ProgressBar()
-        self.fillprogressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-        self.fillprogressbar.set_pulse_step(0.1)
         self.build_interface()
         self.root.show_all()
         self.stop_evt = Event()
@@ -120,7 +119,6 @@ class GUI_Controller:
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progressbar, False, False)
-        self.control_box.pack_start(self.fillprogressbar, False, False)
         self.main_box.pack_start(self.control_box, False, False)
         self.main_box.pack_start(self.logframe, True, True)
         self.root.add(self.main_box)
@@ -133,7 +131,7 @@ class GUI_Controller:
     def progress(self, q, frac, fl_count):
         tm = datetime.datetime.now()
         self.progressbar.set_fraction(0.0)
-        self.progressbar.set_text("Working")
+        self.progressbar.set_text("Working...")
         counter = 0
         check_half_frac=1.0-frac/2.
         while 1:
@@ -147,6 +145,7 @@ class GUI_Controller:
                 gtk.gdk.threads_leave()
                 break
             elif counter == fl_count-1:
+                self.progressbar.set_text("Filling table...")
                 self.stp_compl.set()
             gtk.gdk.threads_enter()
             self.progressbar.set_fraction(curr+frac)
