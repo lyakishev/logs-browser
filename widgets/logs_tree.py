@@ -88,6 +88,8 @@ class FileServersModel(ServersModel):
 
         #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
         #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
+        self.custom_dir = self.treestore.append(None, ["Custom Folders",\
+            gtk.STOCK_DIRECTORY, None, 'd'])
         threading.Thread(target=self.add_custom_logdir,args=(r"\\VBOXSVR\sharew7\log",)).start()
 
     def fill_model(self, stand, servers):
@@ -122,12 +124,12 @@ class FileServersModel(ServersModel):
                             fls.append(name)
         print stand, '  ', datetime.datetime.now() - dt
 
-    def add_custom_logdir(self, path, parent=(None, "custom_dirs")):
+    def add_custom_logdir(self, path):
         tm = datetime.datetime.now()
         tsappend = self.treestore.append
         opjoin = os.path.join
         gtk.gdk.threads_enter()
-        new_parent = tsappend(parent[0], [parent[1], gtk.STOCK_DIRECTORY, None, 'd'])
+        new_parent = self.custom_dir
         gtk.gdk.threads_leave()
         for subdir in [p for p in path.split(os.sep) if p]:
             gtk.gdk.threads_enter()
@@ -207,9 +209,10 @@ class FileServersModel(ServersModel):
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
-    def __init__( self, model ):
+    def __init__( self, model, srvrs ):
         """ Form a view for the Tree Model """
         self.view = gtk.TreeView( model )
+        self.srvrs = srvrs
         # setup the text cell renderer and allows these
         # cells to be edited.
         self.renderer = gtk.CellRendererText()
@@ -241,6 +244,40 @@ class DisplayServersModel:
         self.view.append_column( self.column0 )
         self.view.append_column( self.column1 )
         self.view.append_column( self.column2 )
+        #self.view.add_events(gtk.gdk,BUTTON_PRESS_MASK)
+        self.view.connect("button-press-event", self.show_menu)
+        self.popup = gtk.Menu()
+        self.add = gtk.MenuItem("Add path")
+        self.add.connect("activate", self.add_path)
+        self.popup.append(self.add)
+        self.popup.show_all()
+
+    def add_path(self, *args):
+        fchooser = gtk.FileChooserDialog(None, None,
+            gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
+            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+        response = fchooser.run()
+        if response == gtk.RESPONSE_OK:
+            self.srvrs.add_custom_logdir(fchooser.get_filename())
+        fchooser.destroy()
+
+    def show_menu(self, treeview, event):
+        if event.button == 3:
+            #x = int(event.x)
+            #y = int(event.y)
+            time = event.time
+            #pthinfo = treeview.get_path_at_pos(x, y)
+            #if pthinfo is not None:
+            #    path, col, cellx, celly = pthinfo
+            #    treeview.grab_focus()
+            #    treeview.set_cursor( path, col, 0)
+            #    self.popup.popup( None, None, None, event.button, time)
+            #else:
+            #    self.popup.popup( None, None, None, event.button, time)
+            self.popup.popup( None, None, None, event.button, time)
+            return True
+
+
         #return self.view
 
     def col1_toggled_cb( self, cell, path, model ):
@@ -258,6 +295,7 @@ class DisplayServersModel:
         #model.refilter()
         return
 
+
 def tree_model_iter_children(model, treeiter):
     it = model.iter_children(treeiter)
     while it:
@@ -274,7 +312,7 @@ class ServersTree(gtk.Frame):
     def __init__(self, logs):
         super(ServersTree, self).__init__()
         self.model = EventServersModel(logs)
-        self.view = DisplayServersModel(self.model.get_model())
+        self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.view.view)
@@ -308,7 +346,7 @@ class FileServersTree(gtk.Frame):
     def __init__(self):
         super(FileServersTree, self).__init__()
         self.model = FileServersModel()
-        self.view = DisplayServersModel(self.model.get_model())
+        self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.view.view)
