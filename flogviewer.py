@@ -81,6 +81,8 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
+        self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process.start()
         self.threads = []
         for t in range(3):
              t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
@@ -124,6 +126,7 @@ class GUI_Controller:
         """ Destroy callback to shutdown the app """
         for t in self.threads:
             t.terminate()
+        self.event_process.terminate()
         gtk.main_quit()
         sys.exit()
         return
@@ -174,10 +177,6 @@ class GUI_Controller:
             p1.start()
             p2=Process(target=queue_filler, args=(n_flogs, self.proc_queue,))
             p2.start()
-            event_process = LogWorker(self.evt_queue, \
-                self.list_queue,self.compl_queue, self.stop_evt, \
-                self.LOGS_FILTER, self.stp_compl)
-            event_process.start()
             pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac, fl_count))
             pr3.start()
             pr4 = LogListFiller(self.list_queue, self.cur_model, self.cur_view, self.stp_compl, self.compl_queue)#, self.fillprogressbar)

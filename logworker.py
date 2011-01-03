@@ -57,16 +57,17 @@ def getEventLog(ev_obj, server, logtype):
     return log
 
 
-class LogWorker(threading.Thread):
-    def __init__(self, in_q, out_q, c_q, stp, fltr, stp_c):
+class LogWorker(multiprocessing.Process):
+    def __init__(self, in_q, out_q, c_q, stp, fltr):
         super(LogWorker,self).__init__()
-        self.ret_self = lambda l: True
         self.fltr = fltr
         self.stop = stp
-        self.stp = stp_c
         self.in_queue = in_q
         self.out_queue = out_q
         self.completed_queue = c_q
+
+    def ret_self(self, l):
+        return True
 
     def f_date(self, l):
         if l['the_time']<self.fltr['date'][0]:
@@ -129,24 +130,18 @@ class LogWorker(threading.Thread):
 
     def run(self):
         while 1:
-            if self.stp.is_set():
-                break
-            try:
-                self.server, self.logtype = self.in_queue.get_nowait()
-            except Queue.Empty:
-                pass
-            else:
-                for l in self.filter():
-                    if uc_re.search(l['msg']):
-                        msg = l['msg'].decode('unicode-escape', 'replace')
-                    else:
-                        msg = l['msg']
-                    ds = descr_re.search(msg)
-                    if ds:
-                        msg = ds.group(1)
-                    self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
-                        l['evt_type'], l['source'], msg, "#FFFFFF"))
-                self.completed_queue.put(1)
+            self.server, self.logtype = self.in_queue.get()
+            for l in self.filter():
+                if uc_re.search(l['msg']):
+                    msg = l['msg'].decode('unicode-escape', 'replace')
+                else:
+                    msg = l['msg']
+                ds = descr_re.search(msg)
+                if ds:
+                    msg = ds.group(1)
+                self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
+                    l['evt_type'], l['source'], msg, "#FFFFFF"))
+            self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
