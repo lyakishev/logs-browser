@@ -124,6 +124,7 @@ class GUI_Controller:
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
+        self.status.statusicon.set_visible(False)
         for t in self.threads:
             t.terminate()
         self.event_process.terminate()
