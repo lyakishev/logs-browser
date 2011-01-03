@@ -1,0 +1,3 @@
+python Configure.py
+python Makespec.py -w -X C:\Users\user\log-viewer\flogviewer
+python Build.py flogviewer\flogviewer.spec

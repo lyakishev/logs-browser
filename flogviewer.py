@@ -19,7 +19,7 @@ from widgets.logs_tree import FileServersTree, ServersTree
 from widgets.logs_notebook import LogsNotebook
 import time
 import sys
-from multiprocessing import Process, Queue, Event, Manager
+from multiprocessing import Process, Queue, Event, Manager, freeze_support
 from Queue import Empty as qEmpty
 import threading
 from widgets.status_icon import StatusIcon
@@ -186,6 +186,7 @@ class GUI_Controller:
 
 
 if __name__ == '__main__':
+    freeze_support()
     gtk.gdk.threads_init()
     myGUI = GUI_Controller()
     gtk.gdk.threads_enter()
