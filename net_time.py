@@ -14,7 +14,7 @@ def get_true_time():
     global TimeDelta
     global time_error_flag
     try:
-        time_string = subprocess.check_output(r"net time \\msk-app-v0190")
+        time_string = subprocess.check_output([r"C:\Windows\System32\net.exe", "time", r"\\msk-app-v0190"])
     except:
         server_time = datetime.now() + TimeDelta
         time_error_flag = 1
