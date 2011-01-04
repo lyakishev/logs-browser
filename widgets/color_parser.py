@@ -4,9 +4,14 @@ import gtk, gobject, gio
 import re
 import pango
 
+cparser = re.compile(r"(#[a-fA-F0-9]{3,}):")
+
 class ColorParser(gtk.HBox):
-    def __init__(self):
+    def __init__(self, model, view):
         super(ColorParser, self).__init__()
+
+        self.model = model
+        self.view = view
 
         self.text = gtk.TextView()
         self.buf = self.text.get_buffer()
@@ -30,7 +35,12 @@ class ColorParser(gtk.HBox):
         self.bold_tag = self.buf.create_tag("bold", weight=pango.WEIGHT_BOLD)
 
     def filter_logs(self, *args):
-        pass
+        start = self.buf.get_start_iter()
+        end = self.buf.get_end_iter()
+        txt = self.buf.get_text(start, end)
+        col_str = cparser.split(txt)[1:]
+        self.model.highlight(col_str)
+        self.view.repaint()
 
     def change_color(self, *args):
         colordlg = gtk.ColorSelectionDialog("Select color")

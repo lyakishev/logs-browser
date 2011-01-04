@@ -26,31 +26,29 @@ class LogsModel:
         else:
             return None
 
-    def parse_like(self, text, what):
-        def parse(token):
-            if token in ["AND", "OR", "NOT"]:
-                return t.lower()
-            elif token in [")","("]:
-                return token
-            elif not token:
-                return token
-            else:
-                return "'"+t.strip()+"'"+" in %s" % what
-        if_expr = ' '.join([parse(t).lower() for t in re.split("(AND|OR|NOT|\)|\()",\
-            text)])
-        return if_expr
-
-
-    def highlight(self, pattern, color):
-        for row in self.list_store:
-            if row[6] == color:
+    def highlight(self, col_str):
+        if col_str:
+            colors = col_str[::2]
+            for color, pattern in zip(colors, [c.strip() for c in col_str[1::2]]):
+                if pattern:
+                    try:
+                        exp = re.compile(pattern)
+                    except re.error:
+                        return
+                    else:
+                        for row in self.list_store:
+                            if row[6] not in colors or row[6] == color:
+                                row[6] = "#FFFFFF"
+                            if exp.search(row[5]):
+                                row[6] = color
+                else:
+                    for row in self.list_store:
+                        if row[6] == color:
+                            row[6] = "#FFFFFF"
+        else:
+            for row in self.list_store:
                 row[6] = "#FFFFFF"
-            if pattern:
-                if eval(self.parse_like(pattern, "row[5].lower()")):
-                    row[6] = color
-                #else:
-                #    if row[6] == color:
-                #        row[6] = "#FFFFFF"
+            
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
@@ -92,8 +90,6 @@ class DisplayLogsModel:
         log_w = LogWindow(model, iter, selection)
         return
 
-
-
 class LogListWindow(gtk.Frame):
     def __init__(self):
         super(LogListWindow, self).__init__()
@@ -103,7 +99,7 @@ class LogListWindow(gtk.Frame):
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.logs_view.view)
-        self.filter_logs = ColorParser()
+        self.filter_logs = ColorParser(self.logs_store, self.logs_view)
         #self.hl_log_red = gtk.Entry()
         #self.hl_log_red.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FF0000"))
         #self.hl_log_green = gtk.Entry()
