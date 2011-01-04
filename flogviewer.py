@@ -55,7 +55,7 @@ class GUI_Controller:
         self.stop_all_btn = gtk.Button('Stop')
         self.stop_all_btn.connect('clicked', self.stop_all)
         self.allstop = threading.Event()
-        self.main_box = gtk.HBox()
+        self.main_box = gtk.HPaned()
         self.control_box = gtk.VBox()
         self.logframe = LogsNotebook()
         self.serversw1 = FileServersTree()
@@ -81,8 +81,6 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
-        self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
-        self.event_process.start()
         self.threads = []
         for t in range(3):
              t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
@@ -118,8 +116,8 @@ class GUI_Controller:
         self.control_box.pack_start(self.filter_frame, False, False)
         self.control_box.pack_start(self.button_box, False, False, 5)
         self.control_box.pack_start(self.progressbar, False, False)
-        self.main_box.pack_start(self.control_box, False, False)
-        self.main_box.pack_start(self.logframe, True, True)
+        self.main_box.pack1(self.control_box, False, False)
+        self.main_box.pack2(self.logframe, True, False)
         self.root.add(self.main_box)
 
     def destroy_cb(self, *kw):
@@ -127,7 +125,6 @@ class GUI_Controller:
         self.status.statusicon.set_visible(False)
         for t in self.threads:
             t.terminate()
-        self.event_process.terminate()
         gtk.main_quit()
         sys.exit()
         return
