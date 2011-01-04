@@ -348,7 +348,7 @@ class FileServersTree(gtk.Frame):
         self.model = FileServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.view.view)
         self.hide_log = gtk.Entry()
         self.box = gtk.VBox()
