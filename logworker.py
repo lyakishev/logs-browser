@@ -213,8 +213,8 @@ class FileLogWorker(multiprocessing.Process):
         while deq:
             if self.stop.is_set():
                 break
-            string = deq.pop().decode('cp1251', 'replace')
-            if string.strip().startswith("at"):
+            string = deq.pop()#.decode('cp1251', 'replace')
+            if "at" in string.lstrip()[:2]:#.startswith("at"):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
