@@ -227,7 +227,7 @@ class FileLogWorker(multiprocessing.Process):
                 buf_deq.appendleft(string)
                 msg = "".join(buf_deq)
                 buf_deq.clear()
-                yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF")
+                yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF", False)
 
     def filter(self):
         def f_date(l):
@@ -247,7 +247,7 @@ class FileLogWorker(multiprocessing.Process):
         for k, g in groupby(self.filter(), ig(0,1,2,3,4)):
             yield (k[0], k[1], k[2], k[3], k[4],\
                 "".join(reversed([m[5] for m in g])),
-                "#FFFFFF")
+                "#FFFFFF", False)
 
     def run(self):
         while 1:

@@ -16,7 +16,8 @@ class LogsModel:
                                          gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING )
+                                         gobject.TYPE_STRING,
+                                         gobject.TYPE_BOOLEAN )
         # places the global people data into the list
         # we form a simple tree.
     def get_model(self):
@@ -55,19 +56,23 @@ class LogsModel:
                     for row in self.list_store:
                         if row[6] not in colors or row[6] == color:
                             row[6] = "#FFFFFF"
+                            row[7] = False
                         try:
                             msg = row[5].decode('utf-8').encode('utf-8')
                         except UnicodeDecodeError:
                             msg = row[5].decode('cp1251').encode('utf-8')
                         if eval(exp):
                             row[6] = color
+                            row[7] = True
                 else:
                     for row in self.list_store:
                         if row[6] == color:
                             row[6] = "#FFFFFF"
+                            row[7] = False
         else:
             for row in self.list_store:
                 row[6] = "#FFFFFF"
+                row[7] = False
             
 
 class DisplayLogsModel:
@@ -84,7 +89,7 @@ class DisplayLogsModel:
         self.renderers = []
         self.columns = []
         for r, header in enumerate(['Date','Computer', 'Log', 'Type',\
-            'Source', 'Message', 'bgcolor']):
+            'Source', 'Message', 'bgcolor', 'show']):
             self.renderers.append(gtk.CellRendererText())
             self.renderers[r].set_property( 'editable', False )
             self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
@@ -94,7 +99,8 @@ class DisplayLogsModel:
         # will show as active e.g on.
         for cid, col in enumerate(self.columns):
             self.view.append_column( col )
-            if col.get_title() == "Message" or col.get_title() == "bgcolor":
+            ctitle = col.get_title()
+            if ctitle == "Message" or ctitle == "bgcolor" or ctitle == "show":
                 col.set_visible(False)
             else:
                 col.set_sort_column_id(cid)

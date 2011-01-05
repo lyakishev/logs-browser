@@ -12,6 +12,9 @@ class ColorParser(gtk.HBox):
 
         self.model = model
         self.view = view
+        self.filter = self.model.get_model().filter_new()
+        self.filter.set_visible_column(7)
+
 
         self.text = gtk.TextView()
         self.text.set_wrap_mode(gtk.WRAP_CHAR)
@@ -39,6 +42,7 @@ class ColorParser(gtk.HBox):
         self.buf.create_tag('#00f', foreground='#00f')
         self.buf.create_tag('#dd0', foreground='#dd0')
         self.bold_tag = self.buf.create_tag("bold", weight=pango.WEIGHT_BOLD)
+        self.white_tag = self.buf.create_tag("#fff", foreground="#000")
 
         self.start_col = 0
         self.in_color = 0
@@ -94,6 +98,10 @@ class ColorParser(gtk.HBox):
         txt = self.buf.get_text(start, end)
         col_str = cparser.split(txt)[1:]
         self.model.highlight(col_str)
+        if self.hide_other.get_active():
+            self.view.view.set_model(self.filter)
+        else:
+            self.view.view.set_model(self.model.get_model())
         self.view.repaint()
 
     def change_color(self, *args):
