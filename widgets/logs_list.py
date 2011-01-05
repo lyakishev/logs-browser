@@ -26,25 +26,41 @@ class LogsModel:
         else:
             return None
 
+    def parse_like(self, pattern, text):
+        def parse(token):
+            if token.strip() in ["AND", "OR", "NOT", "AND (",
+                                 ") AND", "OR (", ") OR", "NOT ("]:
+                return t.lower()
+            elif not token:
+                return token
+            else:
+                lparen = token.count("(")
+                rparen = token.count(")")
+                if lparen == rparen:
+                    return 're.compile("%s", re.U).search(%s)' % (token, text)
+                elif lparen == rparen-1:
+                    return 're.compile("%s", re.U).search(%s))' % (token, text)
+                elif rparen == lparen-1:
+                    return '(re.compile("%s", re.U).search(%s)' % (token, text)
+
+        if_expr = ''.join([parse(t) for t in re.split("( AND \(| OR \(| NOT \(|\) AND |\) OR | AND | OR |NOT )", pattern)])
+        return if_expr
+    
     def highlight(self, col_str):
         if col_str:
             colors = col_str[::2]
             for color, pattern in zip(colors, [c.strip() for c in col_str[1::2]]):
                 if pattern:
-                    try:
-                        exp = re.compile(pattern, re.U)
-                    except re.error:
-                        return
-                    else:
-                        for row in self.list_store:
-                            if row[6] not in colors or row[6] == color:
-                                row[6] = "#FFFFFF"
-                            try:
-                                msg = row[5].decode('utf-8').encode('utf-8')
-                            except UnicodeDecodeError:
-                                msg = row[5].decode('cp1251').encode('utf-8')
-                            if exp.search(msg):
-                                row[6] = color
+                    exp = self.parse_like(pattern, "msg")
+                    for row in self.list_store:
+                        if row[6] not in colors or row[6] == color:
+                            row[6] = "#FFFFFF"
+                        try:
+                            msg = row[5].decode('utf-8').encode('utf-8')
+                        except UnicodeDecodeError:
+                            msg = row[5].decode('cp1251').encode('utf-8')
+                        if eval(exp):
+                            row[6] = color
                 else:
                     for row in self.list_store:
                         if row[6] == color:
