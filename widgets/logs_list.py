@@ -32,14 +32,18 @@ class LogsModel:
             for color, pattern in zip(colors, [c.strip() for c in col_str[1::2]]):
                 if pattern:
                     try:
-                        exp = re.compile(pattern)
+                        exp = re.compile(pattern, re.U)
                     except re.error:
                         return
                     else:
                         for row in self.list_store:
                             if row[6] not in colors or row[6] == color:
                                 row[6] = "#FFFFFF"
-                            if exp.search(row[5]):
+                            try:
+                                msg = row[5].decode('utf-8').encode('utf-8')
+                            except UnicodeDecodeError:
+                                msg = row[5].decode('cp1251').encode('utf-8')
+                            if exp.search(msg):
                                 row[6] = color
                 else:
                     for row in self.list_store:

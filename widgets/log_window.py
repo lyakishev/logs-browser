@@ -113,6 +113,10 @@ class LogWindow:
             self.model.get_value(self.iter, 4),
             self.model.get_value(self.iter, 5)
         )
+        try:
+            self.txt = self.txt.decode('utf-8').encode('utf-8')
+        except UnicodeDecodeError:
+            self.txt = self.txt.decode('cp1251').encode('utf-8')
         self.open_label.set_text(self.model.get_value(self.iter,4))
         self.info_label.set_markup("<big><b>%s</b></big>\n%s\n" % \
             (self.model.get_value(self.iter,0),\
