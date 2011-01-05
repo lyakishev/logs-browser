@@ -230,21 +230,19 @@ class DisplayServersModel:
         # The renderer will then display whatever is in column 0 of
         # our model .
         self.column0 = gtk.TreeViewColumn("Path")
+        self.column0.pack_start(self.renderer1, False)
         self.column0.pack_start(self.stockrenderer, False)
         self.column0.pack_start(self.renderer, True)
+        self.column0.add_attribute(self.renderer1, 'active', 2 )
         self.column0.set_attributes(self.stockrenderer, stock_id=1)
         self.column0.set_attributes(self.renderer, text=0)
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
-        self.column1 = gtk.TreeViewColumn("Show", self.renderer1 )
-        self.column1.add_attribute( self.renderer1, "active", 2)
         self.column2 = gtk.TreeViewColumn("Type", self.renderer2 )
         self.column2.set_visible(False)
         self.view.append_column( self.column0 )
-        self.view.append_column( self.column1 )
         self.view.append_column( self.column2 )
-        #self.view.add_events(gtk.gdk,BUTTON_PRESS_MASK)
         self.view.connect("button-press-event", self.show_menu)
         self.popup = gtk.Menu()
         self.add = gtk.MenuItem("Add path")

@@ -11,9 +11,9 @@ class CommonFilter(gtk.Frame):
 
     def filter_sens(self, *args):
         if self.check_filter.get_active():
-            self.children()[0].set_sensitive(True)
+            self.get_children()[0].set_sensitive(True)
         else:
-            self.children()[0].set_sensitive(False)
+            self.get_children()[0].set_sensitive(False)
 
     def get_active(self):
         return self.check_filter.get_active()
