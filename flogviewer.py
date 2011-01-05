@@ -162,6 +162,8 @@ class GUI_Controller:
         evlogs = [[s[1], s[0]] for s in self.serversw2.model.get_active_servers()]
         if flogs or evlogs:
             self.cur_model.clear()
+            self.cur_model.set_default_sort_func(lambda *args: -1)
+            self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
             self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:

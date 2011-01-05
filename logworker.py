@@ -264,13 +264,13 @@ class LogListFiller(threading.Thread):
         self.view = view
         self.c_q = comp_q
         self.stp = stp
-        #self.fpg = pg
 
     def run(self):
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        #app = self.model.append
         app = self.model.insert_after
+        thr_ent = gtk.gdk.threads_enter
+        thr_leave = gtk.gdk.threads_leave
         sib = None
         get = self.queue.get
         while 1:
@@ -278,23 +278,21 @@ class LogListFiller(threading.Thread):
                 break
             try:
                 l = get(True, 1)
-                gtk.gdk.threads_enter()
+                thr_ent()
                 sib = app(sib,l)
-                gtk.gdk.threads_leave()
+                thr_leave()
             except Queue.Empty:
                 pass
         get = self.queue.get_nowait
         while 1:
             try:
                 l = get()
-                gtk.gdk.threads_enter()
+                thr_ent()
                 sib=app(sib, l)
-                gtk.gdk.threads_leave()
+                thr_leave()
             except Queue.Empty:
                 break
+        self.model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         self.view.set_model(self.model)
         self.view.thaw_child_notify()
-        #self.fpg.set_fraction(0.0)
         self.c_q.put(1)
-
-
