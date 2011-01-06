@@ -140,7 +140,7 @@ class LogWorker(multiprocessing.Process):
                 if ds:
                     msg = ds.group(1)
                 self.out_queue.put((l['the_time'], l['computer'], l['logtype'], \
-                    l['evt_type'], l['source'], msg, "#FFFFFF"))
+                    l['evt_type'], l['source'], msg, "#FFFFFF", False))
             self.completed_queue.put(1)
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
