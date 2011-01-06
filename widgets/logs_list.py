@@ -125,12 +125,16 @@ class LogListWindow(gtk.Frame):
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
         self.logs_window.add_with_viewport(self.logs_view.view)
         self.exp = gtk.Expander("Filter")
+        self.exp.connect("activate", self.text_grab_focus)
         self.filter_logs = ColorParser(self.logs_store, self.logs_view)
         self.exp.add(self.filter_logs)
         self.box = gtk.VBox()
         self.add(self.box)
         self.box.pack_start(self.logs_window, True, True)
         self.box.pack_start(self.exp, False, False, 2)
+
+    def text_grab_focus(self, *args):
+        self.filter_logs.text.grab_focus()
 
 
 
