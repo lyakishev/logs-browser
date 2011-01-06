@@ -4,7 +4,7 @@ import gtk, gobject, gio
 import re
 import pango
 
-cparser = re.compile(r"(#[a-fA-F0-9]{3,}):")
+cparser = re.compile(r"(#[a-fA-F0-9]{3,}):", re.U)
 
 class ColorParser(gtk.HBox):
     def __init__(self, model, view):
@@ -35,7 +35,7 @@ class ColorParser(gtk.HBox):
         self.filter_button.connect("clicked", self.filter_logs)
         self.color_button.connect("clicked", self.change_color)
         self.buf.connect_after("insert-text", self.tags_text)
-        self.text.connect("backspace", self.backspace)
+        self.text.connect_after("backspace", self.backspace)
 
         self.buf.create_tag('#f00', foreground='#f00')
         self.buf.create_tag('#0f0', foreground='#0f0')
@@ -43,54 +43,44 @@ class ColorParser(gtk.HBox):
         self.buf.create_tag('#dd0', foreground='#dd0')
         self.bold_tag = self.buf.create_tag("bold", weight=pango.WEIGHT_BOLD)
         self.white_tag = self.buf.create_tag("#fff", foreground="#000")
+        self.error_tag = self.buf.create_tag("error", style=pango.STYLE_ITALIC, foreground="#f00")
 
         self.start_col = 0
         self.in_color = 0
         self.colon = 0
 
         self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), "#f00:", '#f00', 'bold')
-        self.buf.insert(self.buf.get_end_iter(), '  ')
+        self.buf.insert(self.buf.get_end_iter(), ' ')
         self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), "#0f0:", '#0f0', 'bold')
-        self.buf.insert(self.buf.get_end_iter(), '  ')
+        self.buf.insert(self.buf.get_end_iter(), ' ')
         self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), "#00f:", '#00f', 'bold')
-        self.buf.insert(self.buf.get_end_iter(), '  ')
+        self.buf.insert(self.buf.get_end_iter(), ' ')
         self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), "#dd0:", '#dd0', 'bold')
-        self.buf.insert(self.buf.get_end_iter(), '  ')
+        self.buf.insert(self.buf.get_end_iter(), ' ')
+        self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), "#fff:", '#fff', 'bold')
+        self.buf.insert(self.buf.get_end_iter(), ' ')
 
+
+    def parse_and_highlight(self):
+        ttable = self.buf.get_tag_table()
+        start = self.buf.get_start_iter()
+        end = self.buf.get_end_iter()
+        self.buf.remove_all_tags(start, end)
+        txt = self.buf.get_text(start, end)
+        for m in cparser.finditer(txt):
+            start_iter = self.buf.get_iter_at_offset(m.start())
+            end_iter = self.buf.get_iter_at_offset(m.end())
+            col = m.group()[:-1]
+            tag = ttable.lookup(col)
+            tag = tag if tag else self.buf.create_tag(col, foreground=col)
+            self.buf.apply_tag(tag, start_iter, end_iter)
+            self.buf.apply_tag(self.bold_tag, start_iter, end_iter)
 
     def backspace(self, *args):
-        self.start_col -= 1
-
-    def get_iter_position(self):
-        return self.buf.get_iter_at_mark(self.buf.get_insert())
-
+        self.parse_and_highlight()
 
     def tags_text(self, buf, textiter, text, length):
-        if text == "#":
-            self.start_col = 1
-            self.colon = 0
-        elif text == ":":
-            if not self.colon:
-                iter_start = self.get_iter_position()
-                iter_start.backward_chars(self.start_col+1)
-                iter_end = self.get_iter_position()
-                iter_end.backward_char()
-                colname = self.buf.get_text(iter_start, iter_end)
-                try:
-                    color = gtk.gdk.Color(colname)
-                except ValueError:
-                    print colname
-                    self.buf.backspace(self.get_iter_position(), False, True)
-                    return
-                self.start_col+=1
-                ttable = self.buf.get_tag_table()
-                tag = ttable.lookup(colname)
-                tag = tag if tag else self.buf.create_tag(colname, foreground=colname)
-                self.buf.apply_tag(tag, iter_start, self.get_iter_position())
-                self.buf.apply_tag(self.bold_tag, iter_start, self.get_iter_position())
-                self.colon = 1
-        else:
-            self.start_col += length
+        self.parse_and_highlight()
 
     def filter_logs(self, *args):
         start = self.buf.get_start_iter()
@@ -113,10 +103,7 @@ class ColorParser(gtk.HBox):
         if response == gtk.RESPONSE_OK:
             col = colorsel.get_current_color()
             colordlg.destroy()
-            ttable = self.buf.get_tag_table()
-            tag = ttable.lookup(str(col))
-            tag = tag if tag else self.buf.create_tag(str(col), foreground_gdk=col)
             end = self.buf.get_end_iter()
-            self.buf.insert_with_tags(end, str(col)+": ", tag, self.bold_tag)
+            self.buf.insert(end, str(col)+": ")
 
 
