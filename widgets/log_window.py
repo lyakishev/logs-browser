@@ -16,8 +16,9 @@ xml_s = re.compile(r"<\?xml.+>", re.DOTALL)
 xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 
 class LogWindow:
-    def __init__(self, model, iter, sel):
+    def __init__(self, model, view, iter, sel):
         self.model = model
+        self.view = view
         self.selection = sel
         self.iter = iter
         self.popup = gtk.Window()
@@ -135,6 +136,7 @@ class LogWindow:
             self.iter = self.model.get_iter_from_string(str(prevPath))
         except ValueError:
             pass
+        self.view.scroll_to_cell(prevPath)
         self.fill()
 
     def show_next(self, *args):
@@ -147,6 +149,7 @@ class LogWindow:
             self.iter = self.model.get_iter_from_string(str(prevPath))
         except ValueError:
             pass
+        self.view.scroll_to_cell(prevPath)
         self.fill()
 
     def pretty_xml(self,text):

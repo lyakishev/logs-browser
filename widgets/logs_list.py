@@ -113,7 +113,7 @@ class DisplayLogsModel:
     def show_log( self, path, column, params):
         selection = path.get_selection()
         (model, iter) = selection.get_selected()
-        log_w = LogWindow(model, iter, selection)
+        log_w = LogWindow(model, self.view, iter, selection)
         return
 
 class LogListWindow(gtk.Frame):
@@ -123,7 +123,7 @@ class LogListWindow(gtk.Frame):
         self.logs_view= DisplayLogsModel(self.logs_store.get_model())
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-        self.logs_window.add_with_viewport(self.logs_view.view)
+        self.logs_window.add(self.logs_view.view)
         self.exp = gtk.Expander("Filter")
         self.exp.connect("activate", self.text_grab_focus)
         self.filter_logs = ColorParser(self.logs_store, self.logs_view)
