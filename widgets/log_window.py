@@ -79,6 +79,7 @@ class LogWindow:
             for m in fre.finditer(txt):
                 start_iter = self.txt_buff.get_iter_at_offset(m.start())
                 end_iter = self.txt_buff.get_iter_at_offset(m.end())
+                self.txt_buff.remove_all_tags(start_iter, end_iter)
                 for tag in col_str[0][pattern]:
                     ntag = self.tag_table.lookup(tag)
                     if not ntag:
