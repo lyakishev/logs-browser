@@ -7,6 +7,8 @@ import re
 import xml.dom.minidom
 import os
 import threading
+from widgets.color_parser import LogColorParser
+import pango
 
 #xml_re = re.compile("<\?xml(.+)>")
 xml_spl=re.compile(r"(<\?xml.+?>)")
@@ -55,50 +57,45 @@ class LogWindow:
         self.log_text.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.scr.add(self.log_text)
         self.popup.add(self.box)
-        self.hl_log_red = gtk.Entry()
-        self.hl_log_red.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FF0000"))
-        self.red_tag = self.txt_buff.create_tag("red", background="red")
-        self.hl_log_green = gtk.Entry()
-        self.hl_log_green.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#00FF00"))
-        self.green_tag = self.txt_buff.create_tag("green", background="green")
-        self.hl_log_blue = gtk.Entry()
-        self.hl_log_blue.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#0000FF"))
-        self.hl_log_blue.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FFFFFF"))
-        self.blue_tag = self.txt_buff.create_tag("blue", background="blue", foreground="white")
-        self.hl_log_yellow = gtk.Entry()
-        self.hl_log_yellow.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#FFFF00"))
-        self.yellow_tag = self.txt_buff.create_tag("yellow", background="yellow")
-        self.color_button = gtk.Button("Highlight")
-        self.color_button.connect("clicked", self.highlight_all)
-
-        self.entry_box=gtk.HBox()
-        self.entry_box.pack_start(self.hl_log_red)
-        self.entry_box.pack_start(self.hl_log_green)
-        self.entry_box.pack_start(self.hl_log_blue)
-        self.entry_box.pack_start(self.hl_log_yellow)
-        self.entry_box.pack_start(self.color_button)
+        self.filter_exp = gtk.Expander("Highlight")
+        self.filter = LogColorParser(self)
+        self.filter_exp.add(self.filter)
         self.box.pack_start(self.info_box, False, False, padding=10)
         self.box.pack_start(self.scr)
-        self.box.pack_start(self.entry_box, False,False)
+        self.box.pack_start(self.filter_exp, False,False)
+        self.tag_table = self.txt_buff.get_tag_table()
+        self.col_str=({},[])
         self.fill()
         self.popup.show_all()
 
-    def highlight(self, entry, tag):
-        search_str = entry.get_text()
+    def highlight(self, col_str):
+        self.col_str = col_str
         start = self.txt_buff.get_start_iter()
         end = self.txt_buff.get_end_iter()
-        self.txt_buff.remove_tag(tag, start, end)
+        self.txt_buff.remove_all_tags(start, end)
         txt = self.txt_buff.get_text(start, end)
-        fre = re.compile(search_str, re.DOTALL|re.IGNORECASE)
-        for m in fre.finditer(txt):
-            start_iter = self.txt_buff.get_iter_at_offset(m.start())
-            end_iter = self.txt_buff.get_iter_at_offset(m.end())
-            self.txt_buff.apply_tag(tag, start_iter, end_iter)
-
-    def highlight_all(self, *args):
-        for e, t in zip([self.hl_log_red,self.hl_log_green,self.hl_log_blue,self.hl_log_yellow],\
-            [self.red_tag,self.green_tag,self.blue_tag,self.yellow_tag]):
-            self.highlight(e,t)
+        for pattern in col_str[1]:
+            fre = re.compile(pattern, re.U)
+            for m in fre.finditer(txt):
+                start_iter = self.txt_buff.get_iter_at_offset(m.start())
+                end_iter = self.txt_buff.get_iter_at_offset(m.end())
+                for tag in col_str[0][pattern]:
+                    ntag = self.tag_table.lookup(tag)
+                    if not ntag:
+                        ntag = self.txt_buff.create_tag(tag)
+                        att = tag[0]
+                        if att == "f":
+                            ntag.set_property("foreground",tag[1:])
+                        elif att == "b":
+                            if len(tag)>1:
+                                ntag.set_property("background",tag[1:])
+                            else:
+                                ntag.set_property("weight",pango.WEIGHT_BOLD)
+                        elif att == "s":
+                            ntag.set_property("size",int(tag[1:])*pango.SCALE)
+                        elif att == "i":
+                            ntag.set_property("style",pango.STYLE_ITALIC)
+                    self.txt_buff.apply_tag(ntag, start_iter, end_iter)
 
     def open_file(self, *args):
         file_to_open = self.model.get_value(self.iter, 4)
@@ -124,7 +121,7 @@ class LogWindow:
             self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
             ))
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
-        self.highlight_all(None)
+        self.highlight(self.col_str)
 
 
     def show_prev(self, *args):
