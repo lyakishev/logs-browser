@@ -3,7 +3,7 @@
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
-from parse import parse_filename, parse_logline_re
+from parse import parse_filename, parse_logline_re, define_format
 import os
 import time
 import datetime
@@ -177,17 +177,13 @@ def file_preparator(folders, fltr):#, queue):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
-                if pfn in value and ext in ('txt','log'):
-                    #f_end_date = get_time(fullf, \
-                    #    ltime(os.path.getmtime(fullf))) #RD log write 8
-                    #    minutes after event
+                if not pfn:
+                    pfn = "undefined"
+                if ext in ('txt','log') and pfn in value:
                     f_start_date = get_time(fullf, \
                         ltime(os.path.getctime(fullf)))
                     if f_start_date<=fltr['date'][1]:
-                    #if datetime_intersect(fltr['date'][0],
-                    #                        fltr['date'][1],
-                    #                        f_start_date, f_end_date):
-                        flf.append(fullf)
+                        flf.append([fullf, pfn])
                         #queue.put(fullf)
     return flf
 
@@ -209,6 +205,22 @@ class FileLogWorker(multiprocessing.Process):
         #f = codecs.open(self.path, 'r', 'cp1251')
         deq.extend(f.readlines())
         f.close()
+        pformat = None
+        while deq:
+            line = deq.popleft()
+            pformat = define_format(line)
+            buf_deq.append(line)
+            if pformat:
+                break
+        if not pformat:
+            if buf_deq:
+                print "Not found the format for file %s" % self.path
+            else:
+                print "File %s is empty." % self.path
+            raise StopIteration
+        else:
+            while buf_deq:
+                deq.appendleft(buf_deq.pop())
         at = [0,0]
         while deq:
             if self.stop.is_set():
@@ -218,7 +230,7 @@ class FileLogWorker(multiprocessing.Process):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
-            parsed_s = parse_logline_re(string, cdate)
+            parsed_s = parse_logline_re(string, cdate, pformat)
             if not parsed_s:
                 buf_deq.appendleft(string)
             else:
@@ -227,7 +239,7 @@ class FileLogWorker(multiprocessing.Process):
                 buf_deq.appendleft(string)
                 msg = "".join(buf_deq)
                 buf_deq.clear()
-                yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF", False)
+                yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
 
     def filter(self):
         def f_date(l):
@@ -251,7 +263,7 @@ class FileLogWorker(multiprocessing.Process):
 
     def run(self):
         while 1:
-            self.path = self.in_queue.get()
+            self.path, self.Log = self.in_queue.get()
             for l in self.group():
                 self.out_queue.put(l)
             self.completed_queue.put(1)

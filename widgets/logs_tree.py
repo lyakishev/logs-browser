@@ -115,8 +115,9 @@ class FileServersModel(ServersModel):
                 fls=[]#{}
                 for item in files:
                     name, ext = parse_filename(item)
-                    if name and ext in ('txt', 'log'):
-                        #if not fls.get(name, None):
+                    if ext in ('txt', 'log'):
+                        if not name:
+                            name = "undefined"
                         if name not in fls:
                             gtk.gdk.threads_enter()
                             tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
@@ -148,18 +149,15 @@ class FileServersModel(ServersModel):
             flsapp=fls.append
             for item in files:
                 name, ext = parse_filename(item)
-                if name and ext in ('txt', 'log'):
-                    #if not fls.get(name, None):
+                if ext in ('txt', 'log'):
+                    if not name:
+                        name = "undefined"
                     if name not in fls:
                         gtk.gdk.threads_enter()
                         tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
                         gtk.gdk.threads_leave()
                         flsapp(name)
         print datetime.datetime.now()-tm
-
-
-
-
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
@@ -173,39 +171,6 @@ class FileServersModel(ServersModel):
             folders[k]=[fl[1] for fl in list(g)]
 
         return folders
-
-#def build_tree(nodes):
-#    # create empty tree to fill
-#    tree = {}
-#
-#    # fill in tree starting with roots (those with no parent)
-#    build_tree_recursive(tree, None, nodes)
-#
-#    return tree
-#
-#def build_tree_recursive(tree, parent, nodes):
-#    # find children
-#    children  = [n for n in nodes if n.parent == parent]
-#
-#    # build a subtree for each child
-#    for child in children:
-#    	# start new subtree
-#    	tree[child.name] = {}
-#
-#    	# call recursively to build a subtree for current node
-#    	build_tree_recursive(tree[child.name], child, nodes)
-
-
-##os.path.getmtime(fname)))
-#left_inter = end_date < file_end_date and end_date>file_start_date
-#right_inter = start_date>file_start_date and start_date<file_end_date
-#if left_inter:
-#    parse
-#elif right_inter:
-#    parse
-#elif
-
-
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
