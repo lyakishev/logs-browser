@@ -55,18 +55,13 @@ def file_preparator(folders, fltr):#, queue):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
-                if pfn in value and ext in ('txt','log'):
-                    #f_end_date = get_time(fullf, \
-                    #    ltime(os.path.getmtime(fullf))) #RD log write 8
-                    #    minutes after event
-                    f_start_date = get_time(fullf, \
-                        ltime(os.path.getctime(fullf)))
-                    if f_start_date<=fltr['date'][1]:
-                    #if datetime_intersect(fltr['date'][0],
-                    #                        fltr['date'][1],
-                    #                        f_start_date, f_end_date):
-                        flf.append(fullf)
-                        #queue.put(fullf)
+                if ext in ('txt','log'):
+                    if (not pfn and "undefined" in value) or (pfn in value):
+                        f_start_date = get_time(fullf, \
+                            ltime(os.path.getctime(fullf)))
+                        if f_start_date<=fltr['date'][1]:
+                            flf.append(fullf)
+                            #queue.put(fullf)
     return flf
 
 
