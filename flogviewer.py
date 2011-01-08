@@ -81,6 +81,8 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
+        self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process.start()
         self.threads = []
         for t in range(3):
              t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
@@ -125,6 +127,7 @@ class GUI_Controller:
         self.status.statusicon.set_visible(False)
         for t in self.threads:
             t.terminate()
+        self.event_process.terminate()
         gtk.main_quit()
         sys.exit()
         return
