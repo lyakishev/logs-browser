@@ -3,6 +3,7 @@ pygtk.require("2.0")
 import gtk, gobject, gio
 from widgets.log_window import LogWindow
 from widgets.color_parser import ColorParser
+from widgets.label_text import LabelText
 import re
 
 class LogsModel:
@@ -127,9 +128,11 @@ class LogListWindow(gtk.Frame):
         self.exp = gtk.Expander("Filter")
         self.exp.connect("activate", self.text_grab_focus)
         self.filter_logs = ColorParser(self.logs_store, self.logs_view)
+        self.label_text = LabelText()
         self.exp.add(self.filter_logs)
         self.box = gtk.VBox()
         self.add(self.box)
+        self.box.pack_start(self.label_text, False, False)
         self.box.pack_start(self.logs_window, True, True)
         self.box.pack_start(self.exp, False, False, 2)
 
