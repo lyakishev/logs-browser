@@ -9,34 +9,44 @@ def parse_filename(path):
     fnparts = fnwonums.split('.')
     return (".".join(fnparts[:-1]) , fnparts[-1].lower())
 
-line_re = re.compile(r"^(\[?\w+\]?|\w+)?\s*\[?"
-r"((?P<year1>\d{4})[.-](?P<month1>\d{2})[.-](?P<day1>\d{2})\s*(?P<hour1>\d{2})[:](?P<min1>\d{2})[:](?P<sec1>\d{2})([,.](?P<ms1>\d+))?|"
-r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?|"
-r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+))\]?\s*(?P<msg>.+)")
+prefix = r"^(\[?\w+\]?|\w+)?\s*\[?"
+formats = [
+    r"(?P<year1>\d{4})[.-](?P<month1>\d{2})[.-](?P<day1>\d{2})\s*(?P<hour1>\d{2})[:](?P<min1>\d{2})[:](?P<sec1>\d{2})([,.](?P<ms1>\d+))?",
+    r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?",
+    r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+)"
+]
+suffix = r"\]?\s*(?P<msg>.+)"
 
-def parse_logline_re(line, cdate):
-    parsed_line = line_re.search(line)
+common_parser = re.compile(prefix+"("+"|".join(formats)+")"+suffix)
+
+def clear_format(pformat, n):
+    for i in ["year","month","day","hour","min","sec","ms"]:
+        pformat = pformat.replace(i+str(n), i)
+    return pformat
+
+def define_format(line):
+    parsed_line = common_parser.search(line)
     if parsed_line:
         pd = parsed_line.groupdict()
-        for n in [1,2,3]:
+        for n in range(1,len(formats)+1):
             if pd["hour%d" % n]:
-                ms = pd["ms%d" % n]
-                ms = int(ms and str(1000*int(ms))[:6] or 0)
-                if pd.get("year%d" % n, None):
-                    dt = datetime(int(pd["year%d" % n]),
-                                  int(pd["month%d" %n]),
-                                  int(pd["day%d" %n]),
-                                  int(pd["hour%d" %n]),
-                                  int(pd["min%d" %n]),
-                                  int(pd["sec%d" %n]),
-                                  ms
-                    )
-                else:
-                    dt = datetime(cdate.tm_year, cdate.tm_mon, \
-                        cdate.tm_mday, int(pd["hour%d" % n]), \
-                        int(pd["min%d" % n]), int(pd["sec%d" % n]), ms)
-            else:
-                continue
+                return re.compile(prefix+clear_format(formats[n-1],n)+suffix)
+    else:
+        return None
+
+def parse_logline_re(line, cdate, re_obj):
+    parsed_line = re_obj.search(line)
+    if parsed_line:
+        pd = parsed_line.groupdict()
+        ms = pd["ms"]
+        ms = int(ms and str(1000*int(ms))[:6] or 0)
+        dt = datetime(int(pd.get("year", None) or cdate.tm_year),
+                      int(pd.get("month", None) or cdate.tm_mon),
+                      int(pd.get("day", None) or cdate.tm_mday),
+                      int(pd["hour"]),
+                      int(pd["min"]),
+                      int(pd["sec"]),
+                      ms)
         return (dt, pd['msg'])
     else:
         return None

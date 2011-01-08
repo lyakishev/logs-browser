@@ -3,7 +3,7 @@
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject
-from parse import parse_filename, parse_logline_re
+from parse import parse_filename, parse_logline_re, define_format
 import os
 import time
 import datetime
@@ -83,6 +83,22 @@ class FileLogWorker(multiprocessing.Process):
         #f = codecs.open(self.path, 'r', 'cp1251')
         deq.extend(f.readlines())
         f.close()
+        pformat = None
+        while deq:
+            line = deq.popleft()
+            pformat = define_format(line)
+            buf_deq.append(line)
+            if pformat:
+                break
+        if not pformat:
+            if buf_deq:
+                print "Not found the format for file %s" % self.path
+            else:
+                print "File %s is empty." % self.path
+            raise StopIteration
+        else:
+            while buf_deq:
+                deq.appendleft(buf_deq.pop())
         at = [0,0]
         while deq:
             if self.stop.is_set():
@@ -92,7 +108,7 @@ class FileLogWorker(multiprocessing.Process):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
-            parsed_s = parse_logline_re(string, cdate)
+            parsed_s = parse_logline_re(string, cdate, pformat)
             if not parsed_s:
                 buf_deq.appendleft(string)
             else:
