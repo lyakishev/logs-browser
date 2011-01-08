@@ -26,6 +26,7 @@ class LogsNotebook(gtk.Notebook):
             self.mem_tab=self.get_tab_label(self.page)
             txt = self.mem_tab.get_children()[0].get_children()[0].get_text()
             self.entry = gtk.Entry()
+            self.entry.set_has_frame(False)
             self.entry.set_width_chars(12)
             self.entry.set_text(txt)
             self.entry.connect("focus-out-event", self.new_page_name)
