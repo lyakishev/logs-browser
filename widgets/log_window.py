@@ -76,8 +76,8 @@ class LogWindow:
         self.txt_buff.remove_all_tags(start, end)
         txt = self.txt_buff.get_text(start, end)
         for pattern in col_str[1]:
-            fre = re.compile(pattern, re.U)
-            for m in fre.finditer(txt):
+            fre = re.compile(pattern.decode('utf8'), re.U)
+            for m in fre.finditer(txt.decode('utf8')):
                 start_iter = self.txt_buff.get_iter_at_offset(m.start())
                 end_iter = self.txt_buff.get_iter_at_offset(m.end())
                 self.txt_buff.remove_all_tags(start_iter, end_iter)
