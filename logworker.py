@@ -55,13 +55,14 @@ def file_preparator(folders, fltr):#, queue):
             fullf = os.path.join(key,f)
             if os.path.isfile(fullf):
                 pfn, ext = parse_filename(f)
-                if ext in ('txt','log'):
-                    if (not pfn and "undefined" in value) or (pfn in value):
-                        f_start_date = get_time(fullf, \
-                            ltime(os.path.getctime(fullf)))
-                        if f_start_date<=fltr['date'][1]:
-                            flf.append(fullf)
-                            #queue.put(fullf)
+                if not pfn:
+                    pfn = "undefined"
+                if ext in ('txt','log') and pfn in value:
+                    f_start_date = get_time(fullf, \
+                        ltime(os.path.getctime(fullf)))
+                    if f_start_date<=fltr['date'][1]:
+                        flf.append([fullf, pfn])
+                        #queue.put(fullf)
     return flf
 
 
@@ -100,7 +101,7 @@ class FileLogWorker(multiprocessing.Process):
                 buf_deq.appendleft(string)
                 msg = "".join(buf_deq)
                 buf_deq.clear()
-                yield (parsed_s[0], "", "", l_type , self.path, msg, "#FFFFFF", False)
+                yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
 
     def filter(self):
         def f_date(l):
@@ -124,7 +125,7 @@ class FileLogWorker(multiprocessing.Process):
 
     def run(self):
         while 1:
-            self.path = self.in_queue.get()
+            self.path, self.Log = self.in_queue.get()
             for l in self.group():
                 self.out_queue.put(l)
             self.completed_queue.put(1)
