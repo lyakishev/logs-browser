@@ -90,7 +90,7 @@ class FileServersModel(ServersModel):
         #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
         self.custom_dir = self.treestore.append(None, ["Custom Folders",\
             gtk.STOCK_DIRECTORY, None, 'd'])
-        threading.Thread(target=self.add_custom_logdir,args=(r"/home/user/sharew7/log",)).start()
+        threading.Thread(target=self.add_custom_logdir,args=(r"\\VBOXSVR\sharew7\log",)).start()
 
     def fill_model(self, stand, servers):
         dt = datetime.datetime.now()
@@ -165,7 +165,7 @@ class FileServersModel(ServersModel):
         srvs = self.get_active_servers()
         new_srvs = []
         for i in srvs:
-            new_srvs.append([os.sep+os.sep.join(reversed(i[1:-1])),
+            new_srvs.append(["\\\\"+"\\".join(reversed(i[1:-1])),
                              i[0]])
         folders = {}
 

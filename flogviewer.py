@@ -12,6 +12,8 @@ from logworker import *
 import logworker
 from widgets.date_time import DateFilter
 from widgets.evt_type import EventTypeFilter
+from widgets.content import ContentFilter
+from widgets.quantity import QuantityFilter
 from widgets.logs_tree import FileServersTree, ServersTree
 #import Queue
 from widgets.logs_notebook import LogsNotebook
@@ -42,6 +44,7 @@ class GUI_Controller:
 
         self.date_filter = DateFilter()
         self.status = StatusIcon(self.date_filter, self.root)
+        self.content_filter = ContentFilter()
 
 
         self.logs_frame = gtk.Frame(label="Logs")
@@ -106,6 +109,7 @@ class GUI_Controller:
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
         self.filter_box.pack_start(self.date_filter, False, False)
+        self.filter_box.pack_start(self.content_filter, False, False)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
         self.control_box.pack_start(self.log_ntb, True, True)
@@ -161,10 +165,10 @@ class GUI_Controller:
             self.cur_model.set_default_sort_func(lambda *args: -1)
             self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()
-            self.LOGS_FILTER['types'] = []#self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
+            self.LOGS_FILTER['types'] = [] #self.evt_type_filter.get_active() and self.evt_type_filter.get_event_types or []
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
-            self.LOGS_FILTER['content'] = ("","") #self.content_filter.get_active() and self.content_filter.get_cont or ("","")
+            self.LOGS_FILTER['content'] = self.content_filter.get_active() and self.content_filter.get_cont or ("","")
             self.LOGS_FILTER['last'] = 0 #self.quantity_filter.get_active() and self.quantity_filter.get_quant or 0
             n_flogs=file_preparator(flogs,self.LOGS_FILTER)
             fl_count = len(n_flogs)+len(evlogs)+1
