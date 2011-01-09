@@ -8,6 +8,7 @@ from itertools import groupby
 import glob
 import datetime
 from widgets.dialog import Dialog
+import re
 
 class ServersModel(object):
     def __init__(self):
@@ -80,31 +81,42 @@ class FileServersModel(ServersModel):
         stands = []
         self.parents = {}
         self.files = []
+        self.config = {}
+        self.read_from_file("logs.cfg")
 
-        #stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
-        #stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
-        #stands.append(["kog-app", ['%s-%0.2d' % ("kog-app", i) for i in range(1,13)]])
-        #stands.append(["umc-test-2", ['%s-v%0.4d' % ("msk-app", i) for i in \
-        #    range(190, 224) if i not in range(197,203) and i not in range(204,221)]])
-
-        #for stand, servers in stands:
-        #    thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
-        #    thread.start()
-
-        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
-        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
-        root = self.add_root("Test")
-        #self.add_parents(r"\\VBOXSVR\sharew7\log", root)
-        self.add_parents(r"/home/user/sharew7/log", root)
-        self.add_logdir(r"/home/user/sharew7/log", root)
-        self.remove_empty_dirs()
-        #threading.Thread(target=self.add_logdir,args=(r"/home/user/sharew7/log2", None)).start()
+    def read_from_file(self, path):
+        root_re = re.compile("^\[.+?\]$")
+        with open(path, 'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    if line == "[]":
+                        root = None
+                        c_root = line
+                        self.config[c_root] = []
+                    elif root_re.search(line):
+                        root = self.add_root(line[1:-1])
+                        c_root = line
+                        self.config[c_root] = []
+                    else:
+                        self.add_parents(line, root)
+                        self.add_logdir(line, root)
+                        self.config[c_root].append(line)
+                        
+    def write_config(self, path):
+        with open(path, "w") as f:
+            for k, v in self.config.iteritems():
+                f.write(k+"\n")
+                for line in v:
+                    f.write(line+"\n")
+            
 
     def add_root(self, name):
-        for root in self.treestore:
-            if name == root[0]:
-                return
-        return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
+        if name:
+            for root in self.treestore:
+                if name == root[0]:
+                    return
+            return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
 
     def remove_empty_dirs(self):
         def walker(row):
@@ -232,17 +244,25 @@ class DisplayServersModel:
         self.popup = gtk.Menu()
         self.short_popup = gtk.Menu()
         self.sh_add_path = gtk.MenuItem("Add path")
+        self.sh_save = gtk.MenuItem("Save")
         self.add_path = gtk.MenuItem("Add path")
         self.add_root = gtk.MenuItem("Add root")
+        self.save = gtk.MenuItem("Save")
         self.sh_add_path.connect("activate", self.f_add_path)
         self.add_path.connect("activate", self.f_add_path)
         self.add_root.connect("activate", self.f_add_root)
+        self.save.connect("activate", self.save_config)
+        self.sh_save.connect("activate", self.save_config)
         self.popup.append(self.add_root)
         self.popup.append(self.add_path)
+        self.popup.append(self.save)
         self.short_popup.append(self.sh_add_path)
+        self.short_popup.append(self.sh_save)
         self.popup.show_all()
         self.short_popup.show_all()
 
+    def save_config(self, *args):
+        self.srvrs.write_config("logs.cfg")
 
     def f_add_root(self, *args):
         dialog = Dialog()
@@ -268,6 +288,13 @@ class DisplayServersModel:
             remove_empty_dirs = threading.Thread(target=self.srvrs.remove_empty_dirs)
             remove_empty_dirs.start()
             remove_empty_dirs.join()
+            try:
+                root = "["+self.srvrs.treestore.get_value(self.root, 0)+"]"
+            except TypeError:
+                root = "[]"
+            self.srvrs.config.setdefault(root, [])
+            if path not in self.srvrs.config[root]:
+                self.srvrs.config[root].append(path)
         else:
             fchooser.destroy()
         
@@ -286,6 +313,8 @@ class DisplayServersModel:
                 self.ch_iter = self.srvrs.treestore.get_iter(path)
                 if self.srvrs.treestore.get_value(iter, 3) == 'n':
                     self.root = iter
+                else:
+                    self.root = None
                 self.short_popup.popup( None, None, None, event.button, time)
             else:
                 self.root = None
