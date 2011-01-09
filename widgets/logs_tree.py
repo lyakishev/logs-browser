@@ -7,6 +7,7 @@ import threading
 from itertools import groupby
 import glob
 import datetime
+from widgets.dialog import Dialog
 
 class ServersModel(object):
     def __init__(self):
@@ -37,6 +38,8 @@ class ServersModel(object):
                 cur_log = [self.treestore.get_value(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
+                    if self.treestore.get_value(parent,3) == 'n':
+                        break
                     cur_log.append(self.treestore.get_value(parent,0))
                     parent = self.treestore.iter_parent(parent)
                 log_for_process.append(cur_log)
@@ -75,6 +78,8 @@ class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
         stands = []
+        self.parents = {}
+        self.files = []
 
         #stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
         #stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
@@ -88,83 +93,98 @@ class FileServersModel(ServersModel):
 
         #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
         #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
-        self.custom_dir = self.treestore.append(None, ["Custom Folders",\
-            gtk.STOCK_DIRECTORY, None, 'd'])
-        threading.Thread(target=self.add_custom_logdir,args=(r"\\VBOXSVR\sharew7\log",)).start()
+        root = self.add_root("Test")
+        #self.add_parents(r"\\VBOXSVR\sharew7\log", root)
+        self.add_parents(r"/home/user/sharew7/log", root)
+        self.add_logdir(r"/home/user/sharew7/log", root)
+        self.remove_empty_dirs()
+        #threading.Thread(target=self.add_logdir,args=(r"/home/user/sharew7/log2", None)).start()
 
-    def fill_model(self, stand, servers):
-        dt = datetime.datetime.now()
+    def add_root(self, name):
+        for root in self.treestore:
+            if name == root[0]:
+                return
+        return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
+
+    def remove_empty_dirs(self):
+        def walker(row):
+            files = 0
+            dirs = 0
+            for i in row.iterchildren():
+                if i[3] == 'd':
+                    dirs += 1
+                    walker(i)
+                else:
+                    files += 1
+            if not files and not dirs:
+                par = row.parent
+                if row[3] != 'n':
+                    self.treestore.remove(row.iter)
+                    if par:
+                        walker(par)
+        for i in self.treestore:
+            walker(i)
+
+
+    def add_parents(self, path, parent):
+        opjoin = os.path.join
+        try:
+            parent_str = self.treestore.get_value(parent,0)
+        except TypeError:
+            parent_str = ""
         tsappend = self.treestore.append
+        parts = path.split(os.sep)
+        if path.startswith(r"\\"):
+            parts = [r"\\"+parts[2]]+parts[3:]
+        elif path.startswith("/"):
+            parts = ["/"+parts[1]]+parts[2:]
+        for n, p in enumerate(parts):
+            if p:
+                new_node_path = "|".join([parent_str, os.sep.join(parts[:n+1])])
+                if not self.parents.get(new_node_path, None):
+                    prev_parent = self.parents.get("|".join([parent_str, os.sep.join(parts[:n])]), parent)
+                    #gtk.gdk.threads_enter()
+                    self.parents[new_node_path] = tsappend(prev_parent, [p, gtk.STOCK_DIRECTORY, None, 'd'])
+                    #gtk.gdk.threads_leave()
+
+    def add_logdir(self, path, parent):
         walk = os.walk
         opjoin = os.path.join
-        gtk.gdk.threads_enter()
-        stiter = tsappend(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
-        gtk.gdk.threads_leave()
-        for server_name in servers:
-            parents={}
-            gtk.gdk.threads_enter()
-            server = tsappend(stiter, ["\\".join([server_name, "forislog"]), gtk.STOCK_DIRECTORY, None, 'd'])
-            gtk.gdk.threads_leave()
-            for root, dirs, files in walk(r'\\%s\forislog' % server_name):
-                true_parent = parents.get(root, server)
-                for subdir in dirs:
-                    gtk.gdk.threads_enter()
-                    parents[opjoin(root, subdir)] = tsappend(true_parent, \
+        try:
+            parent_str = self.treestore.get_value(parent, 0)
+        except TypeError:
+            parent_str = ""
+        tsappend = self.treestore.append
+        for root, dirs, files in walk(path):
+            true_parent = self.parents.get("|".join([parent_str, root]), parent)
+            for subdir in dirs:
+                #gtk.gdk.threads_enter()
+                node = self.parents.get("|".join([parent_str, opjoin(root, subdir)]), None)
+                if not node:
+                    self.parents["|".join([parent_str, opjoin(root, subdir)])] = tsappend(true_parent, \
                         [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                    gtk.gdk.threads_leave()
-                fls=[]#{}
-                for item in files:
+                #gtk.gdk.threads_leave()
+            fls=[]
+            for item in files:
+                fullf = opjoin(root, item)
+                if "|".join([parent_str, fullf]) not in self.files:
+                    self.files.append("|".join([parent_str, fullf]))
                     name, ext = parse_filename(item)
                     if ext in ('txt', 'log'):
                         if not name:
                             name = "undefined"
                         if name not in fls:
-                            gtk.gdk.threads_enter()
+                            #gtk.gdk.threads_enter()
                             tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
-                            gtk.gdk.threads_leave()
+                            #gtk.gdk.threads_leave()
                             fls.append(name)
-        print stand, '  ', datetime.datetime.now() - dt
-
-    def add_custom_logdir(self, path):
-        tm = datetime.datetime.now()
-        tsappend = self.treestore.append
-        opjoin = os.path.join
-        gtk.gdk.threads_enter()
-        new_parent = self.custom_dir
-        gtk.gdk.threads_leave()
-        for subdir in [p for p in path.split(os.sep) if p]:
-            gtk.gdk.threads_enter()
-            new_parent = tsappend(new_parent, [subdir, gtk.STOCK_DIRECTORY, None, 'd'])
-            gtk.gdk.threads_leave()
-
-        parents = {}
-        for root, dirs, files in os.walk(path):
-            true_parent = parents.get(root, new_parent)
-            for subdir in dirs:
-                gtk.gdk.threads_enter()
-                parents[opjoin(root, subdir)] = tsappend(true_parent,\
-                    [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                gtk.gdk.threads_leave()
-            fls=[]#{}
-            flsapp=fls.append
-            for item in files:
-                name, ext = parse_filename(item)
-                if ext in ('txt', 'log'):
-                    if not name:
-                        name = "undefined"
-                    if name not in fls:
-                        gtk.gdk.threads_enter()
-                        tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
-                        gtk.gdk.threads_leave()
-                        flsapp(name)
-        print datetime.datetime.now()-tm
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
         new_srvs = []
         for i in srvs:
-            new_srvs.append(["\\\\"+"\\".join(reversed(i[1:-1])),
-                             i[0]])
+            new_srvs.append([os.sep.join(reversed(i[1:])), i[0]])
+
         folders = {}
 
         for k,g in groupby(new_srvs, lambda x: x[0]):
@@ -210,38 +230,66 @@ class DisplayServersModel:
         self.view.append_column( self.column2 )
         self.view.connect("button-press-event", self.show_menu)
         self.popup = gtk.Menu()
-        self.add = gtk.MenuItem("Add path")
-        self.add.connect("activate", self.add_path)
-        self.popup.append(self.add)
+        self.short_popup = gtk.Menu()
+        self.sh_add_path = gtk.MenuItem("Add path")
+        self.add_path = gtk.MenuItem("Add path")
+        self.add_root = gtk.MenuItem("Add root")
+        self.sh_add_path.connect("activate", self.f_add_path)
+        self.add_path.connect("activate", self.f_add_path)
+        self.add_root.connect("activate", self.f_add_root)
+        self.popup.append(self.add_root)
+        self.popup.append(self.add_path)
+        self.short_popup.append(self.sh_add_path)
         self.popup.show_all()
+        self.short_popup.show_all()
 
-    def add_path(self, *args):
+
+    def f_add_root(self, *args):
+        dialog = Dialog()
+        dialog.run()
+        txt = dialog.get_text()
+        dialog.destroy()
+        self.srvrs.add_root(txt)
+
+    def f_add_path(self, *args):
         fchooser = gtk.FileChooserDialog(None, None,
             gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
             gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
         response = fchooser.run()
         if response == gtk.RESPONSE_OK:
-            self.srvrs.add_custom_logdir(fchooser.get_filename())
-        fchooser.destroy()
-
+            path = fchooser.get_filename()
+            fchooser.destroy()
+            add_parents=threading.Thread(target=self.srvrs.add_parents, args=(path, self.root))
+            add_parents.start()
+            add_parents.join()
+            add_logdir=threading.Thread(target=self.srvrs.add_logdir, args=(path, self.root))
+            add_logdir.start()
+            add_logdir.join()
+            remove_empty_dirs = threading.Thread(target=self.srvrs.remove_empty_dirs)
+            remove_empty_dirs.start()
+            remove_empty_dirs.join()
+        else:
+            fchooser.destroy()
+        
+        
     def show_menu(self, treeview, event):
         if event.button == 3:
-            #x = int(event.x)
-            #y = int(event.y)
+            x = int(event.x)
+            y = int(event.y)
             time = event.time
-            #pthinfo = treeview.get_path_at_pos(x, y)
-            #if pthinfo is not None:
-            #    path, col, cellx, celly = pthinfo
-            #    treeview.grab_focus()
-            #    treeview.set_cursor( path, col, 0)
-            #    self.popup.popup( None, None, None, event.button, time)
-            #else:
-            #    self.popup.popup( None, None, None, event.button, time)
-            self.popup.popup( None, None, None, event.button, time)
-            return True
-
-
-        #return self.view
+            pthinfo = treeview.get_path_at_pos(x, y)
+            if pthinfo is not None:
+                path, col, cellx, celly = pthinfo
+                treeview.grab_focus()
+                treeview.set_cursor( path, col, 0)
+                iter = self.srvrs.treestore.get_iter(path[0])
+                self.ch_iter = self.srvrs.treestore.get_iter(path)
+                if self.srvrs.treestore.get_value(iter, 3) == 'n':
+                    self.root = iter
+                self.short_popup.popup( None, None, None, event.button, time)
+            else:
+                self.root = None
+                self.popup.popup( None, None, None, event.button, time)
 
     def col1_toggled_cb( self, cell, path, model ):
         """
