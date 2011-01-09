@@ -89,19 +89,27 @@ class FileServersModel(ServersModel):
         with open(path, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
-                if line and not line.startswith("#"):
-                    if line == "[]":
-                        root = None
-                        c_root = line
-                        self.config[c_root] = []
-                    elif root_re.search(line):
-                        root = self.add_root(line[1:-1])
-                        c_root = line
-                        self.config[c_root] = []
+                if line:
+                    if not line.startswith("#"):
+                        if line == "[]":
+                            root = None
+                            c_root = line
+                            self.config[c_root] = []
+                        elif root_re.search(line):
+                            root = self.add_root(line[1:-1])
+                            c_root = line
+                            self.config[c_root] = []
+                        else:
+                            self.add_parents(line, root)
+                            self.add_logdir(line, root)
+                            self.config[c_root].append(line)
                     else:
-                        self.add_parents(line, root)
-                        self.add_logdir(line, root)
-                        self.config[c_root].append(line)
+                        if line == "#[]" or root_re.search(line[1:]):
+                            c_root = line
+                            self.config[c_root] = []
+                        else:
+                            self.config[c_root].append(line)
+                        
                         
     def write_config(self, path):
         with open(path, "w") as f:
