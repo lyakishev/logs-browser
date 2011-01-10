@@ -107,6 +107,7 @@ class DisplayLogsModel:
                 col.set_sort_column_id(cid)
                 col.set_resizable(True)
         self.view.connect( 'row-activated', self.show_log)
+        self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     
     def repaint(self):
         for n, (col, ren) in enumerate(zip(self.columns, self.renderers)):
@@ -114,8 +115,10 @@ class DisplayLogsModel:
         
     def show_log( self, path, column, params):
         selection = path.get_selection()
+        selection.set_mode(gtk.SELECTION_SINGLE)
         (model, iter) = selection.get_selected()
         log_w = LogWindow(model, self.view, iter, selection)
+        selection.set_mode(gtk.SELECTION_MULTIPLE)
         return
 
 class LogListWindow(gtk.Frame):

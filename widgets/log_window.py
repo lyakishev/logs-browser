@@ -127,6 +127,7 @@ class LogWindow:
 
 
     def show_prev(self, *args):
+        self.selection.set_mode(gtk.SELECTION_SINGLE)
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
             return None
@@ -138,8 +139,10 @@ class LogWindow:
             pass
         self.view.scroll_to_cell(prevPath)
         self.fill()
+        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def show_next(self, *args):
+        self.selection.set_mode(gtk.SELECTION_SINGLE)
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
             return None
@@ -151,6 +154,7 @@ class LogWindow:
             pass
         self.view.scroll_to_cell(prevPath)
         self.fill()
+        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def pretty_xml(self,text):
         def xml_pretty(m):

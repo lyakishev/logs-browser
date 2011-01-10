@@ -111,6 +111,7 @@ class FileServersModel(ServersModel):
                                 self.config[c_root] = set()
                         else:
                             self.config[c_root].add(line)
+        self.remove_empty_dirs()
                         
     def add_root(self, name):
         if name:
