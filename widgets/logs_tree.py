@@ -29,8 +29,6 @@ class ServersModel(object):
         else:
             return None
 
-    #def visible_func(self, model, treeiter):
-
     def get_active_servers(self):
         log_for_process = []
         def treewalk(iters):
@@ -59,7 +57,7 @@ class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
     def __init__(self):
         super(EventServersModel, self).__init__()
-        self.file = "evlogs.cfg"
+        self.file = os.path.join(os.getcwd(),"evlogs.cfg")
         self.read_from_file(True)
 
     def read_from_file(self,fict):
@@ -76,7 +74,7 @@ class EventServersModel(ServersModel):
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
-        self.file = "logs.cfg"
+        self.file = os.path.join(os.getcwd(),"logs.cfg")
         self.read_from_file(True)
 
     def read_from_file(self, re_all):
@@ -151,9 +149,11 @@ class FileServersModel(ServersModel):
         tsappend = self.treestore.append
         parts = path.split(os.sep)
         if path.startswith(r"\\"):
-            parts = [r"\\"+parts[2]]+parts[3:]
+            parts = parts[2:]
+            parts[0] = r"\\"+parts[0]
         elif path.startswith("/"):
-            parts = ["/"+parts[1]]+parts[2:]
+            parts = parts[1:]
+            parts[0] = "/"+parts[0]
         for n, p in enumerate(parts):
             if p:
                 new_node_path = "|".join([parent_str, os.sep.join(parts[:n+1])])
