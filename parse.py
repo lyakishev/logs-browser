@@ -19,6 +19,8 @@ suffix = r"\]?\s*(?P<msg>.+)"
 
 common_parser = re.compile(prefix+"("+"|".join(formats)+")"+suffix)
 
+xml_format = re.compile(r'^<log4j.+timestamp="(?P<datetime>\d+)".+</log4j:event>')
+
 def clear_format(pformat, n):
     for i in ["year","month","day","hour","min","sec","ms"]:
         pformat = pformat.replace(i+str(n), i)
@@ -31,25 +33,36 @@ def define_format(line):
         for n in range(1,len(formats)+1):
             if pd["hour%d" % n]:
                 return re.compile(prefix+clear_format(formats[n-1],n)+suffix)
-    else:
-        return None
+    parsed_line = xml_format.search(line)
+    if parsed_line:
+        return xml_format
+    return None
 
 def parse_logline_re(line, cdate, re_obj):
     parsed_line = re_obj.search(line)
-    if parsed_line:
-        pd = parsed_line.groupdict()
-        ms = pd["ms"]
-        ms = int(ms and str(1000*int(ms))[:6] or 0)
-        dt = datetime(int(pd.get("year", None) or cdate.tm_year),
-                      int(pd.get("month", None) or cdate.tm_mon),
-                      int(pd.get("day", None) or cdate.tm_mday),
-                      int(pd["hour"]),
-                      int(pd["min"]),
-                      int(pd["sec"]),
-                      ms)
-        return (dt, pd['msg'])
+    if re_obj != xml_format:
+        if parsed_line:
+            pd = parsed_line.groupdict()
+            ms = pd["ms"]
+            ms = int(ms and str(1000*int(ms))[:6] or 0)
+            dt = datetime(int(pd.get("year", None) or cdate.tm_year),
+                          int(pd.get("month", None) or cdate.tm_mon),
+                          int(pd.get("day", None) or cdate.tm_mday),
+                          int(pd["hour"]),
+                          int(pd["min"]),
+                          int(pd["sec"]),
+                          ms)
+            return (dt, pd['msg'])
+        else:
+            return None
     else:
-        return None
+        if parsed_line:
+            tstamp = parsed_line.group('datetime')
+            dt = datetime.fromtimestamp(float(tstamp)/1000)
+            return (dt, line)
+        else:
+            return None
+        
     
 
 

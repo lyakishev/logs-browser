@@ -166,7 +166,7 @@ class LogWindow:
             return "\n".join(pr_xml)
 
         try:
-            return xml_s.sub(xml_pretty, text)
+            return xml_s.sub(xml_pretty, text).replace("><",">\n<")
         except:
-            return text
+            return text.replace("><",">\n<")
 
