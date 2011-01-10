@@ -7,7 +7,6 @@ import threading
 from itertools import groupby
 import glob
 import datetime
-from widgets.dialog import Dialog
 import re
 import ConfigParser
 
