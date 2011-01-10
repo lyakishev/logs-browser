@@ -164,6 +164,7 @@ class GUI_Controller:
         evlogs = [[s[1], s[0]] for s in self.serversw2.model.get_active_servers()]
         if flogs or evlogs:
             self.cur_model.clear()
+            self.logframe.get_current_logs_store.rows_set.clear()
             self.cur_model.set_default_sort_func(lambda *args: -1)
             self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or ()

@@ -11,14 +11,17 @@ class LogsModel:
     def __init__(self):
         """ Sets up and populates our gtk.TreeStore """
         """!!!Rewrite to recursive!!!!"""
-        self.list_store = gtk.ListStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_BOOLEAN )
+        self.args =  (gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_STRING,
+                 gobject.TYPE_BOOLEAN
+        )
+        self.list_store = gtk.ListStore(*self.args)
+        self.rows_set = set()
         # places the global people data into the list
         # we form a simple tree.
     def get_model(self):
@@ -74,7 +77,17 @@ class LogsModel:
             for row in self.list_store:
                 row[6] = "#FFFFFF"
                 row[7] = False
-            
+
+    def set_of_rows(self):
+        if not self.rows_set:
+            n = len(self.args)
+            iter = self.list_store.get_iter_first()
+            val = self.list_store.get_value
+            while iter:
+                row_v = [val(iter,v) for v in xrange(n)]
+                self.rows_set.add(tuple(row_v))
+        return self.rows_set
+
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
@@ -108,7 +121,7 @@ class DisplayLogsModel:
                 col.set_resizable(True)
         self.view.connect( 'row-activated', self.show_log)
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-    
+
     def repaint(self):
         for n, (col, ren) in enumerate(zip(self.columns, self.renderers)):
             col.set_attributes(ren, cell_background=6, text=n)
@@ -142,6 +155,10 @@ class LogListWindow(gtk.Frame):
 
     def text_grab_focus(self, *args):
         self.filter_logs.text.grab_focus()
+
+    @property
+    def get_view(self):
+        return self.logs_view.view
 
 
 

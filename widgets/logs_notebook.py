@@ -1,6 +1,7 @@
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
+import datetime
 
 from widgets.logs_list import LogListWindow
 
@@ -56,10 +57,110 @@ class LogsNotebook(gtk.Notebook):
         tab_lab.pack_start(tab_button, False, False)
         tab_lab.show_all()
         l_list = LogListWindow()
+        l_list.get_view.connect("button-press-event", self.show_menu)
         l_list.show()
         tab_lab.show()
-        self.insert_page(l_list, tab_lab, pos)
+        num = self.insert_page(l_list, tab_lab, pos)
         self.show_all()
+        return num
+        
+    def pages_menu(self):
+        menu = gtk.Menu()
+        page_num = 0
+        page = self.get_nth_page(page_num)
+        while page:
+            try:
+                page_name = self.get_tab_label(page).get_children()[0].get_children()[0].get_text()
+            except AttributeError:
+                break
+            if page_num != self.get_current_page():
+                menu_item = gtk.MenuItem(page_name)
+                menu_item.connect("activate", self.copy_to_page, page)
+                menu.append(menu_item)
+            page_num += 1
+            page = self.get_nth_page(page_num)
+        sep = gtk.SeparatorMenuItem()
+        menu_item = gtk.MenuItem("New page")
+        menu_item.connect("activate", self.copy_to_new_page)
+        menu.append(sep)
+        menu.append(menu_item)
+        menu.show_all()
+        return menu
+
+    def copy_to_new_page(self, *args):
+        ntab = len(self.get_children())
+        self.counter+=1
+        new_pagenum = self.add_new_page(ntab-1,"Page "+str(self.counter))
+        new_page = self.get_nth_page(new_pagenum)
+        self.copy_to_page(None, new_page)
+        
+    def show_menu(self, treeview, event):
+        if event.button == 3:
+         # Figure out which item they right clicked on
+            path = treeview.get_path_at_pos(int(event.x),int(event.y))
+             # Get the selection
+            selection = treeview.get_selection()
+             # Get the selected path(s)
+            model, rows, = selection.get_selected_rows()
+         # If they didnt right click on a currently selected row, change the selection
+            if path[0] not in rows:
+                selection.unselect_all()
+                selection.select_path(path[0])
+            popup = gtk.Menu()
+            cp = gtk.MenuItem("Copy to")
+            cp.set_submenu(self.pages_menu())
+            popup.append(cp)
+            popup.show_all()
+            popup.popup( None, None, None, event.button, event.time)
+        menu.show_all()
+        return menu
+    
+    def copy_to_page(self, menuitem, log_list):
+        dt = datetime.datetime.now()
+        view = self.get_current_view
+        selection = view.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        val = model.get_value
+        n = len(model[0])
+        to_view = log_list.get_view
+        to_model = to_view.get_model()
+        to_model.set_default_sort_func(lambda *args: -1)
+        to_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
+        to_set = log_list.logs_store.set_of_rows()
+        to_view.freeze_child_notify()
+        to_view.set_model(None)
+        for path in pathlist:
+            iter = model.get_iter(path)
+            copy = [val(iter,v) for v in xrange(n)]
+            copy[6]="#FFFFFF"
+            copy =tuple(copy)
+            if copy not in to_set:
+                to_model.insert_after(None, copy)
+                to_set.add(copy)
+        to_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
+        to_view.set_model(to_model)
+        to_view.thaw_child_notify()
+        print datetime.datetime.now() - dt
+
+    def show_menu(self, treeview, event):
+        if event.button == 3:
+         # Figure out which item they right clicked on
+            path = treeview.get_path_at_pos(int(event.x),int(event.y))
+             # Get the selection
+            selection = treeview.get_selection()
+             # Get the selected path(s)
+            model, rows, = selection.get_selected_rows()
+         # If they didnt right click on a currently selected row, change the selection
+            if path[0] not in rows:
+                selection.unselect_all()
+                selection.select_path(path[0])
+            popup = gtk.Menu()
+            cp = gtk.MenuItem("Copy to")
+            cp.set_submenu(self.pages_menu())
+            popup.append(cp)
+            popup.show_all()
+            popup.popup( None, None, None, event.button, event.time)
+            return True
 
     def add_and_switch_to_new(self, ntb, page, page_num, *args):
         ntab = len(self.get_children())
@@ -78,6 +179,11 @@ class LogsNotebook(gtk.Notebook):
     def get_current_view(self):
         logsw=self.get_nth_page(self.get_current_page())
         return logsw.logs_view.view
+
+    @property
+    def get_current_logs_store(self):
+        logsw=self.get_nth_page(self.get_current_page())
+        return logsw.logs_store
         
 
     def close_tab(self, args):
@@ -85,6 +191,7 @@ class LogsNotebook(gtk.Notebook):
         child = self.btns.index(args)
         self.btns.pop(child)
         self.remove_page(child)
+
 
         
 
