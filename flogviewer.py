@@ -3,7 +3,6 @@
 import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
-from servers_log import logs
 #from evs import *
 import datetime
 #import threading
@@ -60,7 +59,7 @@ class GUI_Controller:
         self.logframe = LogsNotebook()
         self.serversw1 = FileServersTree()
         self.serversw1.show()
-        self.serversw2 = ServersTree(logs)
+        self.serversw2 = ServersTree()
         self.serversw2.show()
         self.log_ntb = gtk.Notebook()
         self.file_label = gtk.Label("Filelogs")

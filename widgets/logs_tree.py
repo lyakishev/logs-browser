@@ -9,6 +9,7 @@ import glob
 import datetime
 from widgets.dialog import Dialog
 import re
+import ConfigParser
 
 class ServersModel(object):
     def __init__(self):
@@ -57,37 +58,36 @@ class ServersModel(object):
 
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
-    def __init__(self, logs):
-        self.logs=logs
+    def __init__(self):
         super(EventServersModel, self).__init__()
-        self.fill_model()
+        self.file = "evlogs.cfg"
+        self.read_from_file(True)
 
-        """ Sets up and populates our gtk.TreeStore """
-        """!!!Rewrite to recursive!!!!"""
-        # places the global people data into the list
-        # we form a simple tree.
-
-    def fill_model(self):
-        for item in sorted(self.logs.keys()):
-            parent = self.treestore.append( None, (item, gtk.STOCK_DIRECTORY, None, 'd') )
-            for subitem in sorted(self.logs[item].keys()):
-                child = self.treestore.append( parent, (subitem, gtk.STOCK_DIRECTORY, None, 'd') )
-                for subsubitem in self.logs[item][subitem]:
-                    self.treestore.append( child, (subsubitem, gtk.STOCK_FILE, None, 'f') )
+    def read_from_file(self,fict):
+        self.treestore.clear()
+        config = ConfigParser.RawConfigParser()
+        config.read(self.file)
+        for section in config.sections():
+            parent = self.treestore.append(None, (section, gtk.STOCK_NETWORK, None, 'n'))
+            for item in config.items(section):
+                child = self.treestore.append( parent, (item[0], gtk.STOCK_DIRECTORY, None, 'd') )
+                for value in item[1].split(","):
+                    self.treestore.append( child, (value.strip(), gtk.STOCK_FILE, None, 'f') )
 
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
-        self.read_from_file("logs.cfg", True)
+        self.file = "logs.cfg"
+        self.read_from_file(True)
 
-    def read_from_file(self, path, re_all):
+    def read_from_file(self, re_all):
         if re_all:
             self.parents = {}
             self.files = []
             self.config = {}
             self.treestore.clear()
         root_re = re.compile("^\[.+?\]$")
-        with open(path, 'r') as f:
+        with open(self.file, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
                 if line:
@@ -258,10 +258,10 @@ class DisplayServersModel:
         self.popup.show_all()
 
     def reload_all(self, *args):
-        self.srvrs.read_from_file("logs.cfg", True)
+        self.srvrs.read_from_file(True)
 
     def load_new(self, *args):
-        self.srvrs.read_from_file("logs.cfg", False)
+        self.srvrs.read_from_file(False)
 
     def show_menu(self, treeview, event):
         if event.button == 3:
@@ -297,9 +297,9 @@ def tree_model_pre_order(model, treeiter):
             yield it
 
 class ServersTree(gtk.Frame):
-    def __init__(self, logs):
+    def __init__(self):
         super(ServersTree, self).__init__()
-        self.model = EventServersModel(logs)
+        self.model = EventServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
