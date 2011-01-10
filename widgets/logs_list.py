@@ -105,6 +105,7 @@ class DisplayLogsModel:
                 col.set_visible(False)
             else:
                 col.set_sort_column_id(cid)
+                col.set_resizable(True)
         self.view.connect( 'row-activated', self.show_log)
     
     def repaint(self):
