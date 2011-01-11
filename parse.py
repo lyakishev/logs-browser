@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 import re
+import os
 
 
 nums_in_filename = re.compile(r"[_.-]?((?<![a-zA-Z])\d(?![a-zA-Z]))+[_.-]?")
 
 def parse_filename(path):
-    fnwonums = nums_in_filename.sub('', path)
-    fnparts = fnwonums.split('.')
-    return (".".join(fnparts[:-1]) , fnparts[-1].lower())
+    name, ext = os.path.splitext(path)
+    fname = nums_in_filename.sub('', name)
+    return (fname, ext[1:].lower())
 
 prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
 formats = [
