@@ -88,6 +88,7 @@ class FileServersModel(ServersModel):
             for line in f.readlines():
                 line = line.strip()
                 if line:
+                    print line
                     if not line.startswith("#"):
                         if line == "[]":
                             root = None
@@ -111,7 +112,7 @@ class FileServersModel(ServersModel):
                                 self.config[c_root] = set()
                         else:
                             self.config[c_root].add(line)
-        self.remove_empty_dirs()
+        #self.remove_empty_dirs()
                         
     def add_root(self, name):
         if name:
@@ -122,6 +123,7 @@ class FileServersModel(ServersModel):
 
 
     def remove_empty_dirs(self):
+        print "Remove empty dirs"
         def walker(row):
             files = 0
             dirs = 0

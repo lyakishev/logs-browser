@@ -9,13 +9,15 @@ def parse_filename(path):
     fnparts = fnwonums.split('.')
     return (".".join(fnparts[:-1]) , fnparts[-1].lower())
 
-prefix = r"^(\[?\w+\]?|\w+)?\s*\[?"
+prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
 formats = [
     r"(?P<year1>\d{4})[.-](?P<month1>\d{2})[.-](?P<day1>\d{2})\s*(?P<hour1>\d{2})[:](?P<min1>\d{2})[:](?P<sec1>\d{2})([,.](?P<ms1>\d+))?",
-    r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?",
-    r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+)"
+    r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{,2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?",
+    r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+)",
+    r"(?P<day4>\d{2})[.-](?P<month4>\d{2})[.-](?P<year4>\d{2})\s*(?P<hour4>\d{,2})[:](?P<min4>\d{2})[:](?P<sec4>\d{2})([,.](?P<ms4>\d+))?",
 ]
 suffix = r"\]?\s*(?P<msg>.+)"
+
 
 common_parser = re.compile(prefix+"("+"|".join(formats)+")"+suffix)
 
@@ -45,7 +47,15 @@ def parse_logline_re(line, cdate, re_obj):
             pd = parsed_line.groupdict()
             ms = pd["ms"]
             ms = int(ms and str(1000*int(ms))[:6] or 0)
-            dt = datetime(int(pd.get("year", None) or cdate.tm_year),
+            year = pd.get("year", None)
+            if year:
+                if len(year) != 2:
+                    year = int(year)
+                else:
+                    year = int("20"+year)
+            else:
+                year = cdate.tm_year
+            dt = datetime(year,
                           int(pd.get("month", None) or cdate.tm_mon),
                           int(pd.get("day", None) or cdate.tm_mday),
                           int(pd["hour"]),
