@@ -147,17 +147,7 @@ def datetime_intersect(t1start, t1end, t2start, t2end):
     return (t1start <= t2start and t2start <= t1end) or \
            (t2start <= t1start and t1start <= t2end)
 
-def get_time(path, ed):
-    #deq = deque()
-    #f = open(path, 'r')
-    #deq.extend(f.readlines())
-    #f.close()
-    #while deq:
-    #    string = deq.pop()
-    #    parsed_s = parse_logline(string,cdate)
-    #    if parsed_s:
-    #        return parsed_s[0]
-    #ed = cdate
+def get_time(ed):
     return datetime.datetime(ed.tm_year,
                     ed.tm_mon,
                     ed.tm_mday,
@@ -169,24 +159,17 @@ def queue_filler(evlogs, queue):
     for i in evlogs:
         queue.put(i)
 
-def file_preparator(folders, fltr):#, queue):
+def file_preparator(folders, fltr):
     flf = []
-    ltime = time.localtime
     for key, value in folders.iteritems():
         for f in os.listdir(key):
             fullf = os.path.join(key,f)
-            if os.path.isfile(fullf):
-                pfn, ext = parse_filename(f)
-                if not pfn:
-                    pfn = "undefined"
-                if ext in ('txt','log') and pfn in value:
-                    f_start_date = get_time(fullf, \
-                        ltime(os.path.getctime(fullf)))
-                    if f_start_date<=fltr['date'][1]:
-                        flf.append([fullf, pfn])
-                        #queue.put(fullf)
+            pfn, ext = parse_filename(f)
+            if not pfn:
+                pfn = "undefined"
+            if ext in ('txt','log') and pfn in value:
+                    flf.append([fullf, pfn])
     return flf
-
 
 class FileLogWorker(multiprocessing.Process):
     def __init__(self, in_q, out_q, c_q, stp, fltr):
@@ -199,10 +182,11 @@ class FileLogWorker(multiprocessing.Process):
 
     def load(self):
         cdate = time.localtime(os.path.getctime(self.path))
+        if get_time(cdate)>self.fltr['date'][1]:
+            raise StopIteration
         deq = deque()
         buf_deq = deque()
         f = open(self.path, 'r')
-        #f = codecs.open(self.path, 'r', 'cp1251')
         deq.extend(f.readlines())
         f.close()
         pformat = None
@@ -225,7 +209,7 @@ class FileLogWorker(multiprocessing.Process):
         while deq:
             if self.stop.is_set():
                 break
-            string = deq.pop()#.decode('cp1251', 'replace')
+            string = deq.pop()
             if "at" in string.lstrip()[:2]:#.startswith("at"):
                 at[0]+=1
             if "Exception" in string:
