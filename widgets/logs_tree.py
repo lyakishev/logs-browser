@@ -105,13 +105,6 @@ class FileServersModel(ServersModel):
                                 self.add_parents(line, root)
                                 self.add_logdir(line, root)
                                 self.config[c_root].add(line)
-                    else:
-                        if line == "#[]" or root_re.search(line[1:]):
-                            c_root = line
-                            if not self.config.get(c_root, None):
-                                self.config[c_root] = set()
-                        else:
-                            self.config[c_root].add(line)
         #self.remove_empty_dirs()
                         
     def add_root(self, name):
