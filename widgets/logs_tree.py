@@ -166,39 +166,45 @@ class FileServersModel(ServersModel):
                     self.parents[new_node_path] = tsappend(prev_parent, [p, gtk.STOCK_DIRECTORY, None, 'd'])
                     gtk.gdk.threads_leave()
 
+
     def add_logdir(self, path, parent):
-        walk = os.walk
-        opjoin = os.path.join
         try:
             parent_str = self.treestore.get_value(parent, 0)
         except TypeError:
             parent_str = ""
-        tsappend = self.treestore.append
-        for root, dirs, files in walk(path):
-            true_parent = self.parents.get("|".join([parent_str, root]), parent)
-            for subdir in dirs:
-                gtk.gdk.threads_enter()
-                node_name = "|".join([parent_str, opjoin(root, subdir)])
-                node = self.parents.get(node_name, None)
-                if not node:
-                    self.parents[node_name] = tsappend(true_parent, \
-                        [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                gtk.gdk.threads_leave()
-            fls=[]
-            for item in files:
-                fullf = opjoin(root, item)
-                node_name = "|".join([parent_str, fullf])
-                if node_name not in self.files:
-                    self.files.append(node_name)
-                    name, ext = parse_filename(item)
-                    if ext in ('txt', 'log'):
-                        if not name:
-                            name = "undefined"
-                        if name not in fls:
-                            gtk.gdk.threads_enter()
-                            tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
-                            gtk.gdk.threads_leave()
-                            fls.append(name)
+        true_parent = self.parents.get("|".join([parent_str, path]), parent)
+        self.walk(path, true_parent, parent_str)
+
+    def walk(self, path, parent, pstr):
+        fls = []
+        try:
+            for f in os.listdir(path):
+                fullf = os.path.join(path, f)
+                fext = os.path.splitext(f)[1]
+                node_name = "|".join([pstr, fullf])
+                true_parent = self.parents.get("|".join([pstr, fullf]), parent)
+                if fext:
+                    if node_name not in self.files:
+                        self.files.append(node_name)
+                        name, ext = parse_filename(f)
+                        if ext in ('txt', 'log'):
+                            if not name:
+                                name = "undefined"
+                            if name not in fls:
+                                gtk.gdk.threads_enter()
+                                self.treestore.append(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
+                                gtk.gdk.threads_leave()
+                                fls.append(name)
+                else:
+                    node = self.parents.get(node_name, None)
+                    if not node:
+                        gtk.gdk.threads_enter()
+                        node = self.parents[node_name] = self.treestore.append(true_parent, \
+                            [f, gtk.STOCK_DIRECTORY,None, 'd'])
+                        gtk.gdk.threads_leave()
+                    self.walk(fullf, node, pstr)
+        except WindowsError:
+            pass
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
