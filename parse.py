@@ -15,7 +15,7 @@ formats = [
     r"(?P<year1>\d{4})[.-](?P<month1>\d{2})[.-](?P<day1>\d{2})\s*(?P<hour1>\d{2})[:](?P<min1>\d{2})[:](?P<sec1>\d{2})([,.](?P<ms1>\d+))?",
     r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{,2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?",
     r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+)",
-    r"(?P<day4>\d{2})[.-](?P<month4>\d{2})[.-](?P<year4>\d{2})\s*(?P<hour4>\d{,2})[:](?P<min4>\d{2})[:](?P<sec4>\d{2})([,.](?P<ms4>\d+))?",
+    r"(?<!\d)(?P<day4>\d{2})[.-](?P<month4>\d{2})[.-](?P<year4>\d{2})\s*(?P<hour4>\d{,2})[:](?P<min4>\d{2})[:](?P<sec4>\d{2})([,.](?P<ms4>\d+))?",
 ]
 suffix = r"\]?\s*(?P<msg>.+)"
 
@@ -73,7 +73,5 @@ def parse_logline_re(line, cdate, re_obj):
             return (dt, line)
         else:
             return None
-        
-    
 
 
