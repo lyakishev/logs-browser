@@ -104,12 +104,7 @@ class LogWindow:
         threading.Thread(target=os.system, args=("notepad "+file_to_open,)).start()
 
     def fill(self):
-        self.txt = "%s\n%s\n%s\n%s\n%s\n\n\n%s" % (
-            self.model.get_value(self.iter, 0),
-            self.model.get_value(self.iter, 1),
-            self.model.get_value(self.iter, 2),
-            self.model.get_value(self.iter, 3),
-            self.model.get_value(self.iter, 4),
+        self.txt = "\n%s" % (
             self.model.get_value(self.iter, 5)
         )
         try:
@@ -117,9 +112,10 @@ class LogWindow:
         except UnicodeDecodeError:
             self.txt = self.txt.decode('cp1251').encode('utf-8')
         self.open_label.set_text(self.model.get_value(self.iter,4))
-        self.info_label.set_markup('<span background="%s"><big><b>%s</b></big></span>\n%s\n' % \
+        self.info_label.set_markup('<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
             (self.model.get_value(self.iter,6),\
             self.model.get_value(self.iter,0),\
+            self.model.get_value(self.iter,2),
             self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
             ))
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
