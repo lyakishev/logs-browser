@@ -66,8 +66,8 @@ class GUI_Controller:
         self.evt_label = gtk.Label("Eventlogs")
         self.file_label.show()
         self.evt_label.show()
-        self.log_ntb.append_page(self.serversw2, self.evt_label)
         self.log_ntb.append_page(self.serversw1, self.file_label)
+        self.log_ntb.append_page(self.serversw2, self.evt_label)
         self.log_ntb.show_all()
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
@@ -145,6 +145,7 @@ class GUI_Controller:
                 gtk.gdk.threads_enter()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
+                self.show_button.set_sensitive(True)
                 gtk.gdk.threads_leave()
                 break
             elif counter == fl_count-1:
@@ -184,6 +185,7 @@ class GUI_Controller:
             pr3.start()
             pr4 = LogListFiller(self.list_queue, self.cur_model, self.cur_view, self.stp_compl, self.compl_queue)#, self.fillprogressbar)
             pr4.start()
+            self.show_button.set_sensitive(False)
 
 
 
