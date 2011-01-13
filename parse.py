@@ -6,8 +6,8 @@ import os
 nums_in_filename = re.compile(r"[_.-]?((?<![a-zA-Z])\d(?![a-zA-Z]))+[_.-]?")
 
 def parse_filename(path):
-    name, ext = os.path.splitext(path)
-    fname = nums_in_filename.sub('', name)
+    fname = nums_in_filename.sub('', path)
+    name, ext = os.path.splitext(fname)
     return (fname, ext[1:].lower())
 
 prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
