@@ -19,6 +19,7 @@ class LogsNotebook(gtk.Notebook):
         self.set_current_page(0)
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.connect("switch_page", self.add_and_switch_to_new)
+        self.set_scrollable(True)
         self.show()
 
     def change_page_name(self, widget, event):
