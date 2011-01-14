@@ -3,15 +3,28 @@ import re
 import os
 
 
-nums_in_filename = re.compile(r"(\d[-_.]?){2,}(?![a-z])|\(null\)")
-rem_rep = re.compile(r"(_){2,}")
+nums_in_filename = re.compile(r"(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[A-Za-z._-]")
+T_in_name = re.compile(r"(?<=\d)T(?=\d)")
+literal_at_begin_end_line = re.compile("^[._-]+|[._-]+$")
+rem_rep = re.compile(r"([._-]){2,}")
+ext_repeat = re.compile(r"(\.[a-zA-Z]{3})\1+")
+re_null = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
+ext_is_name = re.compile(r"[A-Za-z_]{7,}")
 
 
 def parse_filename(path):
-    fname = nums_in_filename.sub('', path)
-    fname = rem_rep.sub(r'\1', fname)
-    name, ext = os.path.splitext("a"+fname)
-    return (name[1:], ext[1:].lower())
+    fname = T_in_name.sub('', path)
+    fname = "".join(nums_in_filename.findall(fname))
+    fname = ext_repeat.sub(r'\1', fname)
+    fname = literal_at_begin_end_line.sub('', fname)
+    name, ext = os.path.splitext("a."+fname)
+    if ext_is_name.search(ext):
+        name = "a."+ext
+        ext = ".log"
+    name = literal_at_begin_end_line.sub('', name[2:])
+    name = rem_rep.sub(r'\1', name)
+    name = re_null.sub("", name)
+    return (name, ext[1:].lower())
 
 prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
 formats = [

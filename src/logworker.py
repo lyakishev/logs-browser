@@ -167,7 +167,7 @@ def file_preparator(folders, fltr):
             pfn, ext = parse_filename(f)
             if not pfn:
                 pfn = "undefined"
-            if ext in ('txt','log') and pfn in value:
+            if ext in ('txt','log',"svclog") and pfn in value:
                     flf.append([fullf, pfn])
     return flf
 
