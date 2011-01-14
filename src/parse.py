@@ -3,13 +3,15 @@ import re
 import os
 
 
-nums_in_filename = re.compile(r"\d+(?![a-zA-Z])")
+nums_in_filename = re.compile(r"(\d[-_.]?){2,}(?![a-z])|\(null\)")
+rem_rep = re.compile(r"(_){2,}")
 
 
 def parse_filename(path):
     fname = nums_in_filename.sub('', path)
-    name, ext = os.path.splitext(fname)
-    return (fname, ext[1:].lower())
+    fname = rem_rep.sub(r'\1', fname)
+    name, ext = os.path.splitext("a"+fname)
+    return (name[1:], ext[1:].lower())
 
 prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
 formats = [
