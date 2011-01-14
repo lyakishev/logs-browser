@@ -199,8 +199,6 @@ class FileLogWorker(multiprocessing.Process):
         if not pformat:
             if buf_deq:
                 print "Not found the format for file %s" % self.path
-            else:
-                print "File %s is empty." % self.path
             raise StopIteration
         else:
             while buf_deq:

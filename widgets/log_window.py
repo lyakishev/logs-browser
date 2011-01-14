@@ -28,6 +28,7 @@ class LogWindow:
         self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
         self.info_label = gtk.Label()
+        self.info_label.set_selectable(True)
         self.info_button = gtk.Button()
         self.info_button.set_relief(gtk.RELIEF_NONE)
         self.info_button.connect('clicked', self.open_file)
@@ -120,6 +121,7 @@ class LogWindow:
             ))
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
         self.highlight(self.col_str)
+        self.log_text.grab_focus()
 
 
     def show_prev(self, *args):

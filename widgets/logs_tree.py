@@ -105,7 +105,7 @@ class FileServersModel(ServersModel):
                                 self.add_parents(line, root)
                                 self.add_logdir(line, root)
                                 self.config[c_root].add(line)
-        #self.remove_empty_dirs()
+        self.remove_empty_dirs()
                         
     def add_root(self, name):
         if name:
@@ -114,26 +114,32 @@ class FileServersModel(ServersModel):
                     return root.iter
             return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
 
-
     def remove_empty_dirs(self):
+        dt = datetime.datetime.now()
         print "Remove empty dirs"
-        def walker(row):
+        def walker(it):
             files = 0
             dirs = 0
-            for i in row.iterchildren():
-                if i[3] == 'd':
+            chit = self.treestore.iter_children(it)
+            while chit:
+                if self.treestore.get_value(chit,3) == 'd':
                     dirs += 1
-                    walker(i)
+                    walker(chit)
                 else:
                     files += 1
+                chit = self.treestore.iter_next(chit)
             if not files and not dirs:
-                par = row.parent
-                if row[3] != 'n':
-                    self.treestore.remove(row.iter)
+                par = self.treestore.iter_parent(it)
+                if self.treestore.get_value(it, 3) != 'n':
+                    self.treestore.remove(it)
                     if par:
                         walker(par)
-        for i in self.treestore:
-            walker(i)
+
+        it = self.treestore.iter_children(None)
+        while it:
+            walker(it)
+            it = self.treestore.iter_next(it)
+        print datetime.datetime.now() - dt
 
 
     def add_parents(self, path, parent):
