@@ -1,6 +1,8 @@
 import unittest
 from test_log_names import log_names
-from parse import parse_filename
+import sys
+sys.path.append(r"D:\log-viewer\src")
+import parse
 
 class TestParseFileName(unittest.TestCase):
 
@@ -10,7 +12,7 @@ class TestParseFileName(unittest.TestCase):
 
 if __name__ == '__main__':
     for val in log_names:
-        parsed, ext = parse_filename(val[0])
+        parsed, ext = parse.parse_filename(val[0])
         def ch(p, s, l):
             return lambda self: self.check(p, s, l)
         setattr(TestParseFileName, "test_%s" % val[0], ch(parsed,val[1],val[0]))
