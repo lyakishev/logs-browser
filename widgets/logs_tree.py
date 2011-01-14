@@ -356,10 +356,10 @@ class FileServersTree(gtk.Frame):
             self.view.view.expand_all()
 
     def visible_func(self, model, treeiter):
-        search_string = self.hide_log.get_text()
+        search_string = self.hide_log.get_text().lower()
         for it in tree_model_pre_order(model, treeiter):
             try:
-                if search_string in model[it][0]:
+                if search_string in model[it][0].lower():
                     return True
             except:
                 pass
