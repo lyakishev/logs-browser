@@ -3,7 +3,8 @@ import re
 import os
 
 
-nums_in_filename = re.compile(r"[_.-]?((?<![a-zA-Z])\d(?![a-zA-Z]))+[_.-]?")
+nums_in_filename = re.compile(r"\d+(?![a-zA-Z])")
+
 
 def parse_filename(path):
     fname = nums_in_filename.sub('', path)
