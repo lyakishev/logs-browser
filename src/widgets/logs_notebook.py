@@ -9,18 +9,32 @@ from widgets.logs_list import LogListWindow
 class LogsNotebook(gtk.Notebook):
     def __init__(self):
         super(LogsNotebook, self).__init__()
+        act_box = gtk.HBox()
+        add_btn = gtk.Button()
         image = gtk.Image()
         image.set_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
-        fiction = gtk.Label()
+        image.show()
+        add_btn.add(image)
+        add_btn.show()
+        add_btn.connect("clicked", self.add_new_page)
+        act_box.pack_start(add_btn)
+        pages_btn = gtk.Button()
+        image_pages = gtk.Image()
+        image_pages.set_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        image_pages.show()
+        pages_btn.add(image_pages)
+        pages_btn.show()
+        pages_btn.connect("clicked", self.show_all_pages_menu)
+        act_box.pack_start(pages_btn)
         self.btns = []
-        self.append_page(fiction, image)
         self.counter = 1
-        self.add_new_page(0, "Page "+str(self.counter))
+        self.add_new_page()
         self.set_current_page(0)
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
-        self.connect("switch_page", self.add_and_switch_to_new)
         self.set_scrollable(True)
         self.show()
+        act_box.show()
+        self.set_action_widget(act_box, gtk.PACK_END)
 
     def change_page_name(self, widget, event):
         if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
@@ -40,9 +54,9 @@ class LogsNotebook(gtk.Notebook):
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
 
-    def add_new_page(self, pos, text):
+    def add_new_page(self, *args):
         tab_lab = gtk.HBox()
-        label = gtk.Label(text)
+        label = gtk.Label("Page "+str(self.counter))
         e = gtk.EventBox()
         e.add(label)
         e.add_events(gtk.gdk.BUTTON_PRESS_MASK)
@@ -61,8 +75,10 @@ class LogsNotebook(gtk.Notebook):
         l_list.get_view.connect("button-press-event", self.show_menu)
         l_list.show()
         tab_lab.show()
-        num = self.insert_page(l_list, tab_lab, pos)
+        num = self.append_page(l_list, tab_lab)
+        self.set_current_page(len(self.get_children())-1)
         self.show_all()
+        self.counter+=1
         return num
         
     def pages_menu(self):
@@ -87,6 +103,30 @@ class LogsNotebook(gtk.Notebook):
         menu.append(menu_item)
         menu.show_all()
         return menu
+
+    def full_pages_menu(self):
+        menu = gtk.Menu()
+        page_num = 0
+        page = self.get_nth_page(page_num)
+        while page:
+            try:
+                page_name = self.get_tab_label(page).get_children()[0].get_children()[0].get_text()
+            except AttributeError:
+                break
+            menu_item = gtk.MenuItem(page_name)
+            menu_item.connect("activate", self.switch_to, page)
+            menu.append(menu_item)
+            page_num += 1
+            page = self.get_nth_page(page_num)
+        menu.show_all()
+        return menu
+
+    def show_all_pages_menu(self, *args):
+        popup = self.full_pages_menu()
+        popup.popup(None,None,None,1,0)
+
+    def switch_to(self, copy_to_page, log_list):
+        self.set_current_page(self.page_num(log_list))
 
     def copy_to_new_page(self, *args):
         ntab = len(self.get_children())
@@ -163,14 +203,6 @@ class LogsNotebook(gtk.Notebook):
             popup.popup( None, None, None, event.button, event.time)
             return True
 
-    def add_and_switch_to_new(self, ntb, page, page_num, *args):
-        ntab = len(self.get_children())
-        if ntab == page_num+1:
-            self.counter += 1
-            self.add_new_page(page_num, "Page "+str(self.counter))
-            self.stop_emission('switch-page')
-            self.set_current_page(page_num)
-
     @property
     def get_current_loglist(self):
         logsw=self.get_nth_page(self.get_current_page())
@@ -192,8 +224,12 @@ class LogsNotebook(gtk.Notebook):
         child = self.btns.index(args)
         self.btns.pop(child)
         self.remove_page(child)
+        if len(self.get_children())==0:
+            self.counter = 1
+            self.add_new_page()
 
 
         
+
 
 
