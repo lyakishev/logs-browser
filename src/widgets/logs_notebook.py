@@ -16,7 +16,7 @@ class LogsNotebook(gtk.Notebook):
         image.show()
         add_btn.add(image)
         add_btn.show()
-        add_btn.connect("clicked", self.add_new_page)
+        add_btn.connect("clicked", self.add_new)
         act_box.pack_start(add_btn)
         pages_btn = gtk.Button()
         image_pages = gtk.Image()
@@ -54,7 +54,7 @@ class LogsNotebook(gtk.Notebook):
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
 
-    def add_new_page(self, *args):
+    def add_new_page(self):
         tab_lab = gtk.HBox()
         label = gtk.Label("Page "+str(self.counter))
         e = gtk.EventBox()
@@ -76,10 +76,13 @@ class LogsNotebook(gtk.Notebook):
         l_list.show()
         tab_lab.show()
         num = self.append_page(l_list, tab_lab)
-        self.set_current_page(len(self.get_children())-1)
         self.show_all()
         self.counter+=1
         return num
+
+    def add_new(self, *args):
+        self.add_new_page()
+        self.set_current_page(len(self.get_children())-1)
         
     def pages_menu(self):
         menu = gtk.Menu()
@@ -130,8 +133,8 @@ class LogsNotebook(gtk.Notebook):
 
     def copy_to_new_page(self, *args):
         ntab = len(self.get_children())
-        self.counter+=1
-        new_pagenum = self.add_new_page(ntab-1,"Page "+str(self.counter))
+        #self.counter+=1
+        new_pagenum = self.add_new_page()
         new_page = self.get_nth_page(new_pagenum)
         self.copy_to_page(None, new_page)
         
