@@ -9,6 +9,7 @@ import glob
 import datetime
 import re
 import ConfigParser
+from config_editor import ConfigEditor
 
 class ServersModel(object):
     def __init__(self):
@@ -260,9 +261,15 @@ class DisplayServersModel:
         self.load = gtk.MenuItem("Load New")
         self.reload.connect("activate", self.reload_all)
         self.load.connect("activate", self.load_new)
+        self.edit = gtk.MenuItem("Edit config")
+        self.edit.connect("activate", self.show_config_editor)
         self.popup.append(self.reload)
         self.popup.append(self.load)
+        self.popup.append(self.edit)
         self.popup.show_all()
+
+    def show_config_editor(self, *args):
+        c = ConfigEditor(self.srvrs.file)
 
     def reload_all(self, *args):
         self.srvrs.read_from_file(True)
