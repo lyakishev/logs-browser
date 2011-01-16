@@ -62,6 +62,7 @@ class GUI_Controller:
         self.serversw2 = ServersTree()
         self.serversw2.show()
         self.log_ntb = gtk.Notebook()
+        self.log_ntb.connect("switch-page", self.show_hide_ev_filter)
         self.file_label = gtk.Label("Filelogs")
         self.evt_label = gtk.Label("Eventlogs")
         self.file_label.show()
@@ -73,9 +74,17 @@ class GUI_Controller:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.build_interface()
         self.root.show_all()
+        self.ev_filter.hide()
         self.stop_evt = Event()
         self.init_threads()
         return
+
+    def show_hide_ev_filter(self, notebook, page, page_num):
+        if page_num == 0:
+            self.ev_filter.hide()
+        else:
+            self.ev_filter.show()
+            
 
     def init_threads(self):
         self.manager = Manager()
