@@ -2,6 +2,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk, gobject, gio
 import datetime
+from log_window import SeveralLogsWindow
 
 from widgets.logs_list import LogListWindow
 
@@ -160,7 +161,6 @@ class LogsNotebook(gtk.Notebook):
         return menu
     
     def copy_to_page(self, menuitem, log_list):
-        dt = datetime.datetime.now()
         view = self.get_current_view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -184,7 +184,6 @@ class LogsNotebook(gtk.Notebook):
         to_model.set_sort_column_id(0 ,gtk.SORT_DESCENDING)
         to_view.set_model(to_model)
         to_view.thaw_child_notify()
-        print datetime.datetime.now() - dt
 
     def show_menu(self, treeview, event):
         if event.button == 3:
@@ -201,10 +200,20 @@ class LogsNotebook(gtk.Notebook):
             popup = gtk.Menu()
             cp = gtk.MenuItem("Copy to")
             cp.set_submenu(self.pages_menu())
+            aio = gtk.MenuItem("In one")
+            aio.connect("activate", self.show_all_in_one)
+            popup.append(aio)
             popup.append(cp)
             popup.show_all()
             popup.popup( None, None, None, event.button, event.time)
             return True
+
+    def show_all_in_one(self, *args):
+        view = self.get_current_view
+        selection = view.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        logs_w = SeveralLogsWindow(model, view, model.get_iter(pathlist[0]),selection)
+        
 
     @property
     def get_current_loglist(self):

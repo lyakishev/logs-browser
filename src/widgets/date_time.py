@@ -106,7 +106,7 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_combo, False, False)
 
     def get_dates(self):
-        end_date = get_true_time()
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
         active = self.last_date_combo.get_active()
         delta = self.last_date_spin.get_value()/dateunit[active]
