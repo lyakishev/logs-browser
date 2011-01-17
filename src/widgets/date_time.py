@@ -4,6 +4,7 @@ import gtk, gobject, gio
 import datetime
 from common_filter import CommonFilter
 from net_time import get_true_time
+import datetime
 
 class DateTimeWidget(gtk.Table):
     def __init__(self):
@@ -30,10 +31,15 @@ class DateTimeWidget(gtk.Table):
 
     def set_now(self, *args):
         now = get_true_time()
-        self.hours_spin.set_value(now.hour)
-        self.minutes_spin.set_value(now.minute)
-        self.seconds_spin.set_value(now.second)
-        self.year_entry.set_text(now.strftime("%d.%m.%Y"))
+        self.set_date(now)
+
+    def set_date(self, ct):
+        dt = datetime.datetime.fromtimestamp(ct)
+        self.hours_spin.set_value(dt.hour)
+        self.minutes_spin.set_value(dt.minute)
+        self.seconds_spin.set_value(dt.second)
+        self.year_entry.set_text(dt.strftime("%d.%m.%Y"))
+        
 
     def get_datetime(self):
             dt_date = datetime.datetime.strptime(self.year_entry.get_text(),
@@ -75,7 +81,10 @@ class FromToOption(gtk.HBox):
             self.to_date.set_sens(False)
     
     def get_dates(self):
-        return (self.from_date.get_datetime(),self.to_date.get_datetime())
+        if self.to_check:
+            return (self.from_date.get_datetime(),self.to_date.get_datetime())
+        else:
+            return (self.from_date.get_datetime(),datetime.datetime.now())
 
     def get_active(self):
         return self.from_radio.get_active()
@@ -97,7 +106,7 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_combo, False, False)
 
     def get_dates(self):
-        end_date = get_true_time()
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
         active = self.last_date_combo.get_active()
         delta = self.last_date_spin.get_value()/dateunit[active]
@@ -121,7 +130,7 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_combo, False, False)
 
     def get_dates(self):
-        end_date = get_true_time()
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         start_hour = datetime.datetime(end_date.year,
             end_date.month,
             end_date.day,

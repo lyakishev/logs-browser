@@ -1,0 +1,10 @@
+f#00f,s#b: <\w+ f#ddd:</\w+> f#bbb: <.+?/> f#ddd: <|> f#0f0,s#b: \d+;
+f#f00: (?i)(?<=>)\s+[a-z0-9_#-:]+\s+(?=<) s#10b: \[|\]
+
+f#a020f0,s#b: (?<=\s|\.)[A-Z_]+(?=[A-Z_,\s]) f#00f,s#b: [A-Z_]+(?=\.) f#f00,s#b: (?<=[=]).+
+
+s#b: (?s)<log4j:message>.+?</log4j:message> f#eee: <log4j:message>|</log4j:message>
+
+s#10b,f#025f6027025f: [A-Z_.]{3,} s#10b,f#00f: ([A-Z][a-z]+\.?){2,} s#10b,f#f00: (?<=\s)\d+(?=\s) 
+s#10b: \[|\] s#10b,f#ffa500: null
+

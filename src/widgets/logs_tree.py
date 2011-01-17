@@ -7,6 +7,9 @@ import threading
 from itertools import groupby
 import glob
 import datetime
+import re
+import ConfigParser
+from config_editor import ConfigEditor
 
 class ServersModel(object):
     def __init__(self):
@@ -27,8 +30,6 @@ class ServersModel(object):
         else:
             return None
 
-    #def visible_func(self, model, treeiter):
-
     def get_active_servers(self):
         log_for_process = []
         def treewalk(iters):
@@ -37,6 +38,8 @@ class ServersModel(object):
                 cur_log = [self.treestore.get_value(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
+                    if self.treestore.get_value(parent,3) == 'n':
+                        break
                     cur_log.append(self.treestore.get_value(parent,0))
                     parent = self.treestore.iter_parent(parent)
                 log_for_process.append(cur_log)
@@ -53,159 +56,168 @@ class ServersModel(object):
 
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
-    def __init__(self, logs):
-        self.logs=logs
+    def __init__(self):
         super(EventServersModel, self).__init__()
-        self.fill_model()
+        self.file = os.path.join(os.getcwd(),"evlogs.cfg")
+        self.read_from_file(True)
 
-        """ Sets up and populates our gtk.TreeStore """
-        """!!!Rewrite to recursive!!!!"""
-        # places the global people data into the list
-        # we form a simple tree.
-
-    def fill_model(self):
-        for item in sorted(self.logs.keys()):
-            parent = self.treestore.append( None, (item, gtk.STOCK_DIRECTORY, None, 'd') )
-            for subitem in sorted(self.logs[item].keys()):
-                child = self.treestore.append( parent, (subitem, gtk.STOCK_DIRECTORY, None, 'd') )
-                for subsubitem in self.logs[item][subitem]:
-                    self.treestore.append( child, (subsubitem, gtk.STOCK_FILE, None, 'f') )
+    def read_from_file(self,fict):
+        self.treestore.clear()
+        config = ConfigParser.RawConfigParser()
+        config.read(self.file)
+        for section in config.sections():
+            parent = self.treestore.append(None, (section, gtk.STOCK_NETWORK, None, 'n'))
+            for item in config.items(section):
+                child = self.treestore.append( parent, (item[0], gtk.STOCK_DIRECTORY, None, 'd') )
+                for value in item[1].split(","):
+                    self.treestore.append( child, (value.strip(), gtk.STOCK_FILE, None, 'f') )
 
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
-        stands = []
+        self.file = os.path.join(os.getcwd(),"logs.cfg")
+        self.read_from_file(True)
 
-        #stands.append(["nag-tc", ['%s-%0.2d' % ("nag-tc", i) for i in range(1,13)]])
-        #stands.append(["msk-func", ['%s-%0.2d' % ("msk-func", i) for i in range(1,13)]])
-        #stands.append(["kog-app", ['%s-%0.2d' % ("kog-app", i) for i in range(1,13)]])
-        #stands.append(["umc-test-2", ['%s-v%0.4d' % ("msk-app", i) for i in \
-        #    range(190, 224) if i not in range(197,203) and i not in range(204,221)]])
+    def read_from_file(self, re_all):
+        if re_all:
+            self.parents = {}
+            self.files = []
+            self.config = {}
+            self.treestore.clear()
+        root_re = re.compile("^\[.+?\]$")
+        with open(self.file, 'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if line:
+                    print line
+                    if not line.startswith("#"):
+                        if line == "[]":
+                            root = None
+                            c_root = line
+                            if not self.config.get(c_root, None):
+                                self.config[c_root] = set()
+                        elif root_re.search(line):
+                            root = self.add_root(line[1:-1])
+                            c_root = line
+                            if not self.config.get(c_root, None):
+                                self.config[c_root] = set()
+                        else:
+                            if line not in self.config[c_root]:
+                                self.add_parents(line, root)
+                                self.add_logdir(line, root)
+                                self.config[c_root].add(line)
+        #self.remove_empty_dirs()
+                        
+    def add_root(self, name):
+        if name:
+            for root in self.treestore:
+                if name == root[0]:
+                    return root.iter
+            return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
 
-        #for stand, servers in stands:
-        #    thread = threading.Thread(target=self.fill_model, args=(stand, servers,))
-        #    thread.start()
-
-        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\log",)).start()
-        #threading.Thread(target=self.add_custom_logdir,args=(r"\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs",)).start()
-        self.custom_dir = self.treestore.append(None, ["Custom Folders",\
-            gtk.STOCK_DIRECTORY, None, 'd'])
-        threading.Thread(target=self.add_custom_logdir,args=(r"\\VBOXSVR\sharew7\log",)).start()
-
-    def fill_model(self, stand, servers):
+    def remove_empty_dirs(self):
         dt = datetime.datetime.now()
-        tsappend = self.treestore.append
-        walk = os.walk
+        print "Remove empty dirs"
+        def walker(it):
+            files = 0
+            dirs = 0
+            chit = self.treestore.iter_children(it)
+            while chit:
+                if self.treestore.get_value(chit,3) == 'd':
+                    dirs += 1
+                    walker(chit)
+                else:
+                    files += 1
+                chit = self.treestore.iter_next(chit)
+            if not files and not dirs:
+                par = self.treestore.iter_parent(it)
+                if self.treestore.get_value(it, 3) != 'n':
+                    self.treestore.remove(it)
+                    if par:
+                        walker(par)
+
+        it = self.treestore.iter_children(None)
+        while it:
+            walker(it)
+            it = self.treestore.iter_next(it)
+        print datetime.datetime.now() - dt
+
+
+    def add_parents(self, path, parent):
         opjoin = os.path.join
-        gtk.gdk.threads_enter()
-        stiter = tsappend(None, [stand, gtk.STOCK_DIRECTORY, None, 'd'])
-        gtk.gdk.threads_leave()
-        for server_name in servers:
-            parents={}
-            gtk.gdk.threads_enter()
-            server = tsappend(stiter, ["\\".join([server_name, "forislog"]), gtk.STOCK_DIRECTORY, None, 'd'])
-            gtk.gdk.threads_leave()
-            for root, dirs, files in walk(r'\\%s\forislog' % server_name):
-                true_parent = parents.get(root, server)
-                for subdir in dirs:
+        try:
+            parent_str = self.treestore.get_value(parent,0)
+        except TypeError:
+            parent_str = ""
+        tsappend = self.treestore.append
+        parts = path.split(os.sep)
+        if path.startswith(r"\\"):
+            parts = parts[2:]
+            parts[0] = r"\\"+parts[0]
+        elif path.startswith("/"):
+            parts = parts[1:]
+            parts[0] = "/"+parts[0]
+        for n, p in enumerate(parts):
+            if p:
+                new_node_path = "|".join([parent_str, os.sep.join(parts[:n+1])])
+                if not self.parents.get(new_node_path, None):
+                    prev_parent = self.parents.get("|".join([parent_str, os.sep.join(parts[:n])]), parent)
                     gtk.gdk.threads_enter()
-                    parents[opjoin(root, subdir)] = tsappend(true_parent, \
-                        [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
+                    self.parents[new_node_path] = tsappend(prev_parent, [p, gtk.STOCK_DIRECTORY, None, 'd'])
                     gtk.gdk.threads_leave()
-                fls=[]#{}
-                for item in files:
-                    name, ext = parse_filename(item)
-                    if name and ext in ('txt', 'log'):
-                        #if not fls.get(name, None):
-                        if name not in fls:
-                            gtk.gdk.threads_enter()
-                            tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
-                            gtk.gdk.threads_leave()
-                            fls.append(name)
-        print stand, '  ', datetime.datetime.now() - dt
 
-    def add_custom_logdir(self, path):
-        tm = datetime.datetime.now()
-        tsappend = self.treestore.append
-        opjoin = os.path.join
-        gtk.gdk.threads_enter()
-        new_parent = self.custom_dir
-        gtk.gdk.threads_leave()
-        for subdir in [p for p in path.split(os.sep) if p]:
-            gtk.gdk.threads_enter()
-            new_parent = tsappend(new_parent, [subdir, gtk.STOCK_DIRECTORY, None, 'd'])
-            gtk.gdk.threads_leave()
 
-        parents = {}
-        for root, dirs, files in os.walk(path):
-            true_parent = parents.get(root, new_parent)
-            for subdir in dirs:
-                gtk.gdk.threads_enter()
-                parents[opjoin(root, subdir)] = tsappend(true_parent,\
-                    [subdir, gtk.STOCK_DIRECTORY,None, 'd'])
-                gtk.gdk.threads_leave()
-            fls=[]#{}
-            flsapp=fls.append
-            for item in files:
-                name, ext = parse_filename(item)
-                if name and ext in ('txt', 'log'):
-                    #if not fls.get(name, None):
-                    if name not in fls:
+    def add_logdir(self, path, parent):
+        try:
+            parent_str = self.treestore.get_value(parent, 0)
+        except TypeError:
+            parent_str = ""
+        true_parent = self.parents.get("|".join([parent_str, path]), parent)
+        self.walk(path, true_parent, parent_str)
+
+    def walk(self, path, parent, pstr):
+        fls = []
+        try:
+            for f in os.listdir(path):
+                fullf = os.path.join(path, f)
+                fext = os.path.splitext(f)[1]
+                node_name = "|".join([pstr, fullf])
+                true_parent = self.parents.get("|".join([pstr, fullf]), parent)
+                if fext:
+                    if node_name not in self.files:
+                        self.files.append(node_name)
+                        name, ext = parse_filename(f)
+                        if ext in ('txt', 'log', 'svclog'):
+                            if not name:
+                                name = "undefined"
+                            if name not in fls:
+                                gtk.gdk.threads_enter()
+                                self.treestore.append(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
+                                gtk.gdk.threads_leave()
+                                fls.append(name)
+                else:
+                    node = self.parents.get(node_name, None)
+                    if not node:
                         gtk.gdk.threads_enter()
-                        tsappend(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
+                        node = self.parents[node_name] = self.treestore.append(true_parent, \
+                            [f, gtk.STOCK_DIRECTORY,None, 'd'])
                         gtk.gdk.threads_leave()
-                        flsapp(name)
-        print datetime.datetime.now()-tm
-
-
-
-
+                    self.walk(fullf, node, pstr)
+        except WindowsError:
+            pass
 
     def prepare_files_for_parse(self):
         srvs = self.get_active_servers()
         new_srvs = []
         for i in srvs:
-            new_srvs.append(["\\\\"+"\\".join(reversed(i[1:-1])),
-                             i[0]])
+            new_srvs.append([os.sep.join(reversed(i[1:])), i[0]])
+
         folders = {}
 
         for k,g in groupby(new_srvs, lambda x: x[0]):
             folders[k]=[fl[1] for fl in list(g)]
 
         return folders
-
-#def build_tree(nodes):
-#    # create empty tree to fill
-#    tree = {}
-#
-#    # fill in tree starting with roots (those with no parent)
-#    build_tree_recursive(tree, None, nodes)
-#
-#    return tree
-#
-#def build_tree_recursive(tree, parent, nodes):
-#    # find children
-#    children  = [n for n in nodes if n.parent == parent]
-#
-#    # build a subtree for each child
-#    for child in children:
-#    	# start new subtree
-#    	tree[child.name] = {}
-#
-#    	# call recursively to build a subtree for current node
-#    	build_tree_recursive(tree[child.name], child, nodes)
-
-
-##os.path.getmtime(fname)))
-#left_inter = end_date < file_end_date and end_date>file_start_date
-#right_inter = start_date>file_start_date and start_date<file_end_date
-#if left_inter:
-#    parse
-#elif right_inter:
-#    parse
-#elif
-
-
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
@@ -245,38 +257,30 @@ class DisplayServersModel:
         self.view.append_column( self.column2 )
         self.view.connect("button-press-event", self.show_menu)
         self.popup = gtk.Menu()
-        self.add = gtk.MenuItem("Add path")
-        self.add.connect("activate", self.add_path)
-        self.popup.append(self.add)
+        self.reload = gtk.MenuItem("Reload All")
+        self.load = gtk.MenuItem("Load New")
+        self.reload.connect("activate", self.reload_all)
+        self.load.connect("activate", self.load_new)
+        self.edit = gtk.MenuItem("Edit config")
+        self.edit.connect("activate", self.show_config_editor)
+        self.popup.append(self.reload)
+        self.popup.append(self.load)
+        self.popup.append(self.edit)
         self.popup.show_all()
 
-    def add_path(self, *args):
-        fchooser = gtk.FileChooserDialog(None, None,
-            gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-        response = fchooser.run()
-        if response == gtk.RESPONSE_OK:
-            self.srvrs.add_custom_logdir(fchooser.get_filename())
-        fchooser.destroy()
+    def show_config_editor(self, *args):
+        c = ConfigEditor(self.srvrs.file)
+
+    def reload_all(self, *args):
+        self.srvrs.read_from_file(True)
+
+    def load_new(self, *args):
+        self.srvrs.read_from_file(False)
 
     def show_menu(self, treeview, event):
         if event.button == 3:
-            #x = int(event.x)
-            #y = int(event.y)
             time = event.time
-            #pthinfo = treeview.get_path_at_pos(x, y)
-            #if pthinfo is not None:
-            #    path, col, cellx, celly = pthinfo
-            #    treeview.grab_focus()
-            #    treeview.set_cursor( path, col, 0)
-            #    self.popup.popup( None, None, None, event.button, time)
-            #else:
-            #    self.popup.popup( None, None, None, event.button, time)
             self.popup.popup( None, None, None, event.button, time)
-            return True
-
-
-        #return self.view
 
     def col1_toggled_cb( self, cell, path, model ):
         """
@@ -307,9 +311,9 @@ def tree_model_pre_order(model, treeiter):
             yield it
 
 class ServersTree(gtk.Frame):
-    def __init__(self, logs):
+    def __init__(self):
         super(ServersTree, self).__init__()
-        self.model = EventServersModel(logs)
+        self.model = EventServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
@@ -365,10 +369,10 @@ class FileServersTree(gtk.Frame):
             self.view.view.expand_all()
 
     def visible_func(self, model, treeiter):
-        search_string = self.hide_log.get_text()
+        search_string = self.hide_log.get_text().lower()
         for it in tree_model_pre_order(model, treeiter):
             try:
-                if search_string in model[it][0]:
+                if search_string in model[it][0].lower():
                     return True
             except:
                 pass
