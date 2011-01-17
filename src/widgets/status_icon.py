@@ -12,7 +12,7 @@ import time
 class StatusIcon:
     def __init__(self, date_filter, window):
         self.statusicon = gtk.StatusIcon()
-        self.statusicon.set_from_stock(gtk.STOCK_YES) 
+        self.statusicon.set_from_stock(gtk.STOCK_YES)
         self.statusicon.connect("popup-menu", self.right_click_event)
         self.statusicon.connect("activate", self.change_mode)
         self.statusicon.set_tooltip("Log Viewer")
@@ -26,7 +26,7 @@ class StatusIcon:
         now = time.time()
         if self.record:
             self.statusicon.set_from_stock(gtk.STOCK_YES)
-            self.date_filter.fromto_option.to_date.set_date(now)
+            self.date_filter.fromto_option.to_date.set_now()
             self.record = 0
         else:
             self.statusicon.set_from_stock(gtk.STOCK_NO)
@@ -39,7 +39,7 @@ class StatusIcon:
             else:
                 self.date_filter.fromto_option.from_date.set_date(now)
             self.record = 1
-       
+
     def hide_main_window(self, *args):
         self.window.hide()
 

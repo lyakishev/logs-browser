@@ -106,7 +106,7 @@ class FileServersModel(ServersModel):
                                 self.add_parents(line, root)
                                 self.add_logdir(line, root)
                                 self.config[c_root].add(line)
-        self.remove_empty_dirs()
+        #self.remove_empty_dirs()
                         
     def add_root(self, name):
         if name:
