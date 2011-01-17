@@ -44,6 +44,7 @@ class LogsNotebook(gtk.Notebook):
         e.add(label)
         e.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         e.connect("button-press-event", self.change_page_name)
+        e.set_visible_window(False)
         tab_button = gtk.Button()
         tab_button.connect("clicked", self.close_tab)
         tab_button.set_relief(gtk.RELIEF_NONE)
