@@ -5,7 +5,7 @@ from common_filter import CommonFilter
 
 class EventTypeFilter(CommonFilter):
     def __init__(self, event_types, default):
-        super(EventTypeFilter, self).__init__("Type (ONLY FOR EVENTLOGS!)")
+        super(EventTypeFilter, self).__init__("Event Type")
         self.event_box = gtk.VBox()
         self.evt_checkboxes = {}
         for evt in event_types.itervalues():
