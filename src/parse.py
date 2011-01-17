@@ -18,9 +18,6 @@ def parse_filename(path):
     fname = ext_repeat.sub(r'\1', fname)
     fname = literal_at_begin_end_line.sub('', fname)
     name, ext = os.path.splitext("a."+fname)
-    if ext_is_name.search(ext):
-        name = "a."+ext
-        ext = ".log"
     name = literal_at_begin_end_line.sub('', name[2:])
     name = rem_rep.sub(r'\1', name)
     name = re_null.sub("", name)

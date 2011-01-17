@@ -181,12 +181,20 @@ class FileLogWorker(multiprocessing.Process):
         self.completed_queue = c_q
 
     def load(self):
-        cdate = time.localtime(os.path.getctime(self.path))
+        try:
+            cdate = time.localtime(os.path.getctime(self.path))
+        except WindowsError:
+            print "WindowsError: %s" % self.path
+            raise StopIteration
         if get_time(cdate)>self.fltr['date'][1]:
             raise StopIteration
         deq = deque()
         buf_deq = deque()
-        f = open(self.path, 'r')
+        try:
+            f = open(self.path, 'r')
+        except IOError:
+            print "IOError: %s" % self.path
+            raise StopIteration
         deq.extend(f.readlines())
         f.close()
         pformat = None

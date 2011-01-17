@@ -19,13 +19,14 @@ def get_true_time():
         time_string = subprocess.check_output([r"C:\Windows\System32\net.exe", "time", r"\\nag-tc-01"])
     except:
         server_time = datetime.now() + TimeDelta
+        delay = time.time() - dt
         time_error_flag = 1
     else:
+        delay = time.time() - dt
         server_time = datetime.strptime(true_time_re.search(time_string).group(0), "%d.%m.%Y %H:%M:%S")
         TimeDelta = server_time - datetime.now()
         time_error_flag = 0
     finally:
-        delay = time.time() - dt
         return time.mktime(server_time.timetuple())-delay
 
 

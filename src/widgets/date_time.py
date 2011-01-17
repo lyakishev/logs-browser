@@ -130,7 +130,7 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_combo, False, False)
 
     def get_dates(self):
-        end_date = get_true_time()
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         start_hour = datetime.datetime(end_date.year,
             end_date.month,
             end_date.day,
