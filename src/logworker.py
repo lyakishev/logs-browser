@@ -2,7 +2,7 @@
 
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject
+import gtk, gobject, gio
 from parse import parse_filename, parse_logline_re, define_format
 import os
 import time
@@ -160,6 +160,7 @@ def queue_filler(evlogs, queue):
         queue.put(i)
 
 def file_preparator(folders, fltr):
+    #size = os.path.getsize
     flf = []
     for key, value in folders.iteritems():
         for f in os.listdir(key):
@@ -167,7 +168,7 @@ def file_preparator(folders, fltr):
             pfn, ext = parse_filename(f)
             if not pfn:
                 pfn = "undefined"
-            if ext in ('txt','log',"svclog") and pfn in value:
+            if ext in ('txt','log') and pfn in value:
                     flf.append([fullf, pfn])
     return flf
 

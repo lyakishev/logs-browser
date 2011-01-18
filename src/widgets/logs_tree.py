@@ -187,7 +187,7 @@ class FileServersModel(ServersModel):
                     if node_name not in self.files:
                         self.files.append(node_name)
                         name, ext = parse_filename(f)
-                        if ext in ('txt', 'log', 'svclog'):
+                        if ext in ('txt', 'log'):
                             if not name:
                                 name = "undefined"
                             if name not in fls:
