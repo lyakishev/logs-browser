@@ -180,6 +180,7 @@ class FileLogWorker(multiprocessing.Process):
         self.stop = stp
         self.fltr = fltr
         self.completed_queue = c_q
+        self.formats = {}
 
     def load(self):
         try:
@@ -198,13 +199,15 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         deq.extend(f.readlines())
         f.close()
-        pformat = None
-        while deq:
-            line = deq.popleft()
-            pformat = define_format(line)
-            buf_deq.append(line)
-            if pformat:
-                break
+        pformat = self.formats.get(self.Log, None)
+        if not pformat:
+            while deq:
+                line = deq.popleft()
+                pformat = define_format(line)
+                buf_deq.append(line)
+                if pformat:
+                    self.formats[self.Log] = pformat
+                    break
         if not pformat:
             if buf_deq:
                 print "Not found the format for file %s" % self.path
