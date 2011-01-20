@@ -91,11 +91,20 @@ class GUI_Controller:
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
+        self.f_cache_manager = Manager()
+        self.f_cache = self.f_cache_manager.dict()
+        self.d_cache_manager = Manager()
+        self.d_cache = self.d_cache_manager.dict()
+        self.s_cache_manager = Manager()
+        self.s_cache = self.s_cache_manager.dict()
         #self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
         #self.event_process.start()
         self.threads = []
         for t in range(4):
-             t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+             t=FileLogWorker(self.proc_queue,self.list_queue,
+                             self.compl_queue, self.stop_evt,
+                             self.LOGS_FILTER, self.f_cache,
+                             self.d_cache, self.s_cache)
              self.threads.append(t)
              t.start()
 

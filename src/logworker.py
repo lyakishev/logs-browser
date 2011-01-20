@@ -173,7 +173,7 @@ def file_preparator(folders, fltr):
     return flf
 
 class FileLogWorker(multiprocessing.Process):
-    def __init__(self, in_q, out_q, c_q, stp, fltr, f_cache, d_cache):
+    def __init__(self, in_q, out_q, c_q, stp, fltr, f_cache, d_cache, s_cache):
         multiprocessing.Process.__init__(self)
         self.in_queue = in_q
         self.out_queue = out_q
@@ -182,6 +182,7 @@ class FileLogWorker(multiprocessing.Process):
         self.completed_queue = c_q
         self.formats = f_cache
         self.cdates = d_cache
+        self.seeks = s_cache
 
     def load(self):
         cdate = self.cdates.get(self.path, None)
