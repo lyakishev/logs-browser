@@ -203,7 +203,7 @@ class FileServersModel(ServersModel):
                             [f, gtk.STOCK_DIRECTORY,None, 'd'])
                         gtk.gdk.threads_leave()
                     self.walk(fullf, node, pstr)
-        except WindowsError:
+        except:
             pass
 
     def prepare_files_for_parse(self):
