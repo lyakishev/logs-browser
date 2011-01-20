@@ -195,6 +195,11 @@ class FileLogWorker(multiprocessing.Process):
                 self.cdates[self.path] = cdate
         if get_time(cdate)>self.fltr['date'][1]:
             raise StopIteration
+        seek = 0
+        cache = self.seeks.get(self.path, None)
+        if cache:
+            if self.fltr['date'][0] > cache[1]:
+                seek = cache[0]
         deq = deque()
         buf_deq = deque()
         try:
@@ -202,25 +207,32 @@ class FileLogWorker(multiprocessing.Process):
         except IOError:
             print "IOError: %s" % self.path
             raise StopIteration
+        f.seek(seek)
         deq.extend(f.readlines())
         f.close()
-        pformat = self.formats.get(self.Log, None)
-        if not pformat:
-            while deq:
-                line = deq.popleft()
-                pformat = define_format(line)
-                buf_deq.append(line)
-                if pformat:
-                    self.formats[self.Log] = pformat
-                    break
-        if not pformat:
-            if buf_deq:
-                print "Not found the format for file %s" % self.path
-            raise StopIteration
+        if deq:
+            pformat = self.formats.get(self.Log, None)
+            if not pformat:
+                while deq:
+                    line = deq.popleft()
+                    pformat = define_format(line)
+                    buf_deq.append(line)
+                    if pformat:
+                        self.formats[self.Log] = pformat
+                        break
+            if not pformat:
+                if buf_deq:
+                    print "Not found the format for file %s" % self.path
+                raise StopIteration
+            else:
+                while buf_deq:
+                    deq.appendleft(buf_deq.pop())
         else:
-            while buf_deq:
-                deq.appendleft(buf_deq.pop())
+            print "%s not changed" % self.path
+            raise StopIteration
         at = [0,0]
+        size = os.path.getsize(self.path)
+        last = 1
         while deq:
             if self.stop.is_set():
                 break
@@ -238,7 +250,12 @@ class FileLogWorker(multiprocessing.Process):
                 buf_deq.appendleft(string)
                 msg = "".join(buf_deq)
                 buf_deq.clear()
+                if last:
+                    self.seeks[self.path] = [size, parsed_s[0]]
+                    last = 0
                 yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
+
+
 
     def filter(self):
         def f_date(l):
