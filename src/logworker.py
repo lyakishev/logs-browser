@@ -183,7 +183,7 @@ class FileLogWorker(multiprocessing.Process):
         self.completed_queue = c_q
         self.formats = f_cache
 
-   def load(self):
+    def load(self):
         try:
             cdate = time.localtime(os.path.getctime(self.path))
         except WindowsError:
@@ -205,7 +205,7 @@ class FileLogWorker(multiprocessing.Process):
                 if pformat:
                     self.formats[self.Log] = pformat
                     break
-        f.close()
+            f.close()
         if not pformat:
             print "Not found the format for file %s" % self.path
             raise StopIteration
@@ -214,7 +214,8 @@ class FileLogWorker(multiprocessing.Process):
         for string in b_read(self.path):
             if self.stop.is_set():
                 break
-            if "at" in string.startswith("at"):
+            #if string.lstrip().startswith("at"):
+            if "at" in string.lstrip()[:2]:
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
@@ -223,10 +224,10 @@ class FileLogWorker(multiprocessing.Process):
                 buff.append(string)
             else:
                 l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
-                buf.append(string)
-                msg = "".join(reversed(buf))
+                buff.append(string)
+                msg = "".join(reversed(buff))
                 yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
-                buf = []
+                buff = []
                 at = [0,0]
 
     def filter(self):
