@@ -20,6 +20,7 @@ import threading
 #import codecs
 from operator import itemgetter as ig
 import Queue
+from buf_read import b_read
 
 evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
       win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -173,14 +174,14 @@ def file_preparator(folders, fltr):
     return flf
 
 class FileLogWorker(multiprocessing.Process):
-    def __init__(self, in_q, out_q, c_q, stp, fltr):
+    def __init__(self, in_q, out_q, c_q, stp, fltr, formats):
         multiprocessing.Process.__init__(self)
         self.in_queue = in_q
         self.out_queue = out_q
         self.stop = stp
         self.fltr = fltr
         self.completed_queue = c_q
-        self.formats = {}
+        self.formats = formats
 
     def load(self):
         try:
@@ -190,50 +191,43 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         if get_time(cdate)>self.fltr['date'][1]:
             raise StopIteration
-        deq = deque()
-        buf_deq = deque()
-        try:
-            f = open(self.path, 'r')
-        except IOError:
-            print "IOError: %s" % self.path
-            raise StopIteration
-        deq.extend(f.readlines())
-        f.close()
         pformat = self.formats.get(self.Log, None)
         if not pformat:
-            while deq:
-                line = deq.popleft()
+            try:
+                f = open(self.path, 'r')
+            except IOError:
+                print "IOError: %s" % self.path
+                raise StopIteration
+            line = True
+            while line:
+                line = f.readline()
                 pformat = define_format(line)
-                buf_deq.append(line)
                 if pformat:
                     self.formats[self.Log] = pformat
                     break
+        f.close()
         if not pformat:
-            if buf_deq:
-                print "Not found the format for file %s" % self.path
+            print "Not found the format for file %s" % self.path
             raise StopIteration
-        else:
-            while buf_deq:
-                deq.appendleft(buf_deq.pop())
         at = [0,0]
-        while deq:
+        buff = []
+        for string in b_read(self.path):
             if self.stop.is_set():
                 break
-            string = deq.pop()
-            if "at" in string.lstrip()[:2]:#.startswith("at"):
+            if "at" in string.startswith("at"):
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
             parsed_s = parse_logline_re(string, cdate, pformat)
             if not parsed_s:
-                buf_deq.appendleft(string)
+                buff.append(string)
             else:
                 l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
-                at = [0,0]
-                buf_deq.appendleft(string)
-                msg = "".join(buf_deq)
-                buf_deq.clear()
+                buf.append(string)
+                msg = "".join(reversed(buf))
                 yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
+                buf = []
+                at = [0,0]
 
     def filter(self):
         def f_date(l):

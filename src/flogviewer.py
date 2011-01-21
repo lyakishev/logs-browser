@@ -84,16 +84,19 @@ class GUI_Controller:
             self.ev_filter.hide()
         else:
             self.ev_filter.show()
-            
 
     def init_threads(self):
         self.manager = Manager()
         self.LOGS_FILTER = self.manager.dict()
+        self.f_manager = Manager()
+        self.formats = self.manager.dict()
         self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
         self.event_process.start()
         self.threads = []
         for t in range(3):
-             t=FileLogWorker(self.proc_queue,self.list_queue, self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+             t=FileLogWorker(self.proc_queue,self.list_queue,
+                             self.compl_queue, self.stop_evt, self.LOGS_FILTER,
+                             self.formats)
              self.threads.append(t)
              t.start()
 
