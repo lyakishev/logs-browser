@@ -1,4 +1,5 @@
 import os
+from collections import deque
 
 def b_read(path, buf = 0x16000):
     with open(path,'r') as f:
@@ -24,12 +25,12 @@ def b_read(path, buf = 0x16000):
 # license: LGPL
 
 class xreverse:
-    def __init__(self, file_object, buf_size=1024*64):
+    def __init__(self, file_object, buf_size=1024*96):
         self.fo = fo = file_object
         fo.seek(0, 2)        # go to the end of the file
         self.pos = fo.tell() # where we are 
         self.buffer = ''     # data buffer
-        self.lbuf = []       # buffer for parsed lines
+        #self.lbuf = deque()       # buffer for parsed lines
         self.done = 0        # we've read the last line
         self.jump = -1 * buf_size
         
@@ -45,11 +46,8 @@ class xreverse:
             if '\n' in new: break
             if self.pos == 0: return self.buffer
 
-        nl = self.buffer.split('\n')
-        nlb = [ i + '\n' for i in nl[1:-1] ]
-        if not self.buffer[-1] == '\n': nlb.append(nl[-1])
-        self.buffer = nl[0]
-        self.lbuf = nlb
+        self.lbuf = deque(self.buffer.splitlines(True))
+        self.buffer = self.lbuf.popleft()
 
     def __iter__(self): return self
 
@@ -67,9 +65,8 @@ class xreverse:
                 fo.seek(new_position)
                 self.pos = new_position
 
-                nl = (new + self.buffer).split('\n')
-                self.buffer = nl.pop(0)
-                self.lbuf = [ i + '\n' for i in nl ]
+                self.lbuf = deque((new + self.buffer).splitlines(True))
+                self.buffer = self.lbuf.popleft()
 
                 if self.lbuf: return self.lbuf.pop()
                 elif self.pos == 0:
