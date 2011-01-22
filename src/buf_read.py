@@ -17,5 +17,8 @@ def b_read(path, buf = 0x16000):
                 yield lines[ix]
                 ix -= 1
             pos -= buf
-        yield lines[0]
+        try:
+            yield lines[0]
+        except IndexError:
+            return
 

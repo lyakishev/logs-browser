@@ -43,7 +43,7 @@ class GUI_Controller:
 
         self.date_filter = DateFilter()
         self.status = StatusIcon(self.date_filter, self.root)
-        #self.ev_filter = EventTypeFilter(evt_dict, 'ERROR')
+        self.ev_filter = EventTypeFilter(evt_dict, 'ERROR')
 
 
         self.logs_frame = gtk.Frame(label="Logs")
@@ -74,18 +74,16 @@ class GUI_Controller:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.build_interface()
         self.root.show_all()
-        #self.ev_filter.hide()
+        self.ev_filter.hide()
         self.stop_evt = Event()
         self.init_threads()
         return
 
     def show_hide_ev_filter(self, notebook, page, page_num):
         if page_num == 0:
-            pass
-            #self.ev_filter.hide()
+            self.ev_filter.hide()
         else:
-            pass
-            #self.ev_filter.show()
+            self.ev_filter.show()
             
 
     def init_threads(self):
@@ -93,8 +91,8 @@ class GUI_Controller:
         self.LOGS_FILTER = self.manager.dict()
         self.f_manager = Manager()
         self.formats = self.f_manager.dict()
-        #self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
-        #self.event_process.start()
+        self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+        self.event_process.start()
         self.threads = []
         for t in range(3):
              t=FileLogWorker(self.proc_queue,self.list_queue,
@@ -124,7 +122,7 @@ class GUI_Controller:
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
-        #self.filter_box.pack_start(self.ev_filter, False, False)
+        self.filter_box.pack_start(self.ev_filter, False, False)
         self.filter_box.pack_start(self.date_filter, False, False)
         self.button_box.pack_start(self.show_button)
         self.button_box.pack_start(self.stop_all_btn)
@@ -141,7 +139,7 @@ class GUI_Controller:
         self.status.statusicon.set_visible(False)
         for t in self.threads:
             t.terminate()
-        #self.event_process.terminate()
+        self.event_process.terminate()
         gtk.main_quit()
         sys.exit()
         return
@@ -184,7 +182,7 @@ class GUI_Controller:
             self.cur_model.set_default_sort_func(lambda *args: -1)
             self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or (datetime.datetime.min, datetime.datetime.max)
-            self.LOGS_FILTER['types'] = []# self.ev_filter.get_active() and self.ev_filter.get_event_types or []
+            self.LOGS_FILTER['types'] = self.ev_filter.get_active() and self.ev_filter.get_event_types or []
             if net_time.time_error_flag:
                 net_time.show_time_warning(self.root)
             self.LOGS_FILTER['content'] = ("","")#self.content_filter.get_active() and self.content_filter.get_cont or ("","")
