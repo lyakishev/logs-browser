@@ -20,7 +20,7 @@ import threading
 #import codecs
 from operator import itemgetter as ig
 import Queue
-from buf_read import b_read
+from buf_read import xreverse
 
 #evt_dict={win32con.EVENTLOG_AUDIT_FAILURE:'AUDIT_FAILURE',
 #      win32con.EVENTLOG_AUDIT_SUCCESS:'AUDIT_SUCCESS',
@@ -211,24 +211,25 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         at = [0,0]
         buff = []
-        for string in b_read(self.path):
-            if self.stop.is_set():
-                break
-            #if string.lstrip().startswith("at"):
-            if "at" in string.lstrip()[:2]:
-                at[0]+=1
-            if "Exception" in string:
-                at[1]+=1
-            parsed_s = parse_logline_re(string, cdate, pformat)
-            if not parsed_s:
-                buff.append(string)
-            else:
-                l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
-                buff.append(string)
-                msg = "".join(reversed(buff))
-                yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
-                buff = []
-                at = [0,0]
+        with open(self.path,'r') as f:
+            for string in xreverse(f):
+                if self.stop.is_set():
+                    break
+                #if string.lstrip().startswith("at"):
+                if "at" in string.lstrip()[:2]:
+                    at[0]+=1
+                if "Exception" in string:
+                    at[1]+=1
+                parsed_s = parse_logline_re(string, cdate, pformat)
+                if not parsed_s:
+                    buff.append(string)
+                else:
+                    l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
+                    buff.append(string)
+                    msg = "".join(reversed(buff))
+                    yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
+                    buff = []
+                    at = [0,0]
 
     def filter(self):
         def f_date(l):
