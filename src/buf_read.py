@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import os
 from collections import deque
 
-def b_read(path, buf = 0x16000):
+###############################################################################
+#this work wrong
+def b_read(path, buf = 1024*96):
     with open(path,'r') as f:
         lines = ['']
         f.seek(0,2)
@@ -18,19 +22,24 @@ def b_read(path, buf = 0x16000):
                 yield lines[ix]
                 ix -= 1
             pos -= buf
-        yield lines[0]
-
+        try:
+            yield lines[0]
+        except:
+            return
+###############################################################################
 
 # copyright 2004 Michael D. Stenner <mstenner@ece.arizona.edu>
 # license: LGPL
 
 class xreverse:
-    def __init__(self, file_object, buf_size=1024*96):
+    def __init__(self, file_object, buf_size=1024*64):
         self.fo = fo = file_object
         fo.seek(0, 2)        # go to the end of the file
         self.pos = fo.tell() # where we are 
+        if self.pos == 0:
+           raise StopIteration
         self.buffer = ''     # data buffer
-        #self.lbuf = deque()       # buffer for parsed lines
+        self.lbuf = deque()       # buffer for parsed lines
         self.done = 0        # we've read the last line
         self.jump = -1 * buf_size
         
@@ -44,10 +53,14 @@ class xreverse:
 
             self.buffer = new + self.buffer
             if '\n' in new: break
-            if self.pos == 0: return self.buffer
+            if self.pos == 0:
+                return
 
-        self.lbuf = deque(self.buffer.splitlines(True))
-        self.buffer = self.lbuf.popleft()
+        nl = self.buffer.split('\n')
+        nlb = [ i + '\n' for i in nl[1:-1] ]
+        if not self.buffer[-1] == '\n': nlb.append(nl[-1])
+        self.buffer = nl[0]
+        self.lbuf = deque(nlb)
 
     def __iter__(self): return self
 
@@ -65,8 +78,9 @@ class xreverse:
                 fo.seek(new_position)
                 self.pos = new_position
 
-                self.lbuf = deque((new + self.buffer).splitlines(True))
-                self.buffer = self.lbuf.popleft()
+                nl = (new + self.buffer).split('\n')
+                self.buffer = nl.pop(0)
+                self.lbuf = deque([ i + '\n' for i in nl ])
 
                 if self.lbuf: return self.lbuf.pop()
                 elif self.pos == 0:
@@ -75,4 +89,6 @@ class xreverse:
                     else:
                         self.done = 1
                         return self.buffer + '\n'
+
+
 
