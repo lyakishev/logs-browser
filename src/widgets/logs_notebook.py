@@ -8,8 +8,9 @@ from widgets.logs_list import LogListWindow
 
 
 class LogsNotebook(gtk.Notebook):
-    def __init__(self):
+    def __init__(self, tree):
         super(LogsNotebook, self).__init__()
+        self.tree = tree
         act_box = gtk.HBox()
         add_btn = gtk.Button()
         image = gtk.Image()
@@ -36,7 +37,26 @@ class LogsNotebook(gtk.Notebook):
         self.show()
         act_box.show()
         self.set_action_widget(act_box, gtk.PACK_END)
+        self.connect("switch_page", self.change_source_tree)
+        self.tree_paths = {}
 
+    def change_source_tree(self, ntb, page, page_num, *args):
+        ncurpage = self.get_current_page()
+        if ncurpage >= 0:
+            old_pathslist = self.tree.get_active_check_paths()
+            cur_page = self.get_nth_page(ncurpage)
+            self.tree_paths[cur_page] = old_pathslist
+        new_page = self.get_nth_page(page_num)
+        new_pathslist = self.tree_paths.get(new_page, None)
+        if new_pathslist:
+            self.tree.set_active_from_paths(new_pathslist)
+        else:
+            try:
+                self.tree.set_active_from_paths(old_pathslist)
+            except UnboundLocalError:
+                self.tree.set_active_from_paths([])
+        self.tree_paths[new_page] = new_pathslist
+            
     def change_page_name(self, widget, event):
         if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
             self.page = self.get_nth_page(self.get_current_page())
@@ -233,7 +253,8 @@ class LogsNotebook(gtk.Notebook):
         
 
     def close_tab(self, args):
-        self.set_current_page(0)
+        page = self.get_nth_page(self.get_current_page())
+        del self.tree_paths[page]
         child = self.btns.index(args)
         self.btns.pop(child)
         self.remove_page(child)

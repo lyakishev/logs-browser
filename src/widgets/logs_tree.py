@@ -51,8 +51,41 @@ class ServersModel(object):
         while root:
             treewalk(root)
             root = self.treestore.iter_next(root)
-
         return log_for_process
+
+    def get_active_check_paths(self):
+        pathslist = []
+        def treewalk(iters):
+            if self.treestore.get_value(iters, 3) == 'f' \
+                and self.treestore.get_value(iters, 2):
+                pathslist.append(self.treestore.get_string_from_iter(iters))
+                return
+            it = self.treestore.iter_children(iters)
+            while it:
+                treewalk(it)
+                it = self.treestore.iter_next(it)
+        root = self.treestore.iter_children(None)
+        while root:
+            treewalk(root)
+            root = self.treestore.iter_next(root)
+        return pathslist
+
+    def set_active_from_paths(self, pathslist):
+        def treewalk(iters):
+            self.treestore.set_value(iters, 2, 0)
+            if self.treestore.get_value(iters, 3) == 'f':
+                path = self.treestore.get_string_from_iter(iters)
+                if path in pathslist:
+                    self.treestore.set_value(iters, 2, 1)
+                return
+            it = self.treestore.iter_children(iters)
+            while it:
+                treewalk(it)
+                it = self.treestore.iter_next(it)
+        root = self.treestore.iter_children(None)
+        while root:
+            treewalk(root)
+            root = self.treestore.iter_next(root)
 
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
@@ -335,10 +368,10 @@ class ServersTree(gtk.Frame):
             self.view.view.expand_all()
 
     def visible_func(self, model, treeiter):
-        search_string = self.hide_log.get_text()
+        search_string = self.hide_log.get_text().lower()
         for it in tree_model_pre_order(model, treeiter):
             try:
-                if search_string in model[it][0]:
+                if search_string in model[it][0].lower():
                     return True
             except:
                 pass
