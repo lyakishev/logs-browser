@@ -9,11 +9,13 @@ import os
 import threading
 from widgets.color_parser import LogColorParser
 import pango
+import traceback
 
 #xml_re = re.compile("<\?xml(.+)>")
 xml_spl=re.compile(r"(<\?xml.+?>)")
-xml_s = re.compile(r"<\?xml.+>", re.DOTALL)
+xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
 xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
+xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 
 class LogWindow:
     def __init__(self, model, view, iter, sel):
@@ -157,20 +159,14 @@ class LogWindow:
     def pretty_xml(self,text):
         def xml_pretty(m):
             txt = m.group()
-            spl = xml_spl.split(txt)[1:]
-            pr_xml = []
-            for head, body in zip(spl[::2], spl[1::2]):
-                xml_other = xml_s2.search(body).groupdict()
-                true_xml = "".join([head, xml_other['xml']])
-                pretty_xml = xml.dom.minidom.parseString(true_xml.encode("utf-16")).toprettyxml()
-                pr_xml.append("".join([pretty_xml, xml_other['other']]))
-                
-            return "\n".join(pr_xml)
+            try:
+                pretty_xml = xml.dom.minidom.parseString(txt.encode("utf-16")).toprettyxml()
+            except xml.parsers.expat.ExpatError as xml_er:
+                print traceback.format_exc()
+                pretty_xml = txt.replace("><",">\n<")
+            return "\n"+pretty_xml
 
-        try:
-            return xml_s.sub(xml_pretty, text).replace("><",">\n<")
-        except:
-            return text.replace("><",">\n<")
+        return xml_new.sub(xml_pretty, text)
 
 class SeveralLogsWindow(LogWindow):
     def __init__(self,model, view, iter, sel):

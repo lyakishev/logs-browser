@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 import os
 from collections import deque
+import mmap
 
 ###############################################################################
 #this work wrong
@@ -32,7 +32,7 @@ def b_read(path, buf = 1024*96):
 # license: LGPL
 
 class xreverse:
-    def __init__(self, file_object, buf_size=1024*64):
+    def __init__(self, file_object, buf_size=1024*16):
         self.fo = fo = file_object
         fo.seek(0, 2)        # go to the end of the file
         self.pos = fo.tell() # where we are 
@@ -90,5 +90,14 @@ class xreverse:
                         self.done = 1
                         return self.buffer + '\n'
 
+def mmap_read(path):
+    with open(path, 'rb') as f:
+        data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        n = len(data)
+        for c in reversed(xrange(len(data))):
+            if c == "\n":
+                yield data[i+1:n]
+                n=i
+        yield data[0:n]
 
 
