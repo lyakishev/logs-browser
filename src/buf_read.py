@@ -96,8 +96,8 @@ def mmap_read(path):
         n = len(data)
         for i in xrange(len(data)-1,-1,-1):
             if data[i] == "\n":
-                yield data[i+1:n]
+                yield data[i+1:n+1]
                 n=i
-        yield data[0:n]
+        yield data[0:n+1]
 
 

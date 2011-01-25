@@ -241,10 +241,4 @@ class SeveralLogsWindow(LogWindow):
         fchooser.destroy()
 
 
-        
-
-
-
-
-
 
