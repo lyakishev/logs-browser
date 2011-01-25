@@ -232,6 +232,8 @@ class SeveralLogsWindow(LogWindow):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
             gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
             gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+        fchooser.set_current_name("_".join([os.path.basename(f) for f in
+                                            self.files]))
         response = fchooser.run()
         if response == gtk.RESPONSE_OK:
             path = fchooser.get_filename()

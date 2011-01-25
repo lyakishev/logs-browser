@@ -92,7 +92,11 @@ class xreverse:
 
 def mmap_read(path):
     with open(path, 'rb') as f:
-        data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        try:
+            data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        except WindowsError:
+            print "mmap error: %s" % path
+            return
         n = len(data)
         for i in xrange(len(data)-1,-1,-1):
             if data[i] == "\n":

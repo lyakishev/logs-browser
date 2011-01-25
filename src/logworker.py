@@ -78,7 +78,12 @@ class FileLogWorker(multiprocessing.Process):
                 if pformat:
                     self.formats[self.Log] = pformat
                     break
-            f.close()
+            if f.tell() == 0:
+                f.close()
+                print "File %s is empty" % self.path
+                raise StopIteration
+            else:
+                f.close()
         if not pformat:
             print "Not found the format for file %s" % self.path
             raise StopIteration
