@@ -84,7 +84,8 @@ class FromToOption(gtk.HBox):
         if self.to_check:
             return (self.from_date.get_datetime(),self.to_date.get_datetime())
         else:
-            return (self.from_date.get_datetime(),datetime.datetime.now())
+            return (self.from_date.get_datetime(),
+                    datetime.datetime.fromtimestamp(get_true_time))
 
     def get_active(self):
         return self.from_radio.get_active()
