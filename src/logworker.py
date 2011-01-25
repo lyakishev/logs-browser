@@ -14,6 +14,7 @@ import multiprocessing
 import threading
 from operator import itemgetter as ig
 import Queue
+from buf_read import mmap_read
 
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
@@ -63,49 +64,43 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         if get_time(cdate)>self.fltr['date'][1]:
             raise StopIteration
-        deq = deque()
-        buf_deq = deque()
-        try:
-            f = open(self.path, 'r')
-        except IOError:
-            print "IOError: %s" % self.path
-            raise StopIteration
-        deq.extend(f.readlines())
-        f.close()
         pformat = self.formats.get(self.Log, None)
         if not pformat:
-            while deq:
-                line = deq.popleft()
+            try:
+                f = open(self.path, 'r')
+            except IOError:
+                print "IOError: %s" % self.path
+                raise StopIteration
+            line = True
+            while line:
+                line = f.readline()
                 pformat = define_format(line)
-                buf_deq.append(line)
                 if pformat:
                     self.formats[self.Log] = pformat
                     break
+            f.close()
         if not pformat:
-            if buf_deq:
-                print "Not found the format for file %s" % self.path
+            print "Not found the format for file %s" % self.path
             raise StopIteration
-        else:
-            while buf_deq:
-                deq.appendleft(buf_deq.pop())
         at = [0,0]
-        while deq:
+        buff = deque()
+        for string in mmap_read(self.path):
             if self.stop.is_set():
                 break
-            string = deq.pop()
-            if "at" in string.lstrip()[:2]:#.startswith("at"):
+            #if string.lstrip().startswith("at"):
+            if "at" in string.lstrip()[:2]:
                 at[0]+=1
             if "Exception" in string:
                 at[1]+=1
             parsed_s = parse_logline_re(string, cdate, pformat)
             if not parsed_s:
-                buf_deq.appendleft(string)
+                buff.appendleft(string)
             else:
                 l_type = (at[0]>0 and at[1]>0) and "ERROR" or "?"
-                buf_deq.appendleft(string)
-                msg = "".join(buf_deq)
+                buff.appendleft(string)
+                msg = "".join(buff)
                 yield (parsed_s[0], "", self.Log, l_type , self.path, msg, "#FFFFFF", False)
-                buf_deq.clear()
+                buff.clear()
                 at = [0,0]
 
     def filter(self):
