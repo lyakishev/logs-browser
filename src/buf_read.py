@@ -94,8 +94,8 @@ def mmap_read(path):
     with open(path, 'rb') as f:
         data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
         n = len(data)
-        for c in reversed(xrange(len(data))):
-            if c == "\n":
+        for i in xrange(len(data)-1,-1,-1):
+            if data[i] == "\n":
                 yield data[i+1:n]
                 n=i
         yield data[0:n]
