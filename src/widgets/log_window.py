@@ -16,6 +16,7 @@ xml_spl=re.compile(r"(<\?xml.+?>)")
 xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
 xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
+xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 
 class LogWindow:
     def __init__(self, model, view, iter, sel):
@@ -166,6 +167,12 @@ class LogWindow:
                 pretty_xml = txt.replace("><",">\n<")
             return "\n"+pretty_xml
 
+        def xml_bad_pretty(m):
+            txt = xml_pretty(m)
+            new_txt = txt.splitlines()[2:]
+            return "\n".join(new_txt)
+
+        text = xml_bad.sub(xml_bad_pretty, text)
         return xml_new.sub(xml_pretty, text)
 
 class SeveralLogsWindow(LogWindow):
