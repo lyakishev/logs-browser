@@ -78,6 +78,15 @@ class LogsModel:
                 row[6] = "#FFFFFF"
                 row[7] = False
 
+    def count_mean(self):
+        sum_ = 0
+        count_ = 0
+        for row in self.list_store:
+            count_+=1
+            sum_+=len(row[5])
+        return sum_/float(count_)
+            
+
     def set_of_rows(self):
         if not self.rows_set:
             n = len(self.args)

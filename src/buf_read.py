@@ -104,4 +104,26 @@ def mmap_read(path):
                 n=i
         yield data[0:n+1]
 
+def mmap_block_read(path, block_size=1850):
+    with open(path, 'rb') as f:
+        try:
+            data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        except WindowsError:
+            print "mmap error: %s" % path
+            return
+        n = len(data)
+        for i in xrange(len(data)-1-block_size,-1,-block_size):
+            text_block = data[i:n+1]
+            ret_pos = text_block.find("\n")
+            if ret_pos>=0:
+                for line in text_block.splitlines(True)[-1:0:-1]:
+                    yield line
+            else:
+                ret_pos=0
+            n=i+ret_pos
+        text_block = data[0:n+1]
+        for line in text_block.splitlines(True)[::-1]:
+            yield line
+
+
 

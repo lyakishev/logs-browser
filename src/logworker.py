@@ -14,7 +14,7 @@ import multiprocessing
 import threading
 from operator import itemgetter as ig
 import Queue
-from buf_read import mmap_read
+from buf_read import mmap_read, mmap_block_read
 
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
@@ -89,7 +89,7 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         at = [0,0]
         buff = deque()
-        for string in mmap_read(self.path):
+        for string in mmap_block_read(self.path, 8192):
             if self.stop.is_set():
                 break
             #if string.lstrip().startswith("at"):
