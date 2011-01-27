@@ -26,7 +26,7 @@ class LogWindow:
         self.iter = iter
         self.popup = gtk.Window()
         self.popup.set_title("Log")
-        self.popup.set_default_size(700,800)
+        self.popup.set_default_size(700,700)
         self.box = gtk.VBox()
         self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
@@ -64,18 +64,20 @@ class LogWindow:
         open_btn = gtk.ToolButton(gtk.STOCK_OPEN)
         open_btn.connect("clicked", self.open_file)
         save_btn = gtk.ToolButton(gtk.STOCK_SAVE)
-        #save_btn.connect("clicked", self.log_log)
+        save_btn.connect("clicked", self.save_to_file)
         copy_btn = gtk.ToolButton(gtk.STOCK_COPY)
-        #copy_btn.connect("clicked", self.copy_log)
+        copy_btn.connect("clicked", self.copy_log)
         sep1 = gtk.SeparatorToolItem()
         find_label = gtk.Label("Find:")
         find_label_item = gtk.ToolItem()
         find_label_item.add(find_label)
-        find_entry = gtk.Entry()
+        self.find_entry = gtk.Entry()
         find_entry_item = gtk.ToolItem()
-        find_entry_item.add(find_entry)
+        find_entry_item.add(self.find_entry)
         prev_btn = gtk.ToolButton(gtk.STOCK_GO_BACK)
+        prev_btn.connect("clicked", self.prev_search)
         next_btn = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
+        next_btn.connect("clicked", self.next_search)
         re_toggle = gtk.CheckButton("regexp")
         re_toggle_item = gtk.ToolItem()
         re_toggle_item.add(re_toggle)
@@ -99,6 +101,14 @@ class LogWindow:
 
         self.filter = LogColorParser(self)
 
+        self.selection_tag = self.txt_buff.create_tag("select")
+        self.selection_tag.set_property("size",12*pango.SCALE)
+        self.selection_tag.set_property("weight",pango.WEIGHT_BOLD)
+        self.selection_tag.set_property("background",'#00F')
+        self.selection_tag.set_property("foreground",'#FFF')
+        self.s = self.txt_buff.get_start_iter()
+        self.e = self.txt_buff.get_end_iter()
+
         self.paned = gtk.VBox()
         self.paned.pack_start(self.scr,True,True)
         self.paned.pack_start(self.filter,False,False, padding=5)
@@ -112,11 +122,60 @@ class LogWindow:
         self.popup.show_all()
         self.filter.hide()
 
+    def prev_search(self, *args):
+        string_to_search = self.find_entry.get_text()
+        self.txt_buff.remove_tag(self.selection_tag, self.s, self.e)
+        if string_to_search:
+            s,e = self.s.backward_search(string_to_search, gtk.TEXT_SEARCH_TEXT_ONLY)
+            self.log_text.scroll_to_iter(s,0)
+            self.txt_buff.select_range(s,e)
+            self.txt_buff.apply_tag(self.selection_tag,s,e)
+            self.s = s
+            self.e = e
+        else:
+            self.s = self.txt_buff.get_start_iter()
+            self.e = self.txt_buff.get_end_iter()
+
+    def next_search(self, *args):
+        string_to_search = self.find_entry.get_text()
+        self.txt_buff.remove_tag(self.selection_tag, self.s, self.e)
+        if string_to_search:
+            s,e = self.e.forward_search(string_to_search, gtk.TEXT_SEARCH_TEXT_ONLY)
+            self.log_text.scroll_to_iter(s,0)
+            self.txt_buff.apply_tag(self.selection_tag,s,e)
+            self.s = s
+            self.e = e
+        else:
+            self.s = self.txt_buff.get_start_iter()
+            self.e = self.txt_buff.get_end_iter()
+
     def show_hl(self, btn):
         if btn.get_active():
             self.filter.show()
         else:
             self.filter.hide()
+
+    def get_text(self):
+        start = self.txt_buff.get_start_iter()
+        end = self.txt_buff.get_end_iter()
+        return self.txt_buff.get_text(start, end)
+
+    def copy_log(self, *args):
+        pass
+
+    def save_to_file(self, *args):
+        fchooser = gtk.FileChooserDialog("Save logs to file...", None,
+            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
+            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+        fchooser.set_current_name("_".join([os.path.basename(f) for f in
+                                            self.files]))
+        response = fchooser.run()
+        if response == gtk.RESPONSE_OK:
+            path = fchooser.get_filename()
+            f = open(path, "w")
+            f.write(self.get_text())
+            f.close()
+        fchooser.destroy()
 
     def highlight(self, col_str):
         self.col_str = col_str
@@ -153,6 +212,7 @@ class LogWindow:
         threading.Thread(target=os.system, args=("notepad "+file_to_open,)).start()
 
     def fill(self):
+        self.files = set([self.model.get_value(self.iter,4)])
         self.txt = "\n%s" % (
             self.model.get_value(self.iter, 5)
         )
@@ -223,15 +283,7 @@ class LogWindow:
 class SeveralLogsWindow(LogWindow):
     def __init__(self,model, view, iter, sel):
         LogWindow.__init__(self,model, view, iter, sel)
-        self.save = gtk.Button()
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_SAVE, gtk.ICON_SIZE_BUTTON)
-        image.show()
-        self.save.add(image)
-        self.save.connect("clicked", self.save_to_file)
-        self.save.show()
         self.info_box.remove(self.updown_btns)
-        self.info_box.pack_start(self.save, False, False, 5)
 
     def show_next(self):
         pass
@@ -279,20 +331,4 @@ class SeveralLogsWindow(LogWindow):
         self.log_text.get_buffer().set_text(self.full_text)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
-
-    def save_to_file(self, *args):
-        fchooser = gtk.FileChooserDialog("Save logs to file...", None,
-            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-        fchooser.set_current_name("_".join([os.path.basename(f) for f in
-                                            self.files]))
-        response = fchooser.run()
-        if response == gtk.RESPONSE_OK:
-            path = fchooser.get_filename()
-            f = open(path, "w")
-            f.write(self.full_text)
-            f.close()
-        fchooser.destroy()
-
-
 
