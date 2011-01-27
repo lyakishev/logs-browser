@@ -15,6 +15,7 @@ from multiprocessing import Process, Queue, Event, Manager, freeze_support
 from Queue import Empty as qEmpty
 import threading
 from widgets.status_icon import StatusIcon
+import traceback
 if sys.platform == 'win32':
     from evlogworker import LogWorker, evt_dict
     from widgets.evt_type import EventTypeFilter
@@ -217,7 +218,10 @@ class GUI_Controller:
 if __name__ == '__main__':
     freeze_support()
     gtk.gdk.threads_init()
-    myGUI = GUI_Controller()
+    try:
+        myGUI = GUI_Controller()
+    except:
+        print traceback.format_exc()
     gtk.gdk.threads_enter()
     gtk.main()
     gtk.gdk.threads_leave()

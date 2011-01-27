@@ -13,6 +13,8 @@ from config_editor import ConfigEditor
 
 class ServersModel(object):
     def __init__(self):
+        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-2]+
+                    ["config"])
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
                                          gobject.TYPE_BOOLEAN,
@@ -91,7 +93,7 @@ class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
     def __init__(self):
         super(EventServersModel, self).__init__()
-        self.file = os.path.join(os.getcwd(),"evlogs.cfg")
+        self.file = os.path.join(self.conf_dir,"evlogs.cfg")
         self.read_from_file(True)
 
     def read_from_file(self,fict):
@@ -108,7 +110,7 @@ class EventServersModel(ServersModel):
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
-        self.file = os.path.join(os.getcwd(),"logs.cfg")
+        self.file = os.path.join(self.conf_dir,"logs.cfg")
         self.read_from_file(True)
 
     def read_from_file(self, re_all):
