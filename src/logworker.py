@@ -64,7 +64,7 @@ class FileLogWorker(multiprocessing.Process):
             raise StopIteration
         if get_time(cdate)>self.fltr['date'][1]:
             raise StopIteration
-        pformat = self.formats.get(self.Log, None)
+        pformat = self.formats.get(self.Log)
         if not pformat:
             try:
                 f = open(self.path, 'r')

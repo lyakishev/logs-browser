@@ -129,12 +129,12 @@ class FileServersModel(ServersModel):
                         if line == "[]":
                             root = None
                             c_root = line
-                            if not self.config.get(c_root, None):
+                            if not self.config.get(c_root):
                                 self.config[c_root] = set()
                         elif root_re.search(line):
                             root = self.add_root(line[1:-1])
                             c_root = line
-                            if not self.config.get(c_root, None):
+                            if not self.config.get(c_root):
                                 self.config[c_root] = set()
                         else:
                             if line not in self.config[c_root]:
@@ -195,7 +195,7 @@ class FileServersModel(ServersModel):
         for n, p in enumerate(parts):
             if p:
                 new_node_path = "|".join([parent_str, os.sep.join(parts[:n+1])])
-                if not self.parents.get(new_node_path, None):
+                if not self.parents.get(new_node_path):
                     prev_parent = self.parents.get("|".join([parent_str, os.sep.join(parts[:n])]), parent)
                     gtk.gdk.threads_enter()
                     self.parents[new_node_path] = tsappend(prev_parent, [p, gtk.STOCK_DIRECTORY, None, 'd'])
@@ -231,7 +231,7 @@ class FileServersModel(ServersModel):
                                 gtk.gdk.threads_leave()
                                 fls.append(name)
                 else:
-                    node = self.parents.get(node_name, None)
+                    node = self.parents.get(node_name)
                     if not node:
                         gtk.gdk.threads_enter()
                         node = self.parents[node_name] = self.treestore.append(true_parent, \

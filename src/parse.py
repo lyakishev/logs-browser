@@ -61,7 +61,7 @@ def parse_logline_re(line, cdate, re_obj):
             pd = parsed_line.groupdict()
             ms = pd["ms"]
             ms = int(ms and str(1000*int(ms))[:6] or 0)
-            year = pd.get("year", None)
+            year = pd.get("year")
             if year:
                 if len(year) != 2:
                     year = int(year)
@@ -70,8 +70,8 @@ def parse_logline_re(line, cdate, re_obj):
             else:
                 year = cdate.tm_year
             dt = datetime(year,
-                          int(pd.get("month", None) or cdate.tm_mon),
-                          int(pd.get("day", None) or cdate.tm_mday),
+                          int(pd.get("month",cdate.tm_mon)),
+                          int(pd.get("day",cdate.tm_mday)),
                           int(pd["hour"]),
                           int(pd["min"]),
                           int(pd["sec"]),

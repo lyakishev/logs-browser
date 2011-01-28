@@ -47,7 +47,7 @@ class LogsNotebook(gtk.Notebook):
             cur_page = self.get_nth_page(ncurpage)
             self.tree_paths[cur_page] = old_pathslist
         new_page = self.get_nth_page(page_num)
-        new_pathslist = self.tree_paths.get(new_page, None)
+        new_pathslist = self.tree_paths.get(new_page)
         if new_pathslist:
             self.tree.set_active_from_paths(new_pathslist)
         else:
