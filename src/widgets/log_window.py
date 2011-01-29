@@ -252,7 +252,12 @@ class LogWindow:
         return self.txt_buff.get_text(start, end)
 
     def copy_log(self, *args):
-        pass
+        clipboard = gtk.clipboard_get("CLIPBOARD")
+        self.txt_buff.select_range(self.txt_buff.get_start_iter(),
+                                   self.txt_buff.get_end_iter())
+        self.txt_buff.copy_clipboard(clipboard)
+        self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+                                   self.txt_buff.get_end_iter())
 
     def save_to_file(self, *args):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
