@@ -72,7 +72,7 @@ class LogWindow:
         find_label_item = gtk.ToolItem()
         find_label_item.add(find_label)
         self.find_entry = gtk.Entry()
-        self.find_entry.connect("changed", self.search)
+        self.find_entry.connect("changed", self.insert_search)
         find_entry_item = gtk.ToolItem()
         find_entry_item.add(self.find_entry)
         prev_btn = gtk.ToolButton(gtk.STOCK_GO_BACK)
@@ -122,79 +122,66 @@ class LogWindow:
         self.popup.show_all()
         self.filter.hide()
 
-    def prev_search(self, *args):
-        string_to_search = self.find_entry.get_text()
-        if string_to_search:
-            try:
-                s,e = self.e.backward_search(string_to_search, gtk.TEXT_SEARCH_TEXT_ONLY)
-            except TypeError:
-               return
-            else:
-                self.log_text.scroll_to_iter(s,0)
-                self.txt_buff.remove_tag(self.selection_tag,
-                    self.txt_buff.get_start_iter(),
-                    self.txt_buff.get_end_iter()
-                )
-                self.txt_buff.apply_tag(self.selection_tag,s,e)
-                self.s = e
-                self.e = s
+    def select_string(self, s_pos, e_pos):
+        s_iter = self.txt_buff.get_iter_at_offset(s_pos)
+        e_iter = self.txt_buff.get_iter_at_offset(e_pos)
+        self.log_text.scroll_to_iter(s_iter,0)
+        self.txt_buff.remove_tag(self.selection_tag,
+            self.txt_buff.get_start_iter(),
+            self.txt_buff.get_end_iter()
+        )
+        self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
+        self.s = e_pos
+        self.e = s_pos
+        
+
+    def search(self, start_pos, f):
+        s_pos, e_pos = f(start_pos)
+        if s_pos:
+            if s_pos>0:
+                self.select_string(s_pos, e_pos)
         else:
             self.txt_buff.remove_tag(self.selection_tag,
                 self.txt_buff.get_start_iter(),
                 self.txt_buff.get_end_iter()
             )
-            self.s = self.txt_buff.get_start_iter()
-            self.e = self.txt_buff.get_end_iter()
+
+    def b_search(self, start_pos):
+        text = self.get_text().decode('utf-8').lower()[::-1]
+        string_to_search = self.find_entry.get_text().lower()[::-1]
+        chars = len(string_to_search)
+        ltext = len(text)
+        if chars>0:
+            tf = text.find(string_to_search, ltext-start_pos)
+            if tf>0:
+                pos = ltext - tf
+                return pos-chars, pos
+            else:
+                return (-1, -1)
+        else:
+            return (None, None)
+
+    def f_search(self, start_pos):
+        text = self.get_text().decode('utf-8').lower()
+        string_to_search = self.find_entry.get_text().lower()
+        chars = len(string_to_search)
+        if chars>0:
+            pos = text.find(string_to_search, start_pos)
+            if pos>0:
+                return (pos, pos+chars)
+            else:
+                return(-1, -1)
+        else:
+            return (None, None)
+
+    def insert_search(self, *args):
+        self.search(0, self.f_search)
+
+    def prev_search(self, *args):
+        self.search(self.e, self.b_search)
 
     def next_search(self, *args):
-        string_to_search = self.find_entry.get_text()
-        if string_to_search:
-            try:
-                s,e = self.s.forward_search(string_to_search, gtk.TEXT_SEARCH_TEXT_ONLY)
-            except TypeError:
-                return
-            else:
-                self.log_text.scroll_to_iter(s,0)
-                self.txt_buff.remove_tag(self.selection_tag,
-                    self.txt_buff.get_start_iter(),
-                    self.txt_buff.get_end_iter()
-                )
-                self.txt_buff.apply_tag(self.selection_tag,s,e)
-                self.s = e
-                self.e = s
-        else:
-            self.txt_buff.remove_tag(self.selection_tag,
-                self.txt_buff.get_start_iter(),
-                self.txt_buff.get_end_iter()
-            )
-            self.s = self.txt_buff.get_start_iter()
-            self.e = self.txt_buff.get_end_iter()
-
-    def search(self, *args):
-        string_to_search = self.find_entry.get_text()
-        if string_to_search:
-            start = self.txt_buff.get_start_iter()
-            try:
-                s,e = start.forward_search(string_to_search, gtk.TEXT_SEARCH_TEXT_ONLY)
-            except TypeError:
-                return
-            else:
-                self.log_text.scroll_to_iter(s,0)
-                self.txt_buff.remove_tag(self.selection_tag,
-                    self.txt_buff.get_start_iter(),
-                    self.txt_buff.get_end_iter()
-                )
-                self.txt_buff.apply_tag(self.selection_tag,s,e)
-                self.s = e
-                self.e = s
-        else:
-            self.txt_buff.remove_tag(self.selection_tag,
-                self.txt_buff.get_start_iter(),
-                self.txt_buff.get_end_iter()
-            )
-            self.s = self.txt_buff.get_start_iter()
-            self.e = self.txt_buff.get_end_iter()
-        
+        self.search(self.s, self.f_search)
 
     def show_hl(self, btn):
         if btn.get_active():
@@ -277,8 +264,7 @@ class LogWindow:
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
         self.highlight(self.col_str)
         self.log_text.grab_focus()
-        self.s = self.txt_buff.get_start_iter()
-        self.e = self.txt_buff.get_end_iter()
+        self.search(0, self.f_search)
 
 
     def show_prev(self, *args):
