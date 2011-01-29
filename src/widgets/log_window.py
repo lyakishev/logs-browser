@@ -79,9 +79,10 @@ class LogWindow:
         prev_btn.connect("clicked", self.prev_search)
         next_btn = gtk.ToolButton(gtk.STOCK_GO_FORWARD)
         next_btn.connect("clicked", self.next_search)
-        re_toggle = gtk.CheckButton("regexp")
+        self.re_toggle = gtk.CheckButton("regexp")
+        self.re_toggle.connect_after("toggled", self.t_insert_search)
         re_toggle_item = gtk.ToolItem()
-        re_toggle_item.add(re_toggle)
+        re_toggle_item.add(self.re_toggle)
         sep2 = gtk.SeparatorToolItem()
         hl_btn = gtk.ToggleToolButton(gtk.STOCK_SELECT_COLOR)
         hl_btn.connect("toggled", self.show_hl)
@@ -137,8 +138,8 @@ class LogWindow:
 
     def search(self, start_pos, f):
         s_pos, e_pos = f(start_pos)
-        if s_pos:
-            if s_pos>0:
+        if s_pos or e_pos:
+            if s_pos>=0:
                 self.select_string(s_pos, e_pos)
         else:
             self.txt_buff.remove_tag(self.selection_tag,
@@ -170,18 +171,74 @@ class LogWindow:
             if pos>0:
                 return (pos, pos+chars)
             else:
-                return(-1, -1)
+                if start_pos == 0:
+                    return (None, None)
+                else:
+                    return(-1, -1)
         else:
             return (None, None)
 
+    def f_re_search(self, start_pos):
+        text = self.get_text().decode('utf-8')
+        string_to_search = self.find_entry.get_text()
+        if string_to_search:
+            re_string = re.compile(string_to_search, re.U)
+            searched = re_string.search(text[start_pos:])
+            if searched:
+                s_pos = searched.start()+start_pos
+                e_pos = searched.end()+start_pos
+                return (s_pos, e_pos)
+            else:
+                if start_pos == 0:
+                    return (None, None)
+                else:
+                    return (-1, -1)
+        else:
+            return (None, None)
+
+    def b_re_search(self, start_pos):
+        text = self.get_text().decode('utf-8')
+        string_to_search = self.find_entry.get_text()
+        if string_to_search:
+            re_string = re.compile(string_to_search, re.U)
+            searched = list(re_string.finditer(text[:start_pos]))
+            if searched:
+                s_pos = searched[-1].start()
+                e_pos = searched[-1].end()
+                return (s_pos, e_pos)
+            else:
+                return (-1, -1)
+        else:
+            return (None, None)
+        
+
+    def t_insert_search(self, *args):
+        self.txt_buff.remove_tag(self.selection_tag,
+            self.txt_buff.get_start_iter(),
+            self.txt_buff.get_end_iter()
+        )
+        if not self.re_toggle.get_active():
+            self.search(0, self.f_search)
+        else:
+            self.search(0, self.f_re_search)
+
     def insert_search(self, *args):
-        self.search(0, self.f_search)
+        if not self.re_toggle.get_active():
+            self.search(0, self.f_search)
+        else:
+            self.search(0, self.f_re_search)
 
     def prev_search(self, *args):
-        self.search(self.e, self.b_search)
+        if not self.re_toggle.get_active():
+            self.search(self.e, self.b_search)
+        else:
+            self.search(self.e, self.b_re_search)
 
     def next_search(self, *args):
-        self.search(self.s, self.f_search)
+        if not self.re_toggle.get_active():
+            self.search(self.s, self.f_search)
+        else:
+            self.search(self.s, self.f_re_search)
 
     def show_hl(self, btn):
         if btn.get_active():
@@ -247,9 +304,7 @@ class LogWindow:
 
     def fill(self):
         self.files = set([self.model.get_value(self.iter,4)])
-        self.txt = "\n%s" % (
-            self.model.get_value(self.iter, 5)
-        )
+        self.txt = self.model.get_value(self.iter, 5)
         try:
             self.txt = self.txt.decode('utf-8').encode('utf-8')
         except UnicodeDecodeError:
@@ -264,8 +319,9 @@ class LogWindow:
         self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
         self.highlight(self.col_str)
         self.log_text.grab_focus()
-        self.search(0, self.f_search)
-
+        self.s = 0
+        self.e = len(self.txt)
+        self.insert_search(None)
 
     def show_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
