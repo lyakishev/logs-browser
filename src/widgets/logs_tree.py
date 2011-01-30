@@ -141,7 +141,7 @@ class FileServersModel(ServersModel):
                                 self.add_parents(line, root)
                                 self.add_logdir(line, root)
                                 self.config[c_root].add(line)
-        #self.remove_empty_dirs()
+        self.remove_empty_dirs()
                         
     def add_root(self, name):
         if name:
@@ -158,12 +158,13 @@ class FileServersModel(ServersModel):
             dirs = 0
             chit = self.treestore.iter_children(it)
             while chit:
+                n_chit = self.treestore.iter_next(chit)
                 if self.treestore.get_value(chit,3) == 'd':
                     dirs += 1
                     walker(chit)
                 else:
                     files += 1
-                chit = self.treestore.iter_next(chit)
+                chit = n_chit
             if not files and not dirs:
                 par = self.treestore.iter_parent(it)
                 if self.treestore.get_value(it, 3) != 'n':
