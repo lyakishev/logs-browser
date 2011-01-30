@@ -86,6 +86,10 @@ class LogWindow:
         sep2 = gtk.SeparatorToolItem()
         hl_btn = gtk.ToggleToolButton(gtk.STOCK_SELECT_COLOR)
         hl_btn.connect("toggled", self.show_hl)
+        self.syntax = gtk.combo_box_new_text()
+        self.syntax.connect("changed", self.combo_hl)
+        syntax_item = gtk.ToolItem()
+        syntax_item.add(self.syntax)
         
         toolbar.insert(open_btn, 0)
         toolbar.insert(save_btn, 1)
@@ -97,7 +101,8 @@ class LogWindow:
         toolbar.insert(next_btn,7)
         toolbar.insert(re_toggle_item,8)
         toolbar.insert(sep2, 9)
-        toolbar.insert(hl_btn,10)
+        toolbar.insert(syntax_item,10)
+        toolbar.insert(hl_btn,11)
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
@@ -118,20 +123,46 @@ class LogWindow:
         self.box.pack_start(self.paned)
         self.tag_table = self.txt_buff.get_tag_table()
         self.col_str=({},[])
+        
+        self.read_config()
+
         self.fill()
+        self.fill_combo()
 
         self.popup.show_all()
         self.filter.hide()
+
+    def read_config(self):
+        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
+                                    ["config"])
+        with open(os.path.join(self.conf_dir, "syntax_hl"),'r') as f:
+            config = f.read()
+            self.config = eval(config)
+
+    def fill_combo(self):
+        syntax = self.config.keys()
+        self.syntax.append_text("-------")
+        for item in syntax:
+            self.syntax.append_text(item)
+        self.syntax.set_active(0)
+
+    def combo_hl(self, *args):
+        syntax = self.syntax.get_active_text()
+        c_syntax = self.config.get(syntax, "")
+        self.filter.buf.set_text(c_syntax)
+        self.filter.parse_and_highlight()
+        self.filter.filter_logs()
 
     def select_string(self, s_pos, e_pos):
         s_iter = self.txt_buff.get_iter_at_offset(s_pos)
         e_iter = self.txt_buff.get_iter_at_offset(e_pos)
         self.log_text.scroll_to_iter(s_iter,0)
-        self.txt_buff.remove_tag(self.selection_tag,
-            self.txt_buff.get_start_iter(),
-            self.txt_buff.get_end_iter()
-        )
-        self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
+        #self.txt_buff.remove_tag(self.selection_tag,
+        #    self.txt_buff.get_start_iter(),
+        #    self.txt_buff.get_end_iter()
+        #)
+        self.txt_buff.select_range(s_iter, e_iter)
+        #self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
         self.s = e_pos
         self.e = s_pos
         
@@ -142,10 +173,12 @@ class LogWindow:
             if s_pos>=0:
                 self.select_string(s_pos, e_pos)
         else:
-            self.txt_buff.remove_tag(self.selection_tag,
-                self.txt_buff.get_start_iter(),
-                self.txt_buff.get_end_iter()
-            )
+            #self.txt_buff.remove_tag(self.selection_tag,
+            #    self.txt_buff.get_start_iter(),
+            #    self.txt_buff.get_end_iter()
+            #)
+            self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+                                       self.txt_buff.get_end_iter())
 
     def b_search(self, start_pos):
         text = self.get_text().decode('utf-8').lower()[::-1]

@@ -13,7 +13,7 @@ from config_editor import ConfigEditor
 
 class ServersModel(object):
     def __init__(self):
-        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-2]+
+        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
                     ["config"])
         self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
                                          gobject.TYPE_STRING,
