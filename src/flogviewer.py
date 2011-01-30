@@ -52,7 +52,7 @@ class GUI_Controller:
         self.control_box = gtk.VBox()
         self.serversw1 = FileServersTree()
         self.serversw1.show()
-        self.logframe = LogsNotebook(self.serversw1.model)
+        self.logframe = LogsNotebook(self.serversw1)
         self.log_ntb = gtk.Notebook()
         self.file_label = gtk.Label("Filelogs")
         self.file_label.show()

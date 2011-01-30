@@ -39,23 +39,32 @@ class LogsNotebook(gtk.Notebook):
         self.set_action_widget(act_box, gtk.PACK_END)
         self.connect("switch_page", self.change_source_tree)
         self.tree_paths = {}
+        self.entries = {}
 
     def change_source_tree(self, ntb, page, page_num, *args):
         ncurpage = self.get_current_page()
         if ncurpage >= 0:
-            old_pathslist = self.tree.get_active_check_paths()
+            old_pathslist = self.tree.model.get_active_check_paths()
+            old_entry_text = self.tree.hide_log.get_text()
             cur_page = self.get_nth_page(ncurpage)
             self.tree_paths[cur_page] = old_pathslist
+            self.entries[cur_page] = old_entry_text
         new_page = self.get_nth_page(page_num)
         new_pathslist = self.tree_paths.get(new_page)
+        new_entry_text = self.entries.get(new_page)
         if new_pathslist:
-            self.tree.set_active_from_paths(new_pathslist)
+            self.tree.model.set_active_from_paths(new_pathslist)
+            self.tree.hide_log.set_text(new_entry_text)
         else:
             try:
-                self.tree.set_active_from_paths(old_pathslist)
+                self.tree.model.set_active_from_paths(old_pathslist)
             except UnboundLocalError:
-                self.tree.set_active_from_paths([])
+                self.tree.model.set_active_from_paths([])
+                self.tree.hide_log.set_text("")
+            else:
+                self.tree.hide_log.set_text(old_entry_text)
         self.tree_paths[new_page] = new_pathslist
+        self.entries[new_page] = new_entry_text
             
     def change_page_name(self, widget, event):
         if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
@@ -255,6 +264,7 @@ class LogsNotebook(gtk.Notebook):
     def close_tab(self, args):
         page = self.get_nth_page(self.get_current_page())
         del self.tree_paths[page]
+        del self.entries[page]
         child = self.btns.index(args)
         self.btns.pop(child)
         self.remove_page(child)
