@@ -94,6 +94,12 @@ class EventServersModel(ServersModel):
     def __init__(self):
         super(EventServersModel, self).__init__()
         self.file = os.path.join(self.conf_dir,"evlogs.cfg")
+        try:
+            f = open(self.file)
+        except IOError:
+            self.file = os.path.join("config", "evlogs.cfg")
+        else:
+            f.close()
         self.read_from_file(True)
 
     def read_from_file(self,fict):
@@ -111,7 +117,11 @@ class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
         self.file = os.path.join(self.conf_dir,"logs.cfg")
-        self.read_from_file(True)
+        try:
+            self.read_from_file(True)
+        except IOError:
+            self.file = os.path.join("config","logs.cfg")
+            self.read_from_file(True)
 
     def read_from_file(self, re_all):
         if re_all:

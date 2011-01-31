@@ -109,9 +109,9 @@ class LogWindow:
         self.filter = LogColorParser(self)
 
         self.selection_tag = self.txt_buff.create_tag("select")
-        self.selection_tag.set_property("size",12*pango.SCALE)
+        self.selection_tag.set_property("size",13*pango.SCALE)
         self.selection_tag.set_property("weight",pango.WEIGHT_BOLD)
-        self.selection_tag.set_property("background",'#00F')
+        self.selection_tag.set_property("background",'#009')
         self.selection_tag.set_property("foreground",'#FFF')
 
         self.paned = gtk.VBox()
@@ -135,9 +135,14 @@ class LogWindow:
     def read_config(self):
         self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
                                     ["config"])
-        with open(os.path.join(self.conf_dir, "syntax_hl"),'r') as f:
+        try:
+            f = open(os.path.join(self.conf_dir, "syntax_hl"),'r')
+        except IOError:
+            f = open(os.path.join("config", "syntax_hl"),'r')
+        finally:
             config = f.read()
             self.config = eval(config)
+            f.close()
 
     def fill_combo(self):
         syntax = self.config.keys()
@@ -157,12 +162,12 @@ class LogWindow:
         s_iter = self.txt_buff.get_iter_at_offset(s_pos)
         e_iter = self.txt_buff.get_iter_at_offset(e_pos)
         self.log_text.scroll_to_iter(s_iter,0)
-        #self.txt_buff.remove_tag(self.selection_tag,
-        #    self.txt_buff.get_start_iter(),
-        #    self.txt_buff.get_end_iter()
-        #)
-        self.txt_buff.select_range(s_iter, e_iter)
-        #self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
+        self.txt_buff.remove_tag(self.selection_tag,
+            self.txt_buff.get_start_iter(),
+            self.txt_buff.get_end_iter()
+        )
+        #self.txt_buff.select_range(s_iter, e_iter)
+        self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
         self.s = e_pos
         self.e = s_pos
         
@@ -173,12 +178,12 @@ class LogWindow:
             if s_pos>=0:
                 self.select_string(s_pos, e_pos)
         else:
-            #self.txt_buff.remove_tag(self.selection_tag,
-            #    self.txt_buff.get_start_iter(),
-            #    self.txt_buff.get_end_iter()
-            #)
-            self.txt_buff.select_range(self.txt_buff.get_end_iter(),
-                                       self.txt_buff.get_end_iter())
+            self.txt_buff.remove_tag(self.selection_tag,
+                self.txt_buff.get_start_iter(),
+                self.txt_buff.get_end_iter()
+            )
+            #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+                                       #self.txt_buff.get_end_iter())
 
     def b_search(self, start_pos):
         text = self.get_text().decode('utf-8').lower()[::-1]
