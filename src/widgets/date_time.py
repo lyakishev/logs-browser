@@ -7,8 +7,9 @@ from net_time import get_true_time
 import datetime
 
 class DateTimeWidget(gtk.Table):
-    def __init__(self):
+    def __init__(self, d = datetime.timedelta(0)):
         super(DateTimeWidget,self).__init__(2, 3, False)
+        self.delta = d
         self.hours_adj = gtk.Adjustment(value=0, lower=0, upper=23, step_incr=1)
         self.minute_adj = gtk.Adjustment(value=0, lower=0, upper=59, step_incr=1)
         self.second_adj = gtk.Adjustment(value=0, lower=0, upper=59, step_incr=1)
@@ -34,7 +35,7 @@ class DateTimeWidget(gtk.Table):
         self.set_date(now)
 
     def set_date(self, ct):
-        dt = datetime.datetime.fromtimestamp(ct)
+        dt = datetime.datetime.fromtimestamp(ct) + self.delta
         self.hours_spin.set_value(dt.hour)
         self.minutes_spin.set_value(dt.minute)
         self.seconds_spin.set_value(dt.second)
@@ -66,7 +67,7 @@ class FromToOption(gtk.HBox):
         self.to_check = gtk.CheckButton("To")
         self.to_check.set_active(True)
         self.from_date = DateTimeWidget()
-        self.to_date = DateTimeWidget()
+        self.to_date = DateTimeWidget(datetime.timedelta(seconds=1))
         self.pack_start(self.from_radio, False, False)
         self.pack_start(self.from_date, False, False)
         self.pack_start(self.to_check, False, False)
