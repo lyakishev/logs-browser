@@ -25,7 +25,7 @@ def get_true_time():
         try:
             server_time = datetime.strptime(true_time_re.search(time_string).group(0),
                                             "%d.%m.%Y %H:%M:%S")
-        except ValueError:
+        except:
             server_time = dt
         else:
             TimeDelta = timedelta(seconds=(now-server_time).seconds)
