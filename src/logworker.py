@@ -80,7 +80,6 @@ class FileLogWorker(multiprocessing.Process):
                     break
             if f.tell() == 0:
                 f.close()
-                print "File %s is empty" % self.path
                 raise StopIteration
             else:
                 f.close()

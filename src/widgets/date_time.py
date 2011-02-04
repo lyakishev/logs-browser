@@ -125,7 +125,7 @@ class ThisOption(gtk.HBox):
         self.this_date_combo = gtk.combo_box_new_text()
         self.this_date_combo.append_text('hour')
         self.this_date_combo.append_text('day')
-        self.this_date_combo.append_text('week')
+        #self.this_date_combo.append_text('week')
         self.this_date_combo.append_text('month')
         self.this_date_combo.set_active(0)
         self.pack_start(self.this_date_radio, False, False)
@@ -145,11 +145,12 @@ class ThisOption(gtk.HBox):
         start_month = datetime.datetime(end_date.year,
             end_date.month, 1
         )
-        start_week = datetime.datetime(end_date.year,
-            end_date.month,
-            end_date.day-end_date.weekday()
-        )
-        this_date = [start_hour, start_day, start_week, start_month]
+        #start_week = datetime.datetime(end_date.year,
+        #    end_date.month,
+        #    end_date.day-end_date.weekday()
+        #)
+        this_date = [start_hour, start_day, start_month]
+        #start_week, start_month]
         start_date = this_date[self.this_date_combo.get_active()]
         print start_date
         print end_date
