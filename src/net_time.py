@@ -22,10 +22,14 @@ def get_true_time():
         time_error_flag = 1
     else:
         now = datetime.now()
-        server_time = datetime.strptime(true_time_re.search(time_string).group(0),
-                                        "%d.%m.%Y %H:%M:%S")
-        TimeDelta = timedelta(seconds=(now-server_time).seconds)
-        time_error_flag = 0
+        try:
+            server_time = datetime.strptime(true_time_re.search(time_string).group(0),
+                                            "%d.%m.%Y %H:%M:%S")
+        except ValueError:
+            server_time = dt
+        else:
+            TimeDelta = timedelta(seconds=(now-server_time).seconds)
+            time_error_flag = 0
     finally:
         return time.mktime(server_time.timetuple())
 
