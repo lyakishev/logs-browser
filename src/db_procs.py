@@ -1,4 +1,6 @@
 import cx_Oracle
+import re
+
 
 class ProcAnalyzer():
     def __init__(self, proc_string, db):
@@ -32,6 +34,7 @@ class ProcAnalyzer():
         source = self.cur.fetchall()
         proc_source = []
         line_number = 0
+        re_end = re.compile("end\s+%s;" % self.proc_name)
         for n, l in enumerate(source):
             line = l[0]
             if line.startswith("--"):
@@ -45,17 +48,11 @@ class ProcAnalyzer():
                     self.type_ = "func"
                 line_number = n+1
                 break
-        begin_end = 0
         for l in source[line_number:]:
             line = l[0]
-            if "END" in line:
-                begin_end-=1
-                if begin_end == 0:
-                    proc_source.append(line)
-                    break
-            if "BEGIN" in line:
-                begin_end+=1
             proc_source.append(line)
+            if re_end.search(line.lower()):
+                break
         self.proc_source = "".join(proc_source)
 
     def call(self):
@@ -69,6 +66,6 @@ class ProcAnalyzer():
 #oracle ca
 
 if __name__ == "__main__":
-    pa = ProcAnalyzer("CUSTOMER_GET.GET_PERSONAL_ACCOUNT_BY_ID",
+    pa = ProcAnalyzer("CUSTOMER_PA_Q.get_personal_account_by_id",
                      "tf2_cust/cust@heine")
-    print pa.type_
+    print pa.proc_source
