@@ -1,7 +1,6 @@
 import cx_Oracle
 import re
 
-
 class ProcAnalyzer():
     def __init__(self, proc_string, db):
         self.proc = proc_string
@@ -17,7 +16,7 @@ class ProcAnalyzer():
 
     def split(self):
         self.package, self.proc_name = self.proc.split('.')
-    
+
     def check(self):
         self.cur.execute("select count(*) from user_objects where object_name\
             like :pack", pack=self.package)
@@ -34,13 +33,15 @@ class ProcAnalyzer():
         source = self.cur.fetchall()
         proc_source = []
         line_number = 0
-        re_end = re.compile("end\s+%s;" % self.proc_name)
+        re_start = re.compile("(?i)\s*(create|create or replace)?\s*(function|procedure).+?%s" %
+                        self.proc_name.lower())
+        re_end = re.compile("end\s+%s;" % self.proc_name.lower())
         for n, l in enumerate(source):
             line = l[0]
             if line.startswith("--"):
                 continue
             lower_line = line.lower()
-            if self.proc_name.lower() in lower_line:
+            if re_start.match(lower_line):#self.proc_name.lower() in lower_line:
                 proc_source.append(line)
                 if "procedure" in lower_line:
                     self.type_ = "proc"
@@ -66,6 +67,6 @@ class ProcAnalyzer():
 #oracle ca
 
 if __name__ == "__main__":
-    pa = ProcAnalyzer("CUSTOMER_PA_Q.get_personal_account_by_id",
-                     "tf2_cust/cust@heine")
+    pa = ProcAnalyzer("PKG_CRM.get_HLR_code",
+                     "tf2_stock/stock@heine")
     print pa.proc_source

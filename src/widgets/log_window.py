@@ -10,6 +10,7 @@ import threading
 from widgets.color_parser import LogColorParser
 import pango
 import traceback
+from plsql_analyzer import *
 
 #xml_re = re.compile("<\?xml(.+)>")
 xml_spl=re.compile(r"(<\?xml.+?>)")
@@ -17,6 +18,7 @@ xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
 xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
+plsql_re=re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
 
 class LogWindow:
     def __init__(self, model, view, iter, sel):
@@ -57,6 +59,10 @@ class LogWindow:
         self.txt_buff = self.log_text.get_buffer()
         self.log_text.set_editable(False)
         self.log_text.set_wrap_mode(gtk.WRAP_WORD)
+        self.log_text.add_events(gtk.gdk.MOTION_NOTIFY | gtk.gdk.BUTTON_PRESS)
+        self.log_text.connect("motion_notify_event", self.motion_notify)
+        self.log_text.add_events(gtk.gdk.BUTTON_PRESS_MASK)
+        self.log_text.connect("button-press-event", self.show_body)
         self.scr.add(self.log_text)
         self.popup.add(self.box)
 
@@ -123,14 +129,44 @@ class LogWindow:
         self.box.pack_start(self.paned)
         self.tag_table = self.txt_buff.get_tag_table()
         self.col_str=({},[])
-        
         self.read_config()
+        self.p_cursor = gtk.gdk.Cursor(gtk.gdk.HAND1)
 
         self.fill()
         self.fill_combo()
 
         self.popup.show_all()
         self.filter.hide()
+
+    def show_body(self, widget, event, *args):
+        if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
+            iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
+            for s,e in self.procs:
+                if s.get_offset()<=iter_.get_offset()<=e.get_offset():
+                    proc = self.txt_buff.get_text(s,e)
+                    pa = PLSQL_Analyzer(proc)
+                    break
+
+    def motion_notify(self, widget, event):
+        iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
+        child_win = self.log_text.get_window(gtk.TEXT_WINDOW_TEXT)
+        in_f=False
+        for s,e in self.procs:
+            if s.get_offset()<=iter_.get_offset()<=e.get_offset():
+                in_f=True
+        if in_f:
+            child_win.set_cursor(self.p_cursor)
+        else:
+            child_win.set_cursor(None)
+
+    def motion_text(self, txt):
+        m_iters = []
+        procs = plsql_re.finditer(txt)
+        for m in procs:
+            start_iter = self.txt_buff.get_iter_at_offset(m.start())
+            end_iter = self.txt_buff.get_iter_at_offset(m.end())
+            m_iters.append((start_iter,end_iter))
+        return m_iters
 
     def read_config(self):
         self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
@@ -359,12 +395,14 @@ class LogWindow:
             self.model.get_value(self.iter,2),
             self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
             ))
-        self.log_text.get_buffer().set_text(self.pretty_xml(self.txt))
+        txt = self.pretty_xml(self.txt)
+        self.log_text.get_buffer().set_text(txt)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
         self.s = 0
         self.e = len(self.txt)
         self.insert_search(None)
+        self.procs = self.motion_text(txt)
 
     def show_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)

@@ -47,6 +47,6 @@ class FileMonitor():
 	#self.buf.remove_all_tags(start, end)
 	#self.buf.apply_tag(self.new_tag, end, new_end)
 
-fm = FileMonitor(r"\\nag-tc-01\c$\forislog\SelfCare\debug-all.log")
+fm = FileMonitor(r"\\msk-portal-01\forislog\Ncih\back-end-all.log")
 ml = glib.MainLoop()
 ml.run()
