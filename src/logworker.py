@@ -104,8 +104,7 @@ class FileLogWorker(multiprocessing.Process):
                        l_type,
                        self.path,
                        msg,
-                       "#FFFFFF",
-                       False)
+                       "#FFFFFF")
                 buff.clear()
                 at_err = [0, 0]
 
@@ -123,56 +122,41 @@ class FileLogWorker(multiprocessing.Process):
         for log in (l for l in self.load() if f_date(l)):
             yield log
 
-    def group(self):
-        for k, group in groupby(self.filter(), ig(0, 1, 2, 3, 4)):
-            yield (k[0], k[1], k[2], k[3], k[4],
-                   "".join(reversed([m[5] for m in group])),
-                   "#FFFFFF", False)
-
     def run(self):
         while 1:
             self.path, self.common_log_name = self.queues[0].get()
-            for log in self.group():
+            for log in self.filter():
                 self.queues[1].put(log)
             self.queues[2].put(1)
 
 
 class LogListFiller(threading.Thread):
-    def __init__(self, queues, model, view, stp):  # , pg):
+    def __init__(self, queues, stp, loglist):  # , pg):
         threading.Thread.__init__(self)
         self.queues = queues
-        self.model = model
-        self.view = view
         self.stp = stp
+        self.loglist = loglist
 
     def run(self):
-        self.view.freeze_child_notify()
-        self.view.set_model(None)
-        app = self.model.insert_after
-        thr_ent = gtk.gdk.threads_enter
-        thr_leave = gtk.gdk.threads_leave
-        sib = None
+        self.loglist.create_new_table()
+        insert = self.loglist.insert
         get = self.queues[0].get
         while 1:
             if self.stp.is_set():
                 break
             try:
                 log = get(True, 1)
-                thr_ent()
-                sib = app(sib, log)
-                thr_leave()
+                insert(log)
             except Queue.Empty:
                 pass
         get = self.queues[0].get_nowait
         while 1:
             try:
                 log = get()
-                thr_ent()
-                sib = app(sib, log)
-                thr_leave()
+                insert(log)
             except Queue.Empty:
                 break
-        self.model.set_sort_column_id(0, gtk.SORT_DESCENDING)
-        self.view.set_model(self.model)
-        self.view.thaw_child_notify()
+        self.loglist.db_conn.commit()
+        self.loglist.execute("""select date, log, type, source from this
+                                group by date""")
         self.queues[1].put(1)

@@ -192,10 +192,8 @@ class GUI_Controller:
         except AttributeError:
             evlogs = []
         if flogs or evlogs:
-            self.cur_model.clear()
-            self.logframe.get_current_logs_store.rows_set.clear()
-            self.cur_model.set_default_sort_func(lambda *args: -1)
-            self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
+            loglist = self.logframe.get_current_logs_store
+            loglist.clear()
             self.LOGS_FILTER['date'] = self.date_filter.get_active() and\
                                        self.date_filter.get_dates or\
                                        (datetime.datetime.min,
@@ -211,6 +209,7 @@ class GUI_Controller:
             n_flogs = file_preparator(flogs)
             fl_count = len(n_flogs) + len(evlogs) + 1
             frac = 1.0 / (fl_count)
+            loglist.set_hash(self.LOGS_FILTER.items())
             if evlogs:
                 p1 = Process(target=queue_filler,
                              args=(evlogs, self.evt_queue,))
@@ -222,9 +221,8 @@ class GUI_Controller:
                                    args=(self.compl_queue, frac, fl_count))
             pr3.start()
             pr4 = LogListFiller([self.list_queue, self.compl_queue],
-                                self.cur_model,
-                                self.cur_view,
-                                self.stp_compl)
+                                self.stp_compl,
+                                loglist)
             pr4.start()
             self.show_button.set_sensitive(False)
 

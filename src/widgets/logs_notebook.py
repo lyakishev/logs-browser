@@ -232,17 +232,17 @@ class LogsNotebook(gtk.Notebook):
     @property
     def get_current_loglist(self):
         logsw = self.get_nth_page(self.get_current_page())
-        return logsw.logs_store.list_store
+        return logsw.log_list.model
 
     @property
     def get_current_view(self):
         logsw = self.get_nth_page(self.get_current_page())
-        return logsw.logs_view.view
+        return logsw.log_list.view
 
     @property
     def get_current_logs_store(self):
         logsw = self.get_nth_page(self.get_current_page())
-        return logsw.logs_store
+        return logsw.log_list
 
     def close_tab(self, args):
         page = self.get_nth_page(self.get_current_page())
