@@ -2,7 +2,9 @@
 
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 import re
 import xml.dom.minidom
 import os
@@ -10,15 +12,19 @@ import threading
 from widgets.color_parser import LogColorParser
 import pango
 import traceback
-from plsql_analyzer import *
+try:
+    from plsql_analyzer import *
+except:
+    pass
 
 #xml_re = re.compile("<\?xml(.+)>")
-xml_spl=re.compile(r"(<\?xml.+?>)")
+xml_spl = re.compile(r"(<\?xml.+?>)")
 xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
 xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
-plsql_re=re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
+plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
+
 
 class LogWindow:
     def __init__(self, model, view, iter, sel):
@@ -28,7 +34,7 @@ class LogWindow:
         self.iter = iter
         self.popup = gtk.Window()
         self.popup.set_title("Log")
-        self.popup.set_default_size(700,700)
+        self.popup.set_default_size(700, 700)
         self.box = gtk.VBox()
         self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
@@ -96,39 +102,39 @@ class LogWindow:
         self.syntax.connect("changed", self.combo_hl)
         syntax_item = gtk.ToolItem()
         syntax_item.add(self.syntax)
-        
+
         toolbar.insert(open_btn, 0)
         toolbar.insert(save_btn, 1)
         toolbar.insert(copy_btn, 2)
         toolbar.insert(sep1, 3)
-        toolbar.insert(find_label_item,4)
-        toolbar.insert(find_entry_item,5)
-        toolbar.insert(prev_btn,6)
-        toolbar.insert(next_btn,7)
-        toolbar.insert(re_toggle_item,8)
+        toolbar.insert(find_label_item, 4)
+        toolbar.insert(find_entry_item, 5)
+        toolbar.insert(prev_btn, 6)
+        toolbar.insert(next_btn, 7)
+        toolbar.insert(re_toggle_item, 8)
         toolbar.insert(sep2, 9)
-        toolbar.insert(syntax_item,10)
-        toolbar.insert(hl_btn,11)
+        toolbar.insert(syntax_item, 10)
+        toolbar.insert(hl_btn, 11)
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
         self.filter = LogColorParser(self)
 
         self.selection_tag = self.txt_buff.create_tag("select")
-        self.selection_tag.set_property("size",13*pango.SCALE)
-        self.selection_tag.set_property("weight",pango.WEIGHT_BOLD)
-        self.selection_tag.set_property("background",'#009')
-        self.selection_tag.set_property("foreground",'#FFF')
+        self.selection_tag.set_property("size", 13 * pango.SCALE)
+        self.selection_tag.set_property("weight", pango.WEIGHT_BOLD)
+        self.selection_tag.set_property("background", '#009')
+        self.selection_tag.set_property("foreground", '#FFF')
 
         self.paned = gtk.VBox()
-        self.paned.pack_start(self.scr,True,True)
-        self.paned.pack_start(self.filter,False,False, padding=5)
+        self.paned.pack_start(self.scr, True, True)
+        self.paned.pack_start(self.filter, False, False, padding=5)
 
         self.box.pack_start(self.info_box, False, False, padding=10)
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.paned)
         self.tag_table = self.txt_buff.get_tag_table()
-        self.col_str=({},[])
+        self.col_str = ({}, [])
         self.read_config()
         self.p_cursor = gtk.gdk.Cursor(gtk.gdk.HAND1)
 
@@ -140,20 +146,21 @@ class LogWindow:
 
     def show_body(self, widget, event, *args):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
-            iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
-            for s,e in self.procs:
-                if s.get_offset()<=iter_.get_offset()<=e.get_offset():
-                    proc = self.txt_buff.get_text(s,e)
-                    pa = PLSQL_Analyzer(proc)
+            iter_ = self.log_text.get_iter_at_location(int(event.x),
+                                                       int(event.y))
+            for s, e in self.procs:
+                if s.get_offset() <= iter_.get_offset() <= e.get_offset():
+                    proc = self.txt_buff.get_text(s, e)
+                    PLSQL_Analyzer(proc)
                     break
 
     def motion_notify(self, widget, event):
         iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
         child_win = self.log_text.get_window(gtk.TEXT_WINDOW_TEXT)
-        in_f=False
-        for s,e in self.procs:
-            if s.get_offset()<=iter_.get_offset()<=e.get_offset():
-                in_f=True
+        in_f = False
+        for s, e in self.procs:
+            if s.get_offset() <= iter_.get_offset() <= e.get_offset():
+                in_f = True
         if in_f:
             child_win.set_cursor(self.p_cursor)
         else:
@@ -165,16 +172,17 @@ class LogWindow:
         for m in procs:
             start_iter = self.txt_buff.get_iter_at_offset(m.start())
             end_iter = self.txt_buff.get_iter_at_offset(m.end())
-            m_iters.append((start_iter,end_iter))
+            m_iters.append((start_iter, end_iter))
         return m_iters
 
     def read_config(self):
-        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
+        self.conf_dir = os.sep.join(os.path.dirname(__file__).\
+                                    split(os.sep)[:-1] +\
                                     ["config"])
         try:
-            f = open(os.path.join(self.conf_dir, "syntax_hl"),'r')
+            f = open(os.path.join(self.conf_dir, "syntax_hl"), 'r')
         except IOError:
-            f = open(os.path.join("config", "syntax_hl"),'r')
+            f = open(os.path.join("config", "syntax_hl"), 'r')
         finally:
             config = f.read()
             self.config = eval(config)
@@ -197,27 +205,24 @@ class LogWindow:
     def select_string(self, s_pos, e_pos):
         s_iter = self.txt_buff.get_iter_at_offset(s_pos)
         e_iter = self.txt_buff.get_iter_at_offset(e_pos)
-        self.log_text.scroll_to_iter(s_iter,0)
+        self.log_text.scroll_to_iter(s_iter, 0)
         self.txt_buff.remove_tag(self.selection_tag,
             self.txt_buff.get_start_iter(),
-            self.txt_buff.get_end_iter()
-        )
+            self.txt_buff.get_end_iter())
         #self.txt_buff.select_range(s_iter, e_iter)
-        self.txt_buff.apply_tag(self.selection_tag,s_iter,e_iter)
+        self.txt_buff.apply_tag(self.selection_tag, s_iter, e_iter)
         self.s = e_pos
         self.e = s_pos
-        
 
     def search(self, start_pos, f):
         s_pos, e_pos = f(start_pos)
         if s_pos or e_pos:
-            if s_pos>=0:
+            if s_pos >= 0:
                 self.select_string(s_pos, e_pos)
         else:
             self.txt_buff.remove_tag(self.selection_tag,
                 self.txt_buff.get_start_iter(),
-                self.txt_buff.get_end_iter()
-            )
+                self.txt_buff.get_end_iter())
             #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
                                        #self.txt_buff.get_end_iter())
 
@@ -226,11 +231,11 @@ class LogWindow:
         string_to_search = self.find_entry.get_text().lower()[::-1]
         chars = len(string_to_search)
         ltext = len(text)
-        if chars>0:
-            tf = text.find(string_to_search, ltext-start_pos)
-            if tf>0:
+        if chars > 0:
+            tf = text.find(string_to_search, ltext - start_pos)
+            if tf > 0:
                 pos = ltext - tf
-                return pos-chars, pos
+                return pos - chars, pos
             else:
                 return (-1, -1)
         else:
@@ -240,10 +245,10 @@ class LogWindow:
         text = self.get_text().decode('utf-8').lower()
         string_to_search = self.find_entry.get_text().lower()
         chars = len(string_to_search)
-        if chars>0:
+        if chars > 0:
             pos = text.find(string_to_search, start_pos)
-            if pos>0:
-                return (pos, pos+chars)
+            if pos > 0:
+                return (pos, pos + chars)
             else:
                 if start_pos == 0:
                     return (None, None)
@@ -259,8 +264,8 @@ class LogWindow:
             re_string = re.compile(string_to_search, re.U)
             searched = re_string.search(text[start_pos:])
             if searched:
-                s_pos = searched.start()+start_pos
-                e_pos = searched.end()+start_pos
+                s_pos = searched.start() + start_pos
+                e_pos = searched.end() + start_pos
                 return (s_pos, e_pos)
             else:
                 if start_pos == 0:
@@ -284,13 +289,11 @@ class LogWindow:
                 return (-1, -1)
         else:
             return (None, None)
-        
 
     def t_insert_search(self, *args):
         self.txt_buff.remove_tag(self.selection_tag,
             self.txt_buff.get_start_iter(),
-            self.txt_buff.get_end_iter()
-        )
+            self.txt_buff.get_end_iter())
         if not self.re_toggle.get_active():
             self.search(0, self.f_search)
         else:
@@ -365,35 +368,39 @@ class LogWindow:
                         ntag = self.txt_buff.create_tag(tag)
                         att = tag[0]
                         if att == "f":
-                            ntag.set_property("foreground",tag[1:])
+                            ntag.set_property("foreground", tag[1:])
                         elif att == "b":
-                            if len(tag)>1:
-                                ntag.set_property("background",tag[1:])
+                            if len(tag) > 1:
+                                ntag.set_property("background", tag[1:])
                             else:
-                                ntag.set_property("weight",pango.WEIGHT_BOLD)
+                                ntag.set_property("weight", pango.WEIGHT_BOLD)
                         elif att == "s":
-                            ntag.set_property("size",int(tag[1:])*pango.SCALE)
+                            ntag.set_property("size", int(tag[1:]) *\
+                                                      pango.SCALE)
                         elif att == "i":
-                            ntag.set_property("style",pango.STYLE_ITALIC)
+                            ntag.set_property("style", pango.STYLE_ITALIC)
                     self.txt_buff.apply_tag(ntag, start_iter, end_iter)
 
     def open_file(self, *args):
         file_to_open = self.model.get_value(self.iter, 4)
-        threading.Thread(target=os.system, args=("notepad "+file_to_open,)).start()
+        threading.Thread(target=os.system,
+                         args=("notepad %s" % file_to_open,)).start()
 
     def fill(self):
-        self.files = set([self.model.get_value(self.iter,4)])
+        self.files = set([self.model.get_value(self.iter, 4)])
         self.txt = self.model.get_value(self.iter, 5)
         try:
             self.txt = self.txt.decode('utf-8').encode('utf-8')
         except UnicodeDecodeError:
             self.txt = self.txt.decode('cp1251').encode('utf-8')
-        self.open_label.set_text(self.model.get_value(self.iter,4))
-        self.info_label.set_markup('<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
-            (self.model.get_value(self.iter,6),\
-            self.model.get_value(self.iter,0),\
-            self.model.get_value(self.iter,2),
-            self.model.get_value(self.iter,3) == "ERROR" and '<span foreground="red">ERROR</span>' or "",\
+        self.open_label.set_text(self.model.get_value(self.iter, 4))
+        self.info_label.set_markup(
+            '<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
+            (self.model.get_value(self.iter, 6),\
+            self.model.get_value(self.iter, 0),\
+            self.model.get_value(self.iter, 2),
+            self.model.get_value(self.iter, 3) ==\
+                "ERROR" and '<span foreground="red">ERROR</span>' or "",\
             ))
         txt = self.pretty_xml(self.txt)
         self.log_text.get_buffer().set_text(txt)
@@ -409,7 +416,7 @@ class LogWindow:
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
             return None
-        prevPath = int(path)+1
+        prevPath = int(path) + 1
         self.selection.select_path(prevPath)
         try:
             self.iter = self.model.get_iter_from_string(str(prevPath))
@@ -424,7 +431,7 @@ class LogWindow:
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
             return None
-        prevPath = int(path) -1
+        prevPath = int(path) - 1
         self.selection.select_path(prevPath)
         try:
             self.iter = self.model.get_iter_from_string(str(prevPath))
@@ -434,15 +441,16 @@ class LogWindow:
         self.fill()
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
-    def pretty_xml(self,text):
+    def pretty_xml(self, text):
         def xml_pretty(m):
             txt = m.group()
             try:
-                pretty_xml = xml.dom.minidom.parseString(txt.encode("utf-16")).toprettyxml()
-            except xml.parsers.expat.ExpatError as xml_er:
+                xparse = xml.dom.minidom.parseString
+                pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
+            except xml.parsers.expat.ExpatError:
                 print traceback.format_exc()
-                pretty_xml = txt.replace("><",">\n<")
-            return "\n"+pretty_xml
+                pretty_xml = txt.replace("><", ">\n<")
+            return "\n" + pretty_xml
 
         def xml_bad_pretty(m):
             txt = xml_pretty(m)
@@ -452,9 +460,10 @@ class LogWindow:
         text = xml_bad.sub(xml_bad_pretty, text)
         return xml_new.sub(xml_pretty, text)
 
+
 class SeveralLogsWindow(LogWindow):
-    def __init__(self,model, view, iter, sel):
-        LogWindow.__init__(self,model, view, iter, sel)
+    def __init__(self, model, view, iter, sel):
+        LogWindow.__init__(self, model, view, iter, sel)
         self.info_box.remove(self.updown_btns)
 
     def show_next(self):
@@ -465,7 +474,8 @@ class SeveralLogsWindow(LogWindow):
 
     def open_file(self, *args):
         for f in self.files:
-            threading.Thread(target=os.system, args=("notepad "+f,)).start()
+            threading.Thread(target=os.system,
+                             args=("notepad %s" % f,)).start()
 
     def fill(self):
         model, pathlist = self.selection.get_selected_rows()
@@ -474,11 +484,11 @@ class SeveralLogsWindow(LogWindow):
         pathlist.reverse()
         for p in pathlist:
             iter = model.get_iter(p)
-            self.files.add(model.get_value(iter,4))
+            self.files.add(model.get_value(iter, 4))
         prev_f = ""
         for p in pathlist:
             iter = model.get_iter(p)
-            f = model.get_value(iter,4)
+            f = model.get_value(iter, 4)
             txt = model.get_value(iter, 5)
             try:
                 txt = txt.decode('utf-8').encode('utf-8')
@@ -497,10 +507,9 @@ class SeveralLogsWindow(LogWindow):
         end_it = model.get_iter(pathlist[0])
         begin_date = model.get_value(begin_it, 0)
         end_date = model.get_value(end_it, 0)
-        date = " - ".join([str(begin_date),str(end_date)])
+        date = " - ".join([str(begin_date), str(end_date)])
         self.info_label.set_markup('<b>%s</b>' % date)
         self.full_text = "\n".join(text)
         self.log_text.get_buffer().set_text(self.full_text)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
-

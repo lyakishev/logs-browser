@@ -1,18 +1,23 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 import datetime
 from common_filter import CommonFilter
-from net_time import get_true_time
-import datetime
+from net_time import GetTrueTime
+
 
 class DateTimeWidget(gtk.Table):
-    def __init__(self, d = datetime.timedelta(0)):
-        super(DateTimeWidget,self).__init__(2, 3, False)
+    def __init__(self, d=datetime.timedelta(0)):
+        super(DateTimeWidget, self).__init__(2, 3, False)
         self.delta = d
-        self.hours_adj = gtk.Adjustment(value=0, lower=0, upper=23, step_incr=1)
-        self.minute_adj = gtk.Adjustment(value=0, lower=0, upper=59, step_incr=1)
-        self.second_adj = gtk.Adjustment(value=0, lower=0, upper=59, step_incr=1)
+        self.hours_adj = gtk.Adjustment(value=0, lower=0, upper=23,
+                                        step_incr=1)
+        self.minute_adj = gtk.Adjustment(value=0, lower=0, upper=59,
+                                         step_incr=1)
+        self.second_adj = gtk.Adjustment(value=0, lower=0, upper=59,
+                                         step_incr=1)
         self.year_entry = gtk.Entry(10)
         self.year_entry.set_width_chars(10)
         self.hours_spin = gtk.SpinButton(adjustment=self.hours_adj)
@@ -23,15 +28,15 @@ class DateTimeWidget(gtk.Table):
         self.seconds_spin.set_width_chars(2)
         self.now_btn = gtk.Button("Now")
         self.now_btn.connect("clicked", self.set_now)
-        self.attach(self.hours_spin, 0,1,0,1, xoptions=0, yoptions=0)
-        self.attach(self.minutes_spin, 1,2,0,1, xoptions=0, yoptions=0)
-        self.attach(self.seconds_spin, 2,3,0,1, xoptions=0, yoptions=0)
-        self.attach(self.year_entry, 0,2,1,2, xoptions=0, yoptions=0)
-        self.attach(self.now_btn, 2,3,1,2, xoptions=0, yoptions=0)
+        self.attach(self.hours_spin, 0, 1, 0, 1, xoptions=0, yoptions=0)
+        self.attach(self.minutes_spin, 1, 2, 0, 1, xoptions=0, yoptions=0)
+        self.attach(self.seconds_spin, 2, 3, 0, 1, xoptions=0, yoptions=0)
+        self.attach(self.year_entry, 0, 2, 1, 2, xoptions=0, yoptions=0)
+        self.attach(self.now_btn, 2, 3, 1, 2, xoptions=0, yoptions=0)
         self.set_now()
 
     def set_now(self, *args):
-        now = get_true_time()
+        now = GetTrueTime()
         self.set_date(now)
 
     def set_date(self, ct):
@@ -40,7 +45,6 @@ class DateTimeWidget(gtk.Table):
         self.minutes_spin.set_value(dt.minute)
         self.seconds_spin.set_value(dt.second)
         self.year_entry.set_text(dt.strftime("%d.%m.%Y"))
-        
 
     def get_datetime(self):
             dt_date = datetime.datetime.strptime(self.year_entry.get_text(),
@@ -49,8 +53,7 @@ class DateTimeWidget(gtk.Table):
                 dt_date.year, dt_date.month, dt_date.day,
                 self.hours_spin.get_value_as_int(),
                 self.minutes_spin.get_value_as_int(),
-                self.seconds_spin.get_value_as_int()
-            )
+                self.seconds_spin.get_value_as_int())
 
     def set_sens(self, sens):
         for child in [self.hours_spin, \
@@ -59,6 +62,7 @@ class DateTimeWidget(gtk.Table):
                       self.year_entry, \
                       self.now_btn]:
             child.set_sensitive(sens)
+
 
 class FromToOption(gtk.HBox):
     def __init__(self):
@@ -80,22 +84,24 @@ class FromToOption(gtk.HBox):
             self.to_date.set_sens(True)
         else:
             self.to_date.set_sens(False)
-    
+
     def get_dates(self):
         if self.to_check:
-            return (self.from_date.get_datetime(),self.to_date.get_datetime())
+            return (self.from_date.get_datetime(), self.to_date.get_datetime())
         else:
             return (self.from_date.get_datetime(),
-                    datetime.datetime.fromtimestamp(get_true_time))
+                    datetime.datetime.fromtimestamp(GetTrueTime))
 
     def get_active(self):
         return self.from_radio.get_active()
+
 
 class LastDateOption(gtk.HBox):
     def __init__(self):
         super(LastDateOption, self).__init__()
         self.last_date_radio = gtk.RadioButton(label='Last')
-        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100, step_incr=1)
+        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100,
+                                            step_incr=1)
         self.last_date_spin = gtk.SpinButton(adjustment=self.last_date_adj)
         self.last_date_combo = gtk.combo_box_new_text()
         self.last_date_combo.append_text('seconds')
@@ -108,15 +114,16 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_combo, False, False)
 
     def get_dates(self):
-        end_date = datetime.datetime.fromtimestamp(get_true_time())
-        dateunit = [1.*24*60*60,1.*24*60,1.*24,1.]
+        end_date = datetime.datetime.fromtimestamp(GetTrueTime())
+        dateunit = [1. * 24 * 60 * 60, 1. * 24 * 60, 1. * 24, 1.]
         active = self.last_date_combo.get_active()
-        delta = self.last_date_spin.get_value()/dateunit[active]
-        start_date = end_date-datetime.timedelta(delta)
+        delta = self.last_date_spin.get_value() / dateunit[active]
+        start_date = end_date - datetime.timedelta(delta)
         return (start_date, end_date)
 
     def get_active(self):
         return self.last_date_radio.get_active()
+
 
 class ThisOption(gtk.HBox):
     def __init__(self):
@@ -132,19 +139,16 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_combo, False, False)
 
     def get_dates(self):
-        end_date = datetime.datetime.fromtimestamp(get_true_time())
+        end_date = datetime.datetime.fromtimestamp(GetTrueTime())
         start_hour = datetime.datetime(end_date.year,
             end_date.month,
             end_date.day,
-            end_date.hour
-        )
+            end_date.hour)
         start_day = datetime.datetime(end_date.year,
             end_date.month,
-            end_date.day
-        )
+            end_date.day)
         start_month = datetime.datetime(end_date.year,
-            end_date.month, 1
-        )
+            end_date.month, 1)
         #start_week = datetime.datetime(end_date.year,
         #    end_date.month,
         #    end_date.day-end_date.weekday()
@@ -159,6 +163,7 @@ class ThisOption(gtk.HBox):
     def get_active(self):
         return self.this_date_radio.get_active()
 
+
 class DateFilter(CommonFilter):
     def __init__(self):
         super(DateFilter, self).__init__("Date")
@@ -166,8 +171,10 @@ class DateFilter(CommonFilter):
         self.last_option = LastDateOption()
         self.fromto_option = FromToOption()
         self.this_option = ThisOption()
-        self.fromto_option.from_radio.set_group(self.last_option.last_date_radio)
-        self.this_option.this_date_radio.set_group(self.last_option.last_date_radio)
+        self.fromto_option.from_radio.set_group(self.last_option.\
+                                                last_date_radio)
+        self.this_option.this_date_radio.set_group(self.last_option.\
+                                                   last_date_radio)
         self.fromto_option.from_radio.set_active(True)
         self.add(self.date_box)
         self.date_box.pack_start(self.last_option, False, False)
@@ -183,5 +190,3 @@ class DateFilter(CommonFilter):
             return self.fromto_option.get_dates()
         elif self.this_option.get_active():
             return self.this_option.get_dates()
-
-

@@ -1,6 +1,7 @@
 import cx_Oracle
 import re
 
+
 class ProcAnalyzer():
     def __init__(self, proc_string, db):
         self.proc = proc_string
@@ -57,7 +58,7 @@ class ProcAnalyzer():
         self.proc_source = "".join(proc_source)
 
     def call(self):
-        if selt.type_ == "proc":
+        if self.type_ == "proc":
             pass
             #cursor.callproc
         elif self.type_ == "func":

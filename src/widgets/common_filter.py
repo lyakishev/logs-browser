@@ -1,6 +1,9 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
+
 
 class CommonFilter(gtk.Frame):
     def __init__(self, name):

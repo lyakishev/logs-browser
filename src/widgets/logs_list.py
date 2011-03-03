@@ -1,29 +1,32 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 from widgets.log_window import LogWindow
 from widgets.color_parser import ColorParser
 from widgets.label_text import LabelText
 import re
+
 
 class LogsModel:
     """ The model class holds the information we want to display """
     def __init__(self):
         """ Sets up and populates our gtk.TreeStore """
         """!!!Rewrite to recursive!!!!"""
-        self.args =  (gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_STRING,
-                 gobject.TYPE_BOOLEAN
-        )
+        self.args = (gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_STRING,
+                     gobject.TYPE_BOOLEAN)
         self.list_store = gtk.ListStore(*self.args)
         self.rows_set = set()
         # places the global people data into the list
         # we form a simple tree.
+
     def get_model(self):
         """ Returns the model """
         if self.list_store:
@@ -43,18 +46,20 @@ class LogsModel:
                 rparen = token.count(")")
                 if lparen == rparen:
                     return 're.compile("%s", re.U).search(%s)' % (token, text)
-                elif lparen == rparen-1:
+                elif lparen == rparen - 1:
                     return 're.compile("%s", re.U).search(%s))' % (token, text)
-                elif rparen == lparen-1:
+                elif rparen == lparen - 1:
                     return '(re.compile("%s", re.U).search(%s)' % (token, text)
 
-        if_expr = ''.join([parse(t) for t in re.split("( AND \(| OR \(| NOT \(|\) AND |\) OR | AND | OR |NOT )", pattern)])
+        toks = "( AND \(| OR \(| NOT \(|\) AND |\) OR | AND | OR |NOT )"
+        if_expr = ''.join([parse(t) for t in re.split(toks, pattern)])
         return if_expr
-    
+
     def highlight(self, col_str):
         if col_str:
             colors = col_str[::2]
-            for color, pattern in zip(colors, [c.strip() for c in col_str[1::2]]):
+            for color, pattern in zip(colors,
+                                      [c.strip() for c in col_str[1::2]]):
                 if pattern:
                     exp = self.parse_like(pattern, "msg")
                     for row in self.list_store:
@@ -82,10 +87,9 @@ class LogsModel:
         sum_ = 0
         count_ = 0
         for row in self.list_store:
-            count_+=1
-            sum_+=len(row[5])
-        return sum_/float(count_)
-            
+            count_ += 1
+            sum_ += len(row[5])
+        return sum_ / float(count_)
 
     def set_of_rows(self):
         if not self.rows_set:
@@ -93,16 +97,16 @@ class LogsModel:
             iter = self.list_store.get_iter_first()
             val = self.list_store.get_value
             while iter:
-                row_v = [val(iter,v) for v in xrange(n)]
+                row_v = [val(iter, v) for v in xrange(n)]
                 self.rows_set.add(tuple(row_v))
         return self.rows_set
 
 
 class DisplayLogsModel:
     """ Displays the Info_Model model in a view """
-    def __init__( self, model ):
+    def __init__(self, model):
         """ Form a view for the Tree Model """
-        self.view = gtk.TreeView( model )
+        self.view = gtk.TreeView(model)
         # setup the text cell renderer and allows these
         # cells to be edited.
 
@@ -111,45 +115,46 @@ class DisplayLogsModel:
         # our model .
         self.renderers = []
         self.columns = []
-        for r, header in enumerate(['Date','Computer', 'Log', 'Type',\
+        for r, header in enumerate(['Date', 'Computer', 'Log', 'Type',\
             'Source', 'Message', 'bgcolor', 'show']):
             self.renderers.append(gtk.CellRendererText())
-            self.renderers[r].set_property( 'editable', False )
+            self.renderers[r].set_property('editable', False)
             self.columns.append(gtk.TreeViewColumn(header, self.renderers[r],
                                 text=r))
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
         for cid, col in enumerate(self.columns):
-            self.view.append_column( col )
+            self.view.append_column(col)
             ctitle = col.get_title()
             if ctitle == "Message" or ctitle == "bgcolor" or ctitle == "show":
                 col.set_visible(False)
             else:
                 col.set_sort_column_id(cid)
                 col.set_resizable(True)
-        self.view.connect( 'row-activated', self.show_log)
+        self.view.connect('row-activated', self.show_log)
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
 
     def repaint(self):
         for n, (col, ren) in enumerate(zip(self.columns, self.renderers)):
             col.set_attributes(ren, cell_background=6, text=n)
-        
-    def show_log( self, path, column, params):
+
+    def show_log(self, path, column, params):
         selection = path.get_selection()
         selection.set_mode(gtk.SELECTION_SINGLE)
         (model, iter) = selection.get_selected()
-        log_w = LogWindow(model, self.view, iter, selection)
+        LogWindow(model, self.view, iter, selection)
         selection.set_mode(gtk.SELECTION_MULTIPLE)
         return
+
 
 class LogListWindow(gtk.Frame):
     def __init__(self):
         super(LogListWindow, self).__init__()
         self.logs_store = LogsModel()
-        self.logs_view= DisplayLogsModel(self.logs_store.get_model())
+        self.logs_view = DisplayLogsModel(self.logs_store.get_model())
         self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.logs_view.view)
         self.exp = gtk.Expander("Filter")
         self.exp.connect("activate", self.text_grab_focus)
@@ -168,8 +173,3 @@ class LogListWindow(gtk.Frame):
     @property
     def get_view(self):
         return self.logs_view.view
-
-
-
-
-

@@ -2,22 +2,24 @@
 """ Demonstration using editable and activatable CellRenderers """
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 import datetime
-import net_time
+from net_time import GetTrueTime
 from logworker import *
 from widgets.date_time import DateFilter
 from widgets.logs_tree import FileServersTree, ServersTree
 from widgets.logs_notebook import LogsNotebook
-import time
 import sys
 from multiprocessing import Process, Queue, Event, Manager, freeze_support
 from Queue import Empty as qEmpty
 import threading
 from widgets.status_icon import StatusIcon
 if sys.platform == 'win32':
-    from evlogworker import LogWorker, evt_dict
+    from evlogworker import LogWorker, EVT_DICT
     from widgets.evt_type import EventTypeFilter
+
 
 class GUI_Controller:
     """ The GUI class is the controller for our application """
@@ -31,7 +33,7 @@ class GUI_Controller:
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
-        self.root.set_default_size(1200,800)
+        self.root.set_default_size(1200, 800)
         self.tree_frame = gtk.Frame(label="File Logs")
 
         self.filter_frame = gtk.Frame(label="Filter")
@@ -69,7 +71,7 @@ class GUI_Controller:
         return
 
     def show_ev_widgets(self):
-        self.ev_filter = EventTypeFilter(evt_dict, 'ERROR')
+        self.ev_filter = EventTypeFilter(EVT_DICT, 'ERROR')
         self.evt_label = gtk.Label("Eventlogs")
         self.evt_label.show()
         self.log_ntb.connect("switch-page", self.show_hide_ev_filter)
@@ -92,7 +94,9 @@ class GUI_Controller:
         self.f_manager = Manager()
         self.formats = self.f_manager.dict()
         try:
-            self.event_process = LogWorker(self.evt_queue, self.list_queue,self.compl_queue, self.stop_evt, self.LOGS_FILTER)
+            self.event_process = LogWorker([self.evt_queue, self.list_queue,
+                                            self.compl_queue], self.stop_evt,
+                                            self.LOGS_FILTER)
         except NameError:
             thread_nums = 4
         else:
@@ -100,11 +104,11 @@ class GUI_Controller:
             thread_nums = 3
         self.threads = []
         for t in range(thread_nums):
-             t=FileLogWorker(self.proc_queue,self.list_queue,
-                             self.compl_queue, self.stop_evt,
-                             self.LOGS_FILTER, self.formats)
-             self.threads.append(t)
-             t.start()
+            t = FileLogWorker([self.proc_queue, self.list_queue,
+                              self.compl_queue], self.stop_evt,
+                              self.LOGS_FILTER, self.formats)
+            self.threads.append(t)
+            t.start()
 
     def stop_all(self, *args):
         def queue_clear():
@@ -156,10 +160,10 @@ class GUI_Controller:
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working...")
         counter = 0
-        check_half_frac=1.0-frac/2.
+        #check_half_frac = 1.0 - frac / 2.
         while 1:
             curr = self.progressbar.get_fraction()
-            piece = q.get()
+            q.get()
             counter += 1
             if counter == fl_count:
                 gtk.gdk.threads_enter()
@@ -168,13 +172,13 @@ class GUI_Controller:
                 self.show_button.set_sensitive(True)
                 gtk.gdk.threads_leave()
                 break
-            elif counter == fl_count-1:
+            elif counter == fl_count - 1:
                 self.progressbar.set_text("Filling table...")
                 self.stp_compl.set()
             gtk.gdk.threads_enter()
-            self.progressbar.set_fraction(curr+frac)
+            self.progressbar.set_fraction(curr + frac)
             gtk.gdk.threads_leave()
-        print datetime.datetime.now()-tm
+        print datetime.datetime.now() - tm
 
     def show_logs(self, params):
         self.stop_evt.clear()
@@ -183,7 +187,8 @@ class GUI_Controller:
         self.cur_model = self.logframe.get_current_loglist
         flogs = self.serversw1.model.prepare_files_for_parse()
         try:
-            evlogs = [[s[1], s[0]] for s in self.serversw2.model.get_active_servers()]
+            evlogs = [[s[1], s[0]] for s in\
+                        self.serversw2.model.get_active_servers()]
         except AttributeError:
             evlogs = []
         if flogs or evlogs:
@@ -191,28 +196,37 @@ class GUI_Controller:
             self.logframe.get_current_logs_store.rows_set.clear()
             self.cur_model.set_default_sort_func(lambda *args: -1)
             self.cur_model.set_sort_column_id(-1, gtk.SORT_ASCENDING)
-            self.LOGS_FILTER['date'] = self.date_filter.get_active() and self.date_filter.get_dates or (datetime.datetime.min, datetime.datetime.max)
+            self.LOGS_FILTER['date'] = self.date_filter.get_active() and\
+                                       self.date_filter.get_dates or\
+                                       (datetime.datetime.min,
+                                        datetime.datetime.max)
             try:
-                self.LOGS_FILTER['types'] = self.ev_filter.get_active() and self.ev_filter.get_event_types or []
+                self.LOGS_FILTER['types'] = self.ev_filter.get_active()\
+                                    and self.ev_filter.get_event_types\
+                                    or []
             except AttributeError:
                 pass
-            if net_time.time_error_flag:
-                net_time.show_time_warning(self.root)
-            n_flogs=file_preparator(flogs,self.LOGS_FILTER)
-            fl_count = len(n_flogs)+len(evlogs)+1
-            frac = 1.0/(fl_count)
+            if GetTrueTime.time_error_flag:
+                GetTrueTime.show_time_warning(self.root)
+            n_flogs = file_preparator(flogs)
+            fl_count = len(n_flogs) + len(evlogs) + 1
+            frac = 1.0 / (fl_count)
             if evlogs:
-                p1=Process(target=queue_filler, args=(evlogs, self.evt_queue,))
+                p1 = Process(target=queue_filler,
+                             args=(evlogs, self.evt_queue,))
                 p1.start()
-            p2=Process(target=queue_filler, args=(n_flogs, self.proc_queue,))
+            p2 = Process(target=queue_filler,
+                         args=(n_flogs, self.proc_queue,))
             p2.start()
-            pr3 = threading.Thread(target=self.progress, args=(self.compl_queue, frac, fl_count))
+            pr3 = threading.Thread(target=self.progress,
+                                   args=(self.compl_queue, frac, fl_count))
             pr3.start()
-            pr4 = LogListFiller(self.list_queue, self.cur_model, self.cur_view, self.stp_compl, self.compl_queue)#, self.fillprogressbar)
+            pr4 = LogListFiller([self.list_queue, self.compl_queue],
+                                self.cur_model,
+                                self.cur_view,
+                                self.stp_compl)
             pr4.start()
             self.show_button.set_sensitive(False)
-
-
 
 if __name__ == '__main__':
     freeze_support()

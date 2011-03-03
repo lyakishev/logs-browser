@@ -1,6 +1,8 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 import os
 import re
 import pango
@@ -9,13 +11,12 @@ comment_line = re.compile("#.*")
 section = re.compile("\[.+?\]")
 
 
-
 class ConfigEditor:
     def __init__(self, config_path):
         self.config = config_path
         self.editor = gtk.Window()
         self.editor.set_title("%s editor" % os.path.basename(config_path))
-        self.editor.set_default_size(640,480)
+        self.editor.set_default_size(640, 480)
 
         self.scr = gtk.ScrolledWindow()
         self.scr.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -35,7 +36,7 @@ class ConfigEditor:
         self.hl_comments()
         self.editor.set_title("%s editor" % os.path.basename(config_path))
         self.edited = False
-        
+
         toolbar = gtk.Toolbar()
 
         toolbar.set_style(gtk.TOOLBAR_ICONS)
@@ -51,7 +52,8 @@ class ConfigEditor:
         commenttb.set_icon_widget(cimage)
         commenttb.set_label("Comment")
         uncimage = gtk.Image()
-        uncimage.set_from_stock(gtk.STOCK_UNINDENT, gtk.ICON_SIZE_LARGE_TOOLBAR)
+        uncimage.set_from_stock(gtk.STOCK_UNINDENT,
+                                gtk.ICON_SIZE_LARGE_TOOLBAR)
         uncimage.show()
         uncommenttb = gtk.ToolButton()
         uncommenttb.connect("clicked", self.uncomment_lines)
@@ -64,7 +66,6 @@ class ConfigEditor:
         sep1 = gtk.SeparatorToolItem()
         sep2 = gtk.SeparatorToolItem()
 
-
         toolbar.insert(savetb, 0)
         toolbar.insert(sep1, 1)
         toolbar.insert(commenttb, 2)
@@ -73,7 +74,7 @@ class ConfigEditor:
         toolbar.insert(quittb, 5)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
-        self.box.pack_start(toolbar,False,False)
+        self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.scr)
 
         self.editor.add(self.box)
@@ -82,7 +83,7 @@ class ConfigEditor:
     def get_text(self):
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
-        return self.buf.get_text(start,end)
+        return self.buf.get_text(start, end)
 
     def save(self, *args):
         text = self.get_text()
@@ -102,17 +103,17 @@ class ConfigEditor:
             start_line = sel[0].get_line()
             end_line = sel[1].get_line()
             line = start_line
-            while line != end_line+1:
+            while line != end_line + 1:
                 iter = self.buf.get_iter_at_line(line)
                 if iter.get_char() != "#":
-                    self.buf.insert(iter,"#")
-                line+=1
+                    self.buf.insert(iter, "#")
+                line += 1
         else:
             pos = self.get_iter_position()
             line = pos.get_line()
             start_iter = self.buf.get_iter_at_line(line)
             if start_iter.get_char() != "#":
-                self.buf.insert(start_iter,"#")
+                self.buf.insert(start_iter, "#")
 
     def uncomment_lines(self, *args):
         sel = self.buf.get_selection_bounds()
@@ -120,24 +121,23 @@ class ConfigEditor:
             start_line = sel[0].get_line()
             end_line = sel[1].get_line()
             line = start_line
-            while line != end_line+1:
+            while line != end_line + 1:
                 iter = self.buf.get_iter_at_line(line)
                 if iter.get_char() == "#":
-                    end_iter = self.buf.get_iter_at_line_offset(line,1)
+                    end_iter = self.buf.get_iter_at_line_offset(line, 1)
                     self.buf.delete(iter, end_iter)
-                line+=1
+                line += 1
         else:
             pos = self.get_iter_position()
             line = pos.get_line()
             start_iter = self.buf.get_iter_at_line(line)
             if start_iter.get_char() == "#":
-                end_iter = self.buf.get_iter_at_line_offset(line,1)
-                self.buf.delete(start_iter,end_iter)
+                end_iter = self.buf.get_iter_at_line_offset(line, 1)
+                self.buf.delete(start_iter, end_iter)
         self.hl_comments()
 
     def get_iter_position(self):
         return self.buf.get_iter_at_mark(self.buf.get_insert())
-
 
     def load_file(self):
         with open(self.config) as f:
@@ -147,7 +147,7 @@ class ConfigEditor:
     def insert(self, *args):
         if not self.edited:
             title = self.editor.get_title()
-            self.editor.set_title("*"+title)
+            self.editor.set_title("*" + title)
             self.edited = True
         self.hl_comments()
 
@@ -155,7 +155,7 @@ class ConfigEditor:
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
         self.buf.remove_all_tags(start, end)
-        text = self.buf.get_text(start,end)
+        text = self.buf.get_text(start, end)
         for m in section.finditer(text.decode('utf8')):
             start_iter = self.buf.get_iter_at_offset(m.start())
             end_iter = self.buf.get_iter_at_offset(m.end())
@@ -164,7 +164,3 @@ class ConfigEditor:
             start_iter = self.buf.get_iter_at_offset(m.start())
             end_iter = self.buf.get_iter_at_offset(m.end())
             self.buf.apply_tag(self.comment_tag, start_iter, end_iter)
-
-        
-
-

@@ -1,23 +1,21 @@
 import pyHook
 import pythoncom
-import datetime
-import time
 from multiprocessing import Process
-from net_time import *
+from net_time import GetTrueTime
 
 
 class DetectClick(Process):
-    def __init__(self, ct):
+    def __init__(self, click_time):
         Process.__init__(self)
-        self.click_time = ct
+        self.click_time = click_time
 
     def onclick(self, event):
-        self.click_time.value = get_true_time()
+        self.click_time.value = GetTrueTime()
         raise SystemExit
 
     def run(self):
-        hm = pyHook.HookManager()
-        hm.SubscribeMouseAllButtonsDown(self.onclick)
-        hm.HookMouse()
+        hook_manager = pyHook.HookManager()
+        hook_manager.SubscribeMouseAllButtonsDown(self.onclick)
+        hook_manager.HookMouse()
         pythoncom.PumpMessages()
-        hm.UnhookMouse()
+        hook_manager.UnhookMouse()

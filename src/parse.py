@@ -1,90 +1,124 @@
-from datetime import datetime, timedelta
+"""This module cleans file names from junk and get datetime from log's
+string"""
+
+from datetime import datetime
 import re
 import os
 
 
-nums_in_filename = re.compile(r"(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[A-Za-z._-]")
-T_in_name = re.compile(r"(?<=\d)T(?=\d)")
-literal_at_begin_end_line = re.compile("^[._-]+|[._-]+$")
-rem_rep = re.compile(r"([._-]){2,}")
-ext_repeat = re.compile(r"(\.[a-zA-Z]{3})\1+")
-re_null = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
-ext_is_name = re.compile(r"[A-Za-z_]{7,}")
+
+DIGITS_IN_NAME = re.compile(r"(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[A-Za-z._-]")
+T_IN_NAME = re.compile(r"(?<=\d)T(?=\d)")
+LITERAL_AT_BEGIN_END_LINE = re.compile("^[._-]+|[._-]+$")
+REPEATED_LITERALS = re.compile(r"([._-]){2,}")
+REPEATED_EXTENSION = re.compile(r"(\.[a-zA-Z]{3})\1+")
+NULL_WORD = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
+LONG_EXTENSION = re.compile(r"[A-Za-z_]{7,}")
+
+PREFIX = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
+FORMATS = [
+    "".join([r"(?P<year1>\d{4})[.-]",
+            r"(?P<month1>\d{2})[.-]",
+            r"(?P<day1>\d{2})",
+            r"\s*(?P<hour1>\d{2})[:]",
+            r"(?P<min1>\d{2})[:]",
+            r"(?P<sec1>\d{2})",
+            r"([,.](?P<ms1>\d+))?"]),
+    "".join([r"(?P<day2>\d{2})[.-]",
+             r"(?P<month2>\d{2})[.-]",
+             r"(?P<year2>\d{4})",
+             r"\s*(?P<hour2>\d{,2})[:]",
+             r"(?P<min2>\d{2})[:]",
+             r"(?P<sec2>\d{2})",
+             r"([,.](?P<ms2>\d+))?"]),
+    "".join([r"(?P<hour3>\d{2})[:]",
+             r"(?P<min3>\d{2})[:]",
+             r"(?P<sec3>\d{2})",
+             r"[,.](?P<ms3>\d+)"]),
+    "".join([r"(?<!\d)(?P<day4>\d{2})[.-]",
+             r"(?P<month4>\d{2})[.-]",
+             r"(?P<year4>\d{2})",
+             r"\s*(?P<hour4>\d{,2})[:]",
+             r"(?P<min4>\d{2})[:]",
+             r"(?P<sec4>\d{2})",
+             r"([,.](?P<ms4>\d+))?"]),
+]
+SUFFIX = r"\]?\s*(?P<msg>.+)"
+
+COMMON_PARSER = re.compile(PREFIX + "(" + "|".join(FORMATS) + ")" + SUFFIX)
+
+LOG4J = re.compile("".join([r'^<log4j.+',
+                            r'timestamp="(?P<datetime>\d+)"',
+                            r'.+</log4j:event>']))
 
 
 def parse_filename(path):
-    fname = T_in_name.sub('', path)
-    fname = "".join(nums_in_filename.findall(fname))
-    fname = ext_repeat.sub(r'\1', fname)
-    fname = literal_at_begin_end_line.sub('', fname)
-    name, ext = os.path.splitext("a."+fname)
-    name = literal_at_begin_end_line.sub('', name[2:])
-    name = rem_rep.sub(r'\1', name)
-    name = re_null.sub("", name)
+    """Parse file name: remove digits, "junk" literals etc."""
+    fname = T_IN_NAME.sub('', path)
+    fname = "".join(DIGITS_IN_NAME.findall(fname))
+    fname = REPEATED_EXTENSION.sub(r'\1', fname)
+    fname = LITERAL_AT_BEGIN_END_LINE.sub('', fname)
+    name, ext = os.path.splitext("a." + fname)
+    name = LITERAL_AT_BEGIN_END_LINE.sub('', name[2:])
+    name = REPEATED_LITERALS.sub(r'\1', name)
+    name = NULL_WORD.sub("", name)
     return (name, ext[1:].lower())
 
-prefix = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
-formats = [
-    r"(?P<year1>\d{4})[.-](?P<month1>\d{2})[.-](?P<day1>\d{2})\s*(?P<hour1>\d{2})[:](?P<min1>\d{2})[:](?P<sec1>\d{2})([,.](?P<ms1>\d+))?",
-    r"(?P<day2>\d{2})[.-](?P<month2>\d{2})[.-](?P<year2>\d{4})\s*(?P<hour2>\d{,2})[:](?P<min2>\d{2})[:](?P<sec2>\d{2})([,.](?P<ms2>\d+))?",
-    r"(?P<hour3>\d{2})[:](?P<min3>\d{2})[:](?P<sec3>\d{2})[,.](?P<ms3>\d+)",
-    r"(?<!\d)(?P<day4>\d{2})[.-](?P<month4>\d{2})[.-](?P<year4>\d{2})\s*(?P<hour4>\d{,2})[:](?P<min4>\d{2})[:](?P<sec4>\d{2})([,.](?P<ms4>\d+))?",
-]
-suffix = r"\]?\s*(?P<msg>.+)"
 
-
-common_parser = re.compile(prefix+"("+"|".join(formats)+")"+suffix)
-
-xml_format = re.compile(r'^<log4j.+timestamp="(?P<datetime>\d+)".+</log4j:event>')
-
-def clear_format(pformat, n):
-    for i in ["year","month","day","hour","min","sec","ms"]:
-        pformat = pformat.replace(i+str(n), i)
+def clear_format(pformat, format_number):
+    """Remove numbers from format string"""
+    for i in ["year", "month", "day", "hour", "min", "sec", "ms"]:
+        pformat = pformat.replace(i + str(format_number), i)
     return pformat
 
+
 def define_format(line):
-    parsed_line = common_parser.search(line)
+    """Define format by check number in searched named groups"""
+    parsed_line = COMMON_PARSER.search(line)
     if parsed_line:
-        pd = parsed_line.groupdict()
-        for n in range(1,len(formats)+1):
-            if pd["hour%d" % n]:
-                return re.compile(prefix+clear_format(formats[n-1],n)+suffix)
-    parsed_line = xml_format.search(line)
+        parsed_line_dict = parsed_line.groupdict()
+        for format_number in range(1, len(FORMATS) + 1):
+            if parsed_line_dict["hour%d" % format_number]:
+                return re.compile(PREFIX +\
+                                  clear_format(FORMATS[format_number-1],
+                                               format_number) +\
+                                  SUFFIX)
+    parsed_line = LOG4J.search(line)
     if parsed_line:
-        return xml_format
+        return LOG4J
     return None
 
+
 def parse_logline_re(line, cdate, re_obj):
+    """Get datetime from string"""
     parsed_line = re_obj.search(line)
-    if re_obj != xml_format:
+    if re_obj != LOG4J:
         if parsed_line:
-            pd = parsed_line.groupdict()
-            ms = pd["ms"]
-            ms = int(ms and str(1000*int(ms))[:6] or 0)
-            year = pd.get("year")
+            paresd_dict = parsed_line.groupdict()
+            millisecs = paresd_dict["ms"]
+            millisecs = int(millisecs and str(1000 * int(millisecs))[:6] or 0)
+            year = paresd_dict.get("year")
             if year:
                 if len(year) != 2:
                     year = int(year)
                 else:
-                    year = int("20"+year)
+                    year = int("20" + year)
             else:
                 year = cdate.tm_year
-            dt = datetime(year,
-                          int(pd.get("month",cdate.tm_mon)),
-                          int(pd.get("day",cdate.tm_mday)),
-                          int(pd["hour"]),
-                          int(pd["min"]),
-                          int(pd["sec"]),
-                          ms)
-            return (dt, pd['msg'])
+            log_datetime = datetime(year,
+                          int(paresd_dict.get("month", cdate.tm_mon)),
+                          int(paresd_dict.get("day", cdate.tm_mday)),
+                          int(paresd_dict["hour"]),
+                          int(paresd_dict["min"]),
+                          int(paresd_dict["sec"]),
+                          millisecs)
+            return (log_datetime, paresd_dict['msg'])
         else:
             return None
     else:
         if parsed_line:
             tstamp = parsed_line.group('datetime')
-            dt = datetime.fromtimestamp(float(tstamp)/1000)
-            return (dt, line)
+            log_datetime = datetime.fromtimestamp(float(tstamp) / 1000)
+            return (log_datetime, line)
         else:
             return None
-
-

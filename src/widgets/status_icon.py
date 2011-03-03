@@ -1,13 +1,14 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 try:
     from mouse_click import DetectClick
 except:
     pass
 from multiprocessing import Value
-import time
-from net_time import get_true_time
+from net_time import GetTrueTime
 
 
 class StatusIcon:
@@ -24,7 +25,7 @@ class StatusIcon:
         self.active = True
 
     def change_mode(self, *args):
-        now = get_true_time()
+        now = GetTrueTime()
         if self.record:
             self.statusicon.set_from_stock(gtk.STOCK_YES)
             self.date_filter.fromto_option.to_date.set_date(now)
@@ -62,4 +63,5 @@ class StatusIcon:
         menu.append(time_mode)
         menu.show_all()
         menu.show_all()
-        menu.popup(None, None, gtk.status_icon_position_menu, button, time, self.statusicon)
+        menu.popup(None, None, gtk.status_icon_position_menu,
+                   button, time, self.statusicon)

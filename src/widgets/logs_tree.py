@@ -1,24 +1,26 @@
 import pygtk
 pygtk.require("2.0")
-import gtk, gobject, gio
+import gtk
+import gobject
+import gio
 import os
 from parse import parse_filename
-import threading
 from itertools import groupby
-import glob
 import datetime
 import re
 import ConfigParser
 from config_editor import ConfigEditor
 
+
 class ServersModel(object):
     def __init__(self):
-        self.conf_dir = os.sep.join(os.path.dirname(__file__).split(os.sep)[:-1]+
-                    ["config"])
-        self.treestore = gtk.TreeStore( gobject.TYPE_STRING,
-                                         gobject.TYPE_STRING,
-                                         gobject.TYPE_BOOLEAN,
-                                         gobject.TYPE_STRING )
+        self.conf_dir = os.sep.join(os.path.dirname(__file__)\
+                                      .split(os.sep)[:-1] +\
+                                      ["config"])
+        self.treestore = gtk.TreeStore(gobject.TYPE_STRING,
+                                       gobject.TYPE_STRING,
+                                       gobject.TYPE_BOOLEAN,
+                                       gobject.TYPE_STRING)
 
         self.model_filter = self.treestore.filter_new()
 
@@ -34,21 +36,23 @@ class ServersModel(object):
 
     def get_active_servers(self):
         log_for_process = []
+
         def treewalk(iters):
             if self.treestore.get_value(iters, 3) == 'f' \
                 and self.treestore.get_value(iters, 2):
                 cur_log = [self.treestore.get_value(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
-                    if self.treestore.get_value(parent,3) == 'n':
+                    if self.treestore.get_value(parent, 3) == 'n':
                         break
-                    cur_log.append(self.treestore.get_value(parent,0))
+                    cur_log.append(self.treestore.get_value(parent, 0))
                     parent = self.treestore.iter_parent(parent)
                 log_for_process.append(cur_log)
             it = self.treestore.iter_children(iters)
             while it:
                 treewalk(it)
                 it = self.treestore.iter_next(it)
+
         root = self.treestore.iter_children(None)
         while root:
             treewalk(root)
@@ -57,6 +61,7 @@ class ServersModel(object):
 
     def get_active_check_paths(self):
         pathslist = []
+
         def treewalk(iters):
             if self.treestore.get_value(iters, 3) == 'f' \
                 and self.treestore.get_value(iters, 2):
@@ -66,6 +71,7 @@ class ServersModel(object):
             while it:
                 treewalk(it)
                 it = self.treestore.iter_next(it)
+
         root = self.treestore.iter_children(None)
         while root:
             treewalk(root)
@@ -89,11 +95,12 @@ class ServersModel(object):
             treewalk(root)
             root = self.treestore.iter_next(root)
 
+
 class EventServersModel(ServersModel):
     """ The model class holds the information we want to display """
     def __init__(self):
         super(EventServersModel, self).__init__()
-        self.file = os.path.join(self.conf_dir,"evlogs.cfg")
+        self.file = os.path.join(self.conf_dir, "evlogs.cfg")
         try:
             f = open(self.file)
         except IOError:
@@ -102,25 +109,32 @@ class EventServersModel(ServersModel):
             f.close()
         self.read_from_file(True)
 
-    def read_from_file(self,fict):
+    def read_from_file(self, fict):
         self.treestore.clear()
         config = ConfigParser.RawConfigParser()
         config.read(self.file)
         for section in config.sections():
-            parent = self.treestore.append(None, (section, gtk.STOCK_NETWORK, None, 'n'))
+            parent = self.treestore.append(None, (section,
+                                                  gtk.STOCK_NETWORK,
+                                                  None, 'n'))
             for item in config.items(section):
-                child = self.treestore.append( parent, (item[0], gtk.STOCK_DIRECTORY, None, 'd') )
+                child = self.treestore.append(parent, (item[0],
+                                                       gtk.STOCK_DIRECTORY,
+                                                       None, 'd'))
                 for value in item[1].split(","):
-                    self.treestore.append( child, (value.strip(), gtk.STOCK_FILE, None, 'f') )
+                    self.treestore.append(child, (value.strip(),
+                                                  gtk.STOCK_FILE,
+                                                  None, 'f'))
+
 
 class FileServersModel(ServersModel):
     def __init__(self):
         super(FileServersModel, self).__init__()
-        self.file = os.path.join(self.conf_dir,"logs.cfg")
+        self.file = os.path.join(self.conf_dir, "logs.cfg")
         try:
             self.read_from_file(True)
         except IOError:
-            self.file = os.path.join("config","logs.cfg")
+            self.file = os.path.join("config", "logs.cfg")
             self.read_from_file(True)
 
     def read_from_file(self, re_all):
@@ -152,24 +166,27 @@ class FileServersModel(ServersModel):
                                 self.add_logdir(line, root)
                                 self.config[c_root].add(line)
         #self.remove_empty_dirs()
-                        
+
     def add_root(self, name):
         if name:
             for root in self.treestore:
                 if name == root[0]:
                     return root.iter
-            return self.treestore.append(None, [name, gtk.STOCK_NETWORK, None, 'n'])
+            return self.treestore.append(None, [name,
+                                                gtk.STOCK_NETWORK,
+                                                None, 'n'])
 
     def remove_empty_dirs(self):
         dt = datetime.datetime.now()
         print "Remove empty dirs"
+
         def walker(it):
             files = 0
             dirs = 0
             chit = self.treestore.iter_children(it)
             while chit:
                 n_chit = self.treestore.iter_next(chit)
-                if self.treestore.get_value(chit,3) == 'd':
+                if self.treestore.get_value(chit, 3) == 'd':
                     dirs += 1
                     walker(chit)
                 else:
@@ -188,30 +205,31 @@ class FileServersModel(ServersModel):
             it = self.treestore.iter_next(it)
         print datetime.datetime.now() - dt
 
-
     def add_parents(self, path, parent):
-        opjoin = os.path.join
         try:
-            parent_str = self.treestore.get_value(parent,0)
+            parent_str = self.treestore.get_value(parent, 0)
         except TypeError:
             parent_str = ""
         tsappend = self.treestore.append
         parts = path.split(os.sep)
         if path.startswith(r"\\"):
             parts = parts[2:]
-            parts[0] = r"\\"+parts[0]
+            parts[0] = r"\\" + parts[0]
         elif path.startswith("/"):
             parts = parts[1:]
-            parts[0] = "/"+parts[0]
+            parts[0] = "/" + parts[0]
         for n, p in enumerate(parts):
             if p:
-                new_node_path = "|".join([parent_str, os.sep.join(parts[:n+1])])
+                new_node_path = "|".join([parent_str,
+                                          os.sep.join(parts[:(n + 1)])])
                 if not self.parents.get(new_node_path):
-                    prev_parent = self.parents.get("|".join([parent_str, os.sep.join(parts[:n])]), parent)
+                    prev_parent = self.parents.get("|".join([parent_str,
+                                                 os.sep.join(parts[:n])]),
+                                                 parent)
                     gtk.gdk.threads_enter()
-                    self.parents[new_node_path] = tsappend(prev_parent, [p, gtk.STOCK_DIRECTORY, None, 'd'])
+                    self.parents[new_node_path] = tsappend(prev_parent,
+                                        [p, gtk.STOCK_DIRECTORY, None, 'd'])
                     gtk.gdk.threads_leave()
-
 
     def add_logdir(self, path, parent):
         try:
@@ -238,15 +256,17 @@ class FileServersModel(ServersModel):
                                 name = "undefined"
                             if name not in fls:
                                 gtk.gdk.threads_enter()
-                                self.treestore.append(true_parent, [name, gtk.STOCK_FILE, None, 'f'])
+                                self.treestore.append(true_parent,
+                                        [name, gtk.STOCK_FILE, None, 'f'])
                                 gtk.gdk.threads_leave()
                                 fls.append(name)
                 else:
                     node = self.parents.get(node_name)
                     if not node:
                         gtk.gdk.threads_enter()
-                        node = self.parents[node_name] = self.treestore.append(true_parent, \
-                            [f, gtk.STOCK_DIRECTORY,None, 'd'])
+                        node = self.treestore.append(true_parent, \
+                                [f, gtk.STOCK_DIRECTORY, None, 'd'])
+                        self.parents[node_name] = node
                         gtk.gdk.threads_leave()
                     self.walk(fullf, node, pstr)
         except:
@@ -260,21 +280,22 @@ class FileServersModel(ServersModel):
 
         folders = {}
 
-        for k,g in groupby(new_srvs, lambda x: x[0]):
-            folders[k]=[fl[1] for fl in list(g)]
+        for k, g in groupby(new_srvs, lambda x: x[0]):
+            folders[k] = [fl[1] for fl in list(g)]
 
         return folders
 
+
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
-    def __init__( self, model, srvrs ):
+    def __init__(self, model, srvrs):
         """ Form a view for the Tree Model """
-        self.view = gtk.TreeView( model )
+        self.view = gtk.TreeView(model)
         self.srvrs = srvrs
         # setup the text cell renderer and allows these
         # cells to be edited.
         self.renderer = gtk.CellRendererText()
-        self.renderer.set_property( 'editable', False )
+        self.renderer.set_property('editable', False)
         self.stockrenderer = gtk.CellRendererPixbuf()
         #self.renderer.connect( 'edited', self.col0_edited_cb, model )
 
@@ -282,7 +303,7 @@ class DisplayServersModel:
         # changed (toggled) by the user.
         self.renderer1 = gtk.CellRendererToggle()
         self.renderer1.set_property('activatable', True)
-        self.renderer1.connect( 'toggled', self.col1_toggled_cb, model )
+        self.renderer1.connect('toggled', self.col1_toggled_cb, model)
         self.renderer2 = gtk.CellRendererText()
         # Connect column0 of the display with column 0 in our list model
         # The renderer will then display whatever is in column 0 of
@@ -291,16 +312,16 @@ class DisplayServersModel:
         self.column0.pack_start(self.renderer1, False)
         self.column0.pack_start(self.stockrenderer, False)
         self.column0.pack_start(self.renderer, True)
-        self.column0.add_attribute(self.renderer1, 'active', 2 )
+        self.column0.add_attribute(self.renderer1, 'active', 2)
         self.column0.set_attributes(self.stockrenderer, stock_id=1)
         self.column0.set_attributes(self.renderer, text=0)
         # The columns active state is attached to the second column
         # in the model.  So when the model says True then the button
         # will show as active e.g on.
-        self.column2 = gtk.TreeViewColumn("Type", self.renderer2 )
+        self.column2 = gtk.TreeViewColumn("Type", self.renderer2)
         self.column2.set_visible(False)
-        self.view.append_column( self.column0 )
-        self.view.append_column( self.column2 )
+        self.view.append_column(self.column0)
+        self.view.append_column(self.column2)
         self.view.connect("button-press-event", self.show_menu)
         self.popup = gtk.Menu()
         self.reload = gtk.MenuItem("Reload All")
@@ -315,7 +336,7 @@ class DisplayServersModel:
         self.popup.show_all()
 
     def show_config_editor(self, *args):
-        c = ConfigEditor(self.srvrs.file)
+        ConfigEditor(self.srvrs.file)
 
     def reload_all(self, *args):
         self.srvrs.read_from_file(True)
@@ -326,19 +347,21 @@ class DisplayServersModel:
     def show_menu(self, treeview, event):
         if event.button == 3:
             time = event.time
-            self.popup.popup( None, None, None, event.button, time)
+            self.popup.popup(None, None, None, event.button, time)
 
-    def col1_toggled_cb( self, cell, path, model ):
+    def col1_toggled_cb(self, cell, path, model):
         """
         Sets the toggled state on the toggle button to true or false.
         """
         true_model = model.get_model()
         true_path = model.convert_path_to_child_path(path)
         state = true_model[true_path][2] = not true_model[true_path][2]
+
         def walk(child):
             for ch in child.iterchildren():
                 ch[2] = state
                 walk(ch)
+
         walk(true_model[true_path])
         #model.refilter()
         return
@@ -350,11 +373,13 @@ def tree_model_iter_children(model, treeiter):
         yield it
         it = model.iter_next(it)
 
+
 def tree_model_pre_order(model, treeiter):
     yield treeiter
     for childiter in tree_model_iter_children(model, treeiter):
         for it in tree_model_pre_order(model, childiter):
             yield it
+
 
 class ServersTree(gtk.Frame):
     def __init__(self):
@@ -362,7 +387,7 @@ class ServersTree(gtk.Frame):
         self.model = EventServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+        self.logs_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.view.view)
         self.hide_log = gtk.Entry()
         self.box = gtk.VBox()
@@ -371,7 +396,6 @@ class ServersTree(gtk.Frame):
         self.box.pack_start(self.hide_log, False, False)
         self.hide_log.connect("changed", self.on_advanced_entry_changed)
         self.model.get_model().set_visible_func(self.visible_func)
-
 
     def on_advanced_entry_changed(self, widget):
         self.model.get_model().refilter()
@@ -390,13 +414,14 @@ class ServersTree(gtk.Frame):
                 pass
         return False
 
+
 class FileServersTree(gtk.Frame):
     def __init__(self):
         super(FileServersTree, self).__init__()
         self.model = FileServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.view.view)
         self.hide_log = gtk.Entry()
         self.box = gtk.VBox()
@@ -405,7 +430,6 @@ class FileServersTree(gtk.Frame):
         self.box.pack_start(self.hide_log, False, False)
         self.hide_log.connect("changed", self.on_advanced_entry_changed)
         self.model.get_model().set_visible_func(self.visible_func)
-
 
     def on_advanced_entry_changed(self, widget):
         self.model.get_model().refilter()
