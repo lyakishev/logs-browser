@@ -53,7 +53,7 @@ class StatusIcon:
             self.active = False
         else:
             self.active = True
-        print self.active
+        #print self.active
 
     def right_click_event(self, icon, button, time):
         menu = gtk.Menu()

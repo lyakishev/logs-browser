@@ -156,8 +156,8 @@ class ThisOption(gtk.HBox):
         this_date = [start_hour, start_day, start_month]
         #start_week, start_month]
         start_date = this_date[self.this_date_combo.get_active()]
-        print start_date
-        print end_date
+        #print start_date
+        #print end_date
         return (start_date, end_date)
 
     def get_active(self):

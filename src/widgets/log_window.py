@@ -448,7 +448,7 @@ class LogWindow:
                 xparse = xml.dom.minidom.parseString
                 pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
             except xml.parsers.expat.ExpatError:
-                print traceback.format_exc()
+                #print traceback.format_exc()
                 pretty_xml = txt.replace("><", ">\n<")
             return "\n" + pretty_xml
 

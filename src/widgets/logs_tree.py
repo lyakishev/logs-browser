@@ -148,7 +148,7 @@ class FileServersModel(ServersModel):
             for line in f.readlines():
                 line = line.strip()
                 if line:
-                    print line
+                    #print line
                     if not line.startswith("#"):
                         if line == "[]":
                             root = None
@@ -178,7 +178,7 @@ class FileServersModel(ServersModel):
 
     def remove_empty_dirs(self):
         dt = datetime.datetime.now()
-        print "Remove empty dirs"
+        #print "Remove empty dirs"
 
         def walker(it):
             files = 0
@@ -203,7 +203,7 @@ class FileServersModel(ServersModel):
         while it:
             walker(it)
             it = self.treestore.iter_next(it)
-        print datetime.datetime.now() - dt
+        #print datetime.datetime.now() - dt
 
     def add_parents(self, path, parent):
         try:

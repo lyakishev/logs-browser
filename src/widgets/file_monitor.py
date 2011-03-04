@@ -31,7 +31,7 @@ class FileMonitor():
     	gtk.main_quit()
 
     def file_changed(self, m, f1, f2, evt_type):
-	print "changed"
+	#print "changed"
         path = f1.get_path()
         new_size = os.path.getsize(path)
         f = open(path)

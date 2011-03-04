@@ -98,10 +98,10 @@ class GUI_Controller:
                                             self.compl_queue], self.stop_evt,
                                             self.LOGS_FILTER)
         except NameError:
-            thread_nums = 4
+            thread_nums = 1
         else:
             self.event_process.start()
-            thread_nums = 3
+            thread_nums = 1
         self.threads = []
         for t in range(thread_nums):
             t = FileLogWorker([self.proc_queue, self.list_queue,

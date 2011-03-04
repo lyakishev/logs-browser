@@ -6,69 +6,78 @@ import gtk
 import gobject
 import gio
 from widgets.log_window import LogWindow
-from widgets.color_parser import ColorParser
+from widgets.color_parser import ColorParser, SQLExecuter
 from widgets.label_text import LabelText
 import re
 import pickle
 import hashlib
 import sqlite3
 
+def strip(t):
+    return t.strip()
+
+def regexp(t, pattern):
+    return True if re.compile(pattern).search(t) else False
+
+def utf_decode(t):
+    try:
+        txt = t.decode('utf-8').encode('utf-8')
+    except UnicodeDecodeError:
+        txt = t.decode('cp1251').encode('utf-8')
+    return txt
+    
 
 class LogList:
-    sql_re = re.compile("select(.+?)(\s+)?(from|where|group by|order by|union|$)")
-    db_conn = sqlite3.connect(":memory:", check_same_thread = False)
-    db_conn.text_factory = str
+    db_conn = sqlite3.connect("", check_same_thread = False,
+                      detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+    db_conn.text_factory = sqlite3.OptimizedUnicode
+    db_conn.row_factory = sqlite3.Row
+    db_conn.create_function("strip", 1, strip)
+    db_conn.create_function("regexp", 2, regexp)
+    #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
+    db_conn.text_factory = utf_decode
 
     def __init__(self):
         self.hash_value = ""
-        self.sql = ""
         self.view = gtk.TreeView()
         self.view.connect('row-activated', self.show_log)
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.model = None
         self.columns = []
         self.cur = self.db_conn.cursor()
+        self.cur.execute("PRAGMA synchronous=OFF;")
+
 
     def create_new_table(self):
-        sql = """create table %s (date text, computer text, log text,
+        sql = """create virtual table %s using fts4(date text, computer text, log text,
                  type text, source text, msg text, 
-                 color text)""" % self.hash_value
+                 color text);""" % self.hash_value
         self.cur.execute(sql)
         self.db_conn.commit()
 
     def insert(self, log):
-            self.cur.execute("insert into %s values (?,?,?,?,?,?,?)" % self.hash_value,
-                             log)
+        self.cur.execute("insert into %s values (?,?,?,?,?,?,?);" % self.hash_value,
+                         log)
 
     def execute(self, sql):
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        self.sql = sql
-        args = self.new_list_store(sql)
-        self.build_view(args)
         self.cur.execute(sql.replace("this", self.hash_value))
+        rows = self.cur.fetchall()
+        headers = rows[0].keys()
+        self.set_new_list_store(headers)
+        self.build_view(headers)
         sib = None
-        for row in self.cur:
-            sib = self.model.insert_after(sib, row)
-        if 'date' in args:
-            self.model.set_sort_column_id(args.index('date'), gtk.SORT_DESCENDING)
+        for row in rows:
+            sib = self.model.insert_after(sib, tuple(row))
+        if 'date' in headers:
+            self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
         self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
-    def new_list_store(self, sql):
-        cols = self.parse_sql(sql)
+    def set_new_list_store(self, cols):
         args = [gobject.TYPE_STRING for i in cols]
         self.model = gtk.ListStore(*args)
-        return cols
-
-    def parse_sql(self,sql):
-        cols = [m.strip() for m in\
-                    self.sql_re.search(sql).group(1).split(",")]
-        if "".join(cols) == '*':
-            return ['date', 'computer', 'log', 'text', 'source', 'msg',
-                    'color']
-        return cols
-
 
     def build_view(self, args):
         for col in self.columns:
@@ -77,6 +86,8 @@ class LogList:
         for number, header in enumerate(args):
             renderer = gtk.CellRendererText()
             renderer.set_property('editable', False)
+            renderer.props.wrap_width = 640
+            renderer.props.wrap_mode = gtk.WRAP_WORD
             col = gtk.TreeViewColumn(header, renderer,
                                 text=number)
             self.columns.append(col)
@@ -95,10 +106,9 @@ class LogList:
         if self.model:
             self.model.clear()
         if self.hash_value:
-            self.cur.execute("drop table %s" % self.hash_value)
+            self.cur.execute("drop table %s;" % self.hash_value)
             self.db_conn.commit()
         
-
     def show_log(self):
         pass
         
@@ -251,16 +261,17 @@ class LogListWindow(gtk.Frame):
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.log_list.view)
-        #exp = gtk.Expander("Filter")
-        #exp.connect("activate", self.text_grab_focus)
-        #self.filter_logs = ColorParser(self.logs_store, self.logs_view)
+        exp = gtk.Expander("Filter")
+        exp.connect("activate", self.text_grab_focus)
+        self.filter_logs = SQLExecuter(self.log_list.model, self.log_list.view,
+                            self.log_list)
         #label_text = LabelText()
-        #exp.add(filter_logs)
-        self.box = gtk.VBox()
-        self.add(self.box)
+        exp.add(self.filter_logs)
+        box = gtk.VBox()
+        self.add(box)
         #box.pack_start(label_text, False, False)
-        self.box.pack_start(self.logs_window, True, True)
-        #box.pack_start(exp, False, False, 2)
+        box.pack_start(self.logs_window, True, True)
+        box.pack_start(exp, False, False, 2)
         self.show_all()
 
     def text_grab_focus(self, *args):

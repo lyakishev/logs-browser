@@ -33,8 +33,8 @@ class ColorParser(gtk.HBox):
 
         self.model = model
         self.view = view
-        self.filter = self.model.get_model().filter_new()
-        self.filter.set_visible_column(7)
+        #self.filter = self.model.get_model().filter_new()
+        #self.filter.set_visible_column(7)
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -60,10 +60,10 @@ class ColorParser(gtk.HBox):
         self.buf.connect_after("insert-text", self.tags_text)
         self.text.connect_after("backspace", self.backspace)
 
-        self.__init_tags_filter()
+        #self.__init_tags_filter()
 
-        self.tags_ranges = []
-        self.parse_and_highlight()
+        #self.tags_ranges = []
+        #self.parse_and_highlight()
 
     def __init_tags_filter(self):
         def insert_with_tags(txt, tag1, tag2):
@@ -337,3 +337,16 @@ class LogColorParser(gtk.HBox):
     def filter_logs(self, *args):
         col_str = self.def_text_ranges()
         self.logw.highlight(col_str)
+
+class SQLExecuter(ColorParser):
+    def __init__(self,model,view,loglist):
+        ColorParser.__init__(self,model,view)
+        self.loglist = loglist
+
+    def filter_logs(self, *args):
+        start = self.buf.get_start_iter()
+        end = self.buf.get_end_iter()
+        txt = self.buf.get_text(start, end)
+        col_str = cparser.split(txt)[1:]
+        self.loglist.execute(txt)
+
