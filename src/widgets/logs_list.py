@@ -25,7 +25,44 @@ def utf_decode(t):
     except UnicodeDecodeError:
         txt = t.decode('cp1251').encode('utf-8')
     return txt
+
+class AggError:
+    def __init__(self):
+        self.type_ = '?'
+
+    def step(self, value):
+        if value == 'ERROR':
+            self.type_ = 'ERROR'
+
+    def finalize(self):
+        return self.type_
+
+class RowIDsList:
+    def __init__(self):
+        self.rowids = []
+
+    def step(self, value):
+        self.rowids.append(value)
+
+    def finalize(self):
+        return str(self.rowids).replace("[","(").replace("]",")")
+
+def add_parens(t):
+    return "("+str(t)+")"
     
+SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
+        "(.+?)",
+        "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
+
+def add_rows_to_select(sql):
+    new_sql = []
+    start = 0
+    for m in SQL_RE.finditer(sql):
+        begin = sql[start:m.start(1)]
+        new_sql.append("".join([begin,m.group(1),", rows(rowid) as rows_for_log_window"]))
+        start = m.end(1)
+    new_sql.append(sql[start:])
+    return "".join(new_sql)
 
 class LogList:
     db_conn = sqlite3.connect("", check_same_thread = False,
@@ -34,6 +71,8 @@ class LogList:
     db_conn.row_factory = sqlite3.Row
     db_conn.create_function("strip", 1, strip)
     db_conn.create_function("regexp", 2, regexp)
+    db_conn.create_aggregate("error", 1, AggError)
+    db_conn.create_aggregate("rows", 1, RowIDsList)
     #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
     db_conn.text_factory = utf_decode
 
@@ -46,33 +85,39 @@ class LogList:
         self.columns = []
         self.cur = self.db_conn.cursor()
         self.cur.execute("PRAGMA synchronous=OFF;")
+        self.sql = ""
+        self.headers = []
 
 
     def create_new_table(self):
         sql = """create virtual table %s using fts4(date text, computer text, log text,
-                 type text, source text, msg text, 
-                 color text);""" % self.hash_value
+                 type text, source text, msg text);""" % self.hash_value
         self.cur.execute(sql)
         self.db_conn.commit()
 
     def insert(self, log):
-        self.cur.execute("insert into %s values (?,?,?,?,?,?,?);" % self.hash_value,
+        self.cur.execute("insert into %s values (?,?,?,?,?,?);" % self.hash_value,
                          log)
 
     def execute(self, sql):
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        self.cur.execute(sql.replace("this", self.hash_value))
+        self.sql = sql.replace("this", self.hash_value)
+        rows_sql = add_rows_to_select(self.sql)
+        self.cur.execute(rows_sql)
         rows = self.cur.fetchall()
-        headers = rows[0].keys()
-        self.set_new_list_store(headers)
-        self.build_view(headers)
-        sib = None
-        for row in rows:
-            sib = self.model.insert_after(sib, tuple(row))
-        if 'date' in headers:
-            self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
-        self.view.set_model(self.model)
+        self.cur.close()
+        if rows:
+            self.headers = rows[0].keys()
+            headers = self.headers
+            self.set_new_list_store(headers)
+            self.build_view(headers)
+            sib = None
+            for row in rows:
+                sib = self.model.insert_after(sib, tuple(row))
+            if 'date' in headers:
+                self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
+            self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
     def set_new_list_store(self, cols):
@@ -88,14 +133,19 @@ class LogList:
             renderer.set_property('editable', False)
             renderer.props.wrap_width = 640
             renderer.props.wrap_mode = gtk.WRAP_WORD
-            col = gtk.TreeViewColumn(header, renderer,
-                                text=number)
+            if 'bgcolor' in args:
+                col = gtk.TreeViewColumn(header, renderer,
+                                    text=number,
+                                    cell_background=args.index('bgcolor'))
+            else:
+                col = gtk.TreeViewColumn(header, renderer,
+                                    text=number)
             self.columns.append(col)
             col.set_sort_column_id(number)
             col.set_resizable(True)
             self.view.append_column(col)
-        self.view.connect('row-activated', self.show_log)
-        self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+            if header in ('rows_for_log_window', 'bgcolor'):
+                col.set_visible(False)
 
     def set_hash(self, params):
         pick = pickle.dumps(params)
@@ -109,8 +159,35 @@ class LogList:
             self.cur.execute("drop table %s;" % self.hash_value)
             self.db_conn.commit()
         
-    def show_log(self):
-        pass
+    def show_log(self, path, column, params):
+        selection = path.get_selection()
+        selection.set_mode(gtk.SELECTION_SINGLE)
+        (model, iter_) = selection.get_selected()
+        LogWindow(self, iter_, selection)
+        selection.set_mode(gtk.SELECTION_MULTIPLE)
+        return
+
+    def get_msg_by_rowids(self, iter_):
+        rows = self.model.get_value(iter_,
+                               self.headers.index('rows_for_log_window'))
+        msg_sql = "select group_concat(msg) from %s where rowid in %s order by date asc;" % \
+                                            (self.hash_value, rows)
+        self.cur.execute(msg_sql)
+        result = self.cur.fetchall()
+        return result[0][0]
+
+        
+
+    #def show_log(self, path, column, params):
+    #    selection = path.get_selection()
+    #    selection.set_mode(gtk.SELECTION_SINGLE)
+    #    (model, iter) = selection.get_selected()
+    #    LogWindow(model, self.view, iter, selection)
+    #    selection.set_mode(gtk.SELECTION_MULTIPLE)
+    #    return
+
+       
+        
         
         
         

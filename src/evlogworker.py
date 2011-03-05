@@ -72,7 +72,7 @@ class LogWorker(multiprocessing.Process):
         try:
             hand = win32evtlog.OpenEventLog(self.server, self.logtype)
         except pywintypes.error:
-            print "Error: %s %s" % (self.server, self.logtype)
+            #print "Error: %s %s" % (self.server, self.logtype)
             return
         flags = win32evtlog.EVENTLOG_BACKWARDS_READ | \
                 win32evtlog.EVENTLOG_SEQUENTIAL_READ
@@ -83,7 +83,7 @@ class LogWorker(multiprocessing.Process):
                 try:
                     events = win32evtlog.ReadEventLog(hand, flags, 0)
                 except pywintypes.error:
-                    print "Pause %s %s" % (self.server, self.logtype)
+                    #print "Pause %s %s" % (self.server, self.logtype)
                     hand.Detach()  # need?
                     time.sleep(1)
                     hand = win32evtlog.OpenEventLog(self.server, self.logtype)
@@ -98,7 +98,7 @@ class LogWorker(multiprocessing.Process):
                 try:
                     win32evtlog.CloseEventLog(hand)
                 except pywintypes.error:
-                    print "Can't close"
+                    #print "Can't close"
 
     def filter(self):
         date_filter = (log for log in self.load() if self.f_date(log))
@@ -122,7 +122,5 @@ class LogWorker(multiprocessing.Process):
                                     log['logtype'],
                                     log['evt_type'],
                                     log['source'],
-                                    msg,
-                                    "#FFFFFF",
-                                    False))
+                                    msg)
             self.queues[2].put(1)

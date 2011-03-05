@@ -27,9 +27,10 @@ plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
 
 
 class LogWindow:
-    def __init__(self, model, view, iter, sel):
-        self.model = model
-        self.view = view
+    def __init__(self, loglist, iter, sel):
+        self.model = loglist.model
+        self.view = loglist.view
+        self.loglist = loglist
         self.selection = sel
         self.iter = iter
         self.popup = gtk.Window()
@@ -387,21 +388,21 @@ class LogWindow:
                          args=("notepad %s" % file_to_open,)).start()
 
     def fill(self):
-        self.files = set([self.model.get_value(self.iter, 4)])
-        self.txt = self.model.get_value(self.iter, 5)
+        #self.files = set([self.model.get_value(self.iter, 4)])
+        self.txt = self.loglist.get_msg_by_rowids(self.iter)
         try:
             self.txt = self.txt.decode('utf-8').encode('utf-8')
         except UnicodeDecodeError:
             self.txt = self.txt.decode('cp1251').encode('utf-8')
-        self.open_label.set_text(self.model.get_value(self.iter, 4))
-        self.info_label.set_markup(
-            '<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
-            (self.model.get_value(self.iter, 6),\
-            self.model.get_value(self.iter, 0),\
-            self.model.get_value(self.iter, 2),
-            self.model.get_value(self.iter, 3) ==\
-                "ERROR" and '<span foreground="red">ERROR</span>' or "",\
-            ))
+        #self.open_label.set_text(self.model.get_value(self.iter, 4))
+        #self.info_label.set_markup(
+        #    '<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
+        #    (self.model.get_value(self.iter, 6),\
+        #    self.model.get_value(self.iter, 0),\
+        #    self.model.get_value(self.iter, 2),
+        #    self.model.get_value(self.iter, 3) ==\
+        #        "ERROR" and '<span foreground="red">ERROR</span>' or "",\
+        #    ))
         txt = self.pretty_xml(self.txt)
         self.log_text.get_buffer().set_text(txt)
         self.highlight(self.col_str)

@@ -7,7 +7,7 @@ def mmap_read(path):
         try:
             data = mmap.mmap(mapped_file.fileno(), 0, access=mmap.ACCESS_READ)
         except WindowsError:
-            print "mmap error: %s" % path
+            #print "mmap error: %s" % path
             return
         mf_size = end_pos = len(data)
         for i in xrange(mf_size-1, -1, -1):
@@ -22,7 +22,7 @@ def mmap_block_read(path, block_size=1850):
         try:
             data = mmap.mmap(mapped_file.fileno(), 0, access=mmap.ACCESS_READ)
         except WindowsError:
-            print "mmap error: %s" % path
+            #print "mmap error: %s" % path
             return
         mf_size = end_pos = len(data)
         for i in xrange(mf_size-1-block_size, -1, -block_size):

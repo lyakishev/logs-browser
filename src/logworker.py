@@ -16,6 +16,7 @@ import threading
 from operator import itemgetter as ig
 import Queue
 from buf_read import mmap_block_read
+import sys
 
 
 def datetime_intersect(t1start, t1end, t2start, t2end):
@@ -59,12 +60,13 @@ class FileLogWorker(multiprocessing.Process):
         self.fltr = fltr
         self.formats = f_cache
         self.path, self.common_log_name = "", "" # defines in self.run()
+        self.count = 0
 
     def load(self):
         try:
             cdate = time.localtime(os.path.getctime(self.path))
         except WindowsError:
-            print "WindowsError: %s" % self.path
+            #print "WindowsError: %s" % self.path
             raise StopIteration
         if get_time(cdate) > self.fltr['date'][1]:
             raise StopIteration
@@ -73,7 +75,7 @@ class FileLogWorker(multiprocessing.Process):
             try:
                 file_ = open(self.path, 'r')
             except IOError:
-                print "IOError: %s" % self.path
+                #print "IOError: %s" % self.path
                 raise StopIteration
             line = True
             while line and (not pformat):
@@ -82,7 +84,7 @@ class FileLogWorker(multiprocessing.Process):
             self.formats[self.common_log_name] = pformat
             file_.close()
         if not pformat:
-            print "Not found the format for file %s" % self.path
+            #print "Not found the format for file %s" % self.path
             raise StopIteration
         at_err = [0, 0]
         buff = deque()
@@ -98,13 +100,13 @@ class FileLogWorker(multiprocessing.Process):
                 l_type = (at_err[0] > 0 and at_err[1] > 0) and "ERROR" or "?"
                 buff.appendleft(string)
                 msg = "".join(buff)
+                self.count += 1
                 yield (parsed_s[0],
                        "",
                        self.common_log_name,
                        l_type,
                        self.path,
-                       msg,
-                       "#FFFFFF")
+                       msg)
                 buff.clear()
                 at_err = [0, 0]
 
@@ -158,5 +160,5 @@ class LogListFiller(threading.Thread):
                 break
         self.loglist.db_conn.commit()
         self.loglist.execute("""select date, log, type, source from this
-                                group by date""")
+                                group by date;""")
         self.queues[1].put(1)

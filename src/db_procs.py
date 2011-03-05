@@ -23,7 +23,7 @@ class ProcAnalyzer():
             like :pack", pack=self.package)
         exist = self.cur.fetchall()[0][0]
         if not exist:
-            print "Package does not exist"
+            #print "Package does not exist"
             return False
         else:
             return True
@@ -70,4 +70,4 @@ class ProcAnalyzer():
 if __name__ == "__main__":
     pa = ProcAnalyzer("PKG_CRM.get_HLR_code",
                      "tf2_stock/stock@heine")
-    print pa.proc_source
+    #print pa.proc_source
