@@ -88,10 +88,9 @@ class LogList:
         self.model = None
         self.columns = []
         self.cur = self.db_conn.cursor()
-        self.cur.execute("PRAGMA synchronous=OFF;")
+        #self.cur.execute("PRAGMA synchronous=OFF;")
         self.sql = ""
         self.headers = []
-        self.count = 0
 
 
     def create_new_table(self):
@@ -101,7 +100,6 @@ class LogList:
         self.db_conn.commit()
 
     def insert(self, log):
-        self.count +=1
         self.cur.execute("insert into %s values (?,?,?,?,?,?);" % self.hash_value,
                          log)
         #self.db_conn.commit()
@@ -114,7 +112,7 @@ class LogList:
         rows_sql = self.sql#add_rows_to_select(self.sql)
         dt = now()
         self.cur.execute(rows_sql)
-        print now() - dt
+        print "Select *:", now() - dt
         rows = self.cur.fetchall()
         self.cur.close()
         if rows:
@@ -126,11 +124,11 @@ class LogList:
             dt = now()
             for row in rows:
                 sib = self.model.insert_after(sib, tuple(row))
-            print now() - dt
-            #dt = now()
+            print "Filling Liststore: ", now() - dt
+            dt = now()
             if 'date' in headers:
                 self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
-            #print now() - dt
+            print "Ordering: ", now() - dt
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
 

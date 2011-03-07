@@ -120,33 +120,30 @@ class LogListFiller(threading.Thread):
         self.queues = queues
         self.stp = stp
         self.loglist = loglist
-        self.count = 0
 
     def run(self):
+        now = datetime.datetime.now
         self.loglist.create_new_table()
         insert = self.loglist.insert
         get = self.queues[0].get
+        dt = now()
         while 1:
-            if self.stp.is_set():
-                break
             try:
                 log = get(True, 1)
-                insert(log)
-                self.count+=1
-            except Queue.Empty:
-                pass
-        print self.count
-        get = self.queues[0].get_nowait
-        while 1:
-            try:
-                log = get()
-                insert(log)
-                self.count+=1
             except Queue.Empty:
                 break
+            else:
+                insert(log)
+        print "Insert: ", now() - dt
+        #get = self.queues[0].get_nowait
+        #while 1:
+        #    try:
+        #        log = get()
+        #        insert(log)
+        #        self.count+=1
+        #    except Queue.Empty:
+        #        break
         self.loglist.db_conn.commit()
-        print self.count
-        print self.loglist.count
         self.loglist.execute("""select date, log, type, source from this
                                 group by date
                                 ;""")

@@ -26,10 +26,6 @@ class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
         # setup the main window
-        self.proc_queue = Queue()
-        self.list_queue = Queue()
-        self.evt_queue = Queue()
-        self.compl_queue = Queue()
         self.stp_compl = threading.Event()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
@@ -143,6 +139,7 @@ class GUI_Controller:
                 gtk.gdk.threads_leave()
                 break
             elif counter == fl_count - 1:
+                print "Parse: ", datetime.datetime.now()-tm
                 self.progressbar.set_text("Filling table...")
                 self.stp_compl.set()
             gtk.gdk.threads_enter()
@@ -162,6 +159,10 @@ class GUI_Controller:
         except AttributeError:
             evlogs = []
         if flogs or evlogs:
+            proc_queue = Queue()
+            list_queue = Queue()
+            evt_queue = Queue()
+            compl_queue = Queue()
             loglist = self.logframe.get_current_logs_store
             loglist.clear()
             dates = self.date_filter.get_active() and\
@@ -177,24 +178,24 @@ class GUI_Controller:
             if evlogs:
                 eventlogs_queue = Process(target=queue_filler,
                              args=(evlogs, self.evt_queue,))
-                event_process = LogWorker([self.evt_queue, self.list_queue,
-                                                self.compl_queue], self.stop_evt,
+                event_process = LogWorker([evt_queue, list_queue,
+                                                compl_queue], self.stop_evt,
                                                 dates)
                 eventlogs_queue.start()
                 event_process.start()
             if flogs:
                 filelogs_queue = Process(target=queue_filler,
-                             args=(n_flogs, self.proc_queue,))
+                             args=(n_flogs, proc_queue,))
                 filelogs_queue.start()
-                for t in range(3):#fileprocess_nums):
-                    t = FileLogWorker([self.proc_queue, self.list_queue,
-                                      self.compl_queue], self.stop_evt,
+                for t in range(5):#fileprocess_nums):
+                    t = FileLogWorker([proc_queue, list_queue,
+                                      compl_queue], self.stop_evt,
                                       dates)
                     t.start()
             progress_thread = threading.Thread(target=self.progress,
-                                   args=(self.compl_queue, frac, fl_count))
+                                   args=(compl_queue, frac, fl_count))
             progress_thread.start()
-            db_insert_process = LogListFiller([self.list_queue, self.compl_queue],
+            db_insert_process = LogListFiller([list_queue, compl_queue],
                                 self.stp_compl,
                                 loglist)
             db_insert_process.start()
