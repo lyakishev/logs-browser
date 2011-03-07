@@ -100,7 +100,7 @@ class LastDateOption(gtk.HBox):
     def __init__(self):
         super(LastDateOption, self).__init__()
         self.last_date_radio = gtk.RadioButton(label='Last')
-        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=100,
+        self.last_date_adj = gtk.Adjustment(value=1, lower=1, upper=300,
                                             step_incr=1)
         self.last_date_spin = gtk.SpinButton(adjustment=self.last_date_adj)
         self.last_date_combo = gtk.combo_box_new_text()

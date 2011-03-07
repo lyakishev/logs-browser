@@ -9,7 +9,7 @@ from parse import parse_filename, parse_logline_re, define_format
 import os
 import time
 import datetime
-from itertools import groupby
+from itertools import islice
 from collections import deque
 import multiprocessing
 import threading
@@ -17,12 +17,6 @@ from operator import itemgetter as ig
 import Queue
 from buf_read import mmap_block_read
 import sys
-
-
-def datetime_intersect(t1start, t1end, t2start, t2end):
-    return (t1start <= t2start and t2start <= t1end) or \
-           (t2start <= t1start and t1start <= t2end)
-
 
 def get_time(tm_dt):
     return datetime.datetime(tm_dt.tm_year,
@@ -39,7 +33,6 @@ def queue_filler(logs, queue):
 
 
 def file_preparator(folders):
-    #size = os.path.getsize
     flf = []
     for key, value in folders.iteritems():
         for file_ in os.listdir(key):
@@ -53,14 +46,13 @@ def file_preparator(folders):
 
 
 class FileLogWorker(multiprocessing.Process):
-    def __init__(self, queues, stp, fltr, f_cache):
+    def __init__(self, queues, stp, dates):
         multiprocessing.Process.__init__(self)
         self.queues = queues
         self.stop = stp
-        self.fltr = fltr
-        self.formats = f_cache
+        self.dates = dates
+        self.formats = {}#f_cache
         self.path, self.common_log_name = "", "" # defines in self.run()
-        self.count = 0
 
     def load(self):
         try:
@@ -68,7 +60,7 @@ class FileLogWorker(multiprocessing.Process):
         except WindowsError:
             #print "WindowsError: %s" % self.path
             raise StopIteration
-        if get_time(cdate) > self.fltr['date'][1]:
+        if get_time(cdate) > self.dates[1]:
             raise StopIteration
         pformat = self.formats.get(self.common_log_name)
         if not pformat:
@@ -97,37 +89,27 @@ class FileLogWorker(multiprocessing.Process):
             if not parsed_s:
                 buff.appendleft(string)
             else:
-                l_type = (at_err[0] > 0 and at_err[1] > 0) and "ERROR" or "?"
-                buff.appendleft(string)
-                msg = "".join(buff)
-                self.count += 1
-                yield (parsed_s[0],
-                       "",
-                       self.common_log_name,
-                       l_type,
-                       self.path,
-                       msg)
+                date = parsed_s[0]
+                if date < self.dates[0]:
+                    buff.clear()
+                    raise StopIteration
+                if date <= self.dates[1]:
+                    l_type = (at_err[0] > 0 and at_err[1] > 0) and "ERROR" or "?"
+                    buff.appendleft(string)
+                    msg = "".join(buff)
+                    yield (parsed_s[0],
+                           "",
+                           self.common_log_name,
+                           l_type,
+                           self.path,
+                           msg)
                 buff.clear()
                 at_err = [0, 0]
-
-    def filter(self):
-        def f_date(log):
-            ndate = self.fltr['date']
-            #try:
-            if log[0] < ndate[0]:
-                raise StopIteration
-            #except TypeError:
-            #    self.deq.clear()
-            #    raise StopIteration
-            return ndate[0] <= log[0] <= ndate[1]
-
-        for log in (l for l in self.load() if f_date(l)):
-            yield log
 
     def run(self):
         while 1:
             self.path, self.common_log_name = self.queues[0].get()
-            for log in self.filter():
+            for log in self.load():
                 self.queues[1].put(log)
             self.queues[2].put(1)
 
@@ -138,6 +120,7 @@ class LogListFiller(threading.Thread):
         self.queues = queues
         self.stp = stp
         self.loglist = loglist
+        self.count = 0
 
     def run(self):
         self.loglist.create_new_table()
@@ -149,16 +132,22 @@ class LogListFiller(threading.Thread):
             try:
                 log = get(True, 1)
                 insert(log)
+                self.count+=1
             except Queue.Empty:
                 pass
+        print self.count
         get = self.queues[0].get_nowait
         while 1:
             try:
                 log = get()
                 insert(log)
+                self.count+=1
             except Queue.Empty:
                 break
         self.loglist.db_conn.commit()
+        print self.count
+        print self.loglist.count
         self.loglist.execute("""select date, log, type, source from this
-                                group by date;""")
+                                group by date
+                                ;""")
         self.queues[1].put(1)

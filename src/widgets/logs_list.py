@@ -12,6 +12,9 @@ import re
 import pickle
 import hashlib
 import sqlite3
+from datetime import datetime
+import pango
+
 
 def strip(t):
     return t.strip()
@@ -71,6 +74,7 @@ class LogList:
     db_conn.row_factory = sqlite3.Row
     db_conn.create_function("strip", 1, strip)
     db_conn.create_function("regexp", 2, regexp)
+    db_conn.create_function("add_parens", 1, add_parens)
     db_conn.create_aggregate("error", 1, AggError)
     db_conn.create_aggregate("rows", 1, RowIDsList)
     #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
@@ -87,6 +91,7 @@ class LogList:
         self.cur.execute("PRAGMA synchronous=OFF;")
         self.sql = ""
         self.headers = []
+        self.count = 0
 
 
     def create_new_table(self):
@@ -96,15 +101,20 @@ class LogList:
         self.db_conn.commit()
 
     def insert(self, log):
+        self.count +=1
         self.cur.execute("insert into %s values (?,?,?,?,?,?);" % self.hash_value,
                          log)
+        #self.db_conn.commit()
 
     def execute(self, sql):
+        now = datetime.now
         self.view.freeze_child_notify()
         self.view.set_model(None)
         self.sql = sql.replace("this", self.hash_value)
-        rows_sql = add_rows_to_select(self.sql)
+        rows_sql = self.sql#add_rows_to_select(self.sql)
+        dt = now()
         self.cur.execute(rows_sql)
+        print now() - dt
         rows = self.cur.fetchall()
         self.cur.close()
         if rows:
@@ -113,10 +123,14 @@ class LogList:
             self.set_new_list_store(headers)
             self.build_view(headers)
             sib = None
+            dt = now()
             for row in rows:
                 sib = self.model.insert_after(sib, tuple(row))
+            print now() - dt
+            #dt = now()
             if 'date' in headers:
                 self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
+            #print now() - dt
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
@@ -132,7 +146,7 @@ class LogList:
             renderer = gtk.CellRendererText()
             renderer.set_property('editable', False)
             renderer.props.wrap_width = 640
-            renderer.props.wrap_mode = gtk.WRAP_WORD
+            renderer.props.wrap_mode = pango.WRAP_WORD
             if 'bgcolor' in args:
                 col = gtk.TreeViewColumn(header, renderer,
                                     text=number,
@@ -156,6 +170,7 @@ class LogList:
         if self.model:
             self.model.clear()
         if self.hash_value:
+            self.cur.execute("VACUUM;")
             self.cur.execute("drop table %s;" % self.hash_value)
             self.db_conn.commit()
         

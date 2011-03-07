@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # vim: ts=4:sw=4:tw=78:nowrap
 """ Demonstration using editable and activatable CellRenderers """
 import pygtk
@@ -67,7 +68,6 @@ class GUI_Controller:
         if sys.platform == 'win32':
             self.show_ev_widgets()
         self.stop_evt = Event()
-        self.init_threads()
         return
 
     def show_ev_widgets(self):
@@ -87,28 +87,6 @@ class GUI_Controller:
             self.ev_filter.hide()
         else:
             self.ev_filter.show()
-
-    def init_threads(self):
-        self.manager = Manager()
-        self.LOGS_FILTER = self.manager.dict()
-        self.f_manager = Manager()
-        self.formats = self.f_manager.dict()
-        try:
-            self.event_process = LogWorker([self.evt_queue, self.list_queue,
-                                            self.compl_queue], self.stop_evt,
-                                            self.LOGS_FILTER)
-        except NameError:
-            thread_nums = 1
-        else:
-            self.event_process.start()
-            thread_nums = 1
-        self.threads = []
-        for t in range(thread_nums):
-            t = FileLogWorker([self.proc_queue, self.list_queue,
-                              self.compl_queue], self.stop_evt,
-                              self.LOGS_FILTER, self.formats)
-            self.threads.append(t)
-            t.start()
 
     def stop_all(self, *args):
         def queue_clear():
@@ -145,14 +123,7 @@ class GUI_Controller:
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
         self.status.statusicon.set_visible(False)
-        for t in self.threads:
-            t.terminate()
-        try:
-            self.event_process.terminate()
-        except AttributeError:
-            pass
         gtk.main_quit()
-        sys.exit()
         return
 
     def progress(self, q, frac, fl_count):
@@ -160,7 +131,6 @@ class GUI_Controller:
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_text("Working...")
         counter = 0
-        #check_half_frac = 1.0 - frac / 2.
         while 1:
             curr = self.progressbar.get_fraction()
             q.get()
@@ -194,36 +164,40 @@ class GUI_Controller:
         if flogs or evlogs:
             loglist = self.logframe.get_current_logs_store
             loglist.clear()
-            self.LOGS_FILTER['date'] = self.date_filter.get_active() and\
+            dates = self.date_filter.get_active() and\
                                        self.date_filter.get_dates or\
                                        (datetime.datetime.min,
                                         datetime.datetime.max)
-            try:
-                self.LOGS_FILTER['types'] = self.ev_filter.get_active()\
-                                    and self.ev_filter.get_event_types\
-                                    or []
-            except AttributeError:
-                pass
             if GetTrueTime.time_error_flag:
                 GetTrueTime.show_time_warning(self.root)
             n_flogs = file_preparator(flogs)
             fl_count = len(n_flogs) + len(evlogs) + 1
             frac = 1.0 / (fl_count)
-            loglist.set_hash(self.LOGS_FILTER.items())
+            loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
             if evlogs:
-                p1 = Process(target=queue_filler,
+                eventlogs_queue = Process(target=queue_filler,
                              args=(evlogs, self.evt_queue,))
-                p1.start()
-            p2 = Process(target=queue_filler,
-                         args=(n_flogs, self.proc_queue,))
-            p2.start()
-            pr3 = threading.Thread(target=self.progress,
+                event_process = LogWorker([self.evt_queue, self.list_queue,
+                                                self.compl_queue], self.stop_evt,
+                                                dates)
+                eventlogs_queue.start()
+                event_process.start()
+            if flogs:
+                filelogs_queue = Process(target=queue_filler,
+                             args=(n_flogs, self.proc_queue,))
+                filelogs_queue.start()
+                for t in range(3):#fileprocess_nums):
+                    t = FileLogWorker([self.proc_queue, self.list_queue,
+                                      self.compl_queue], self.stop_evt,
+                                      dates)
+                    t.start()
+            progress_thread = threading.Thread(target=self.progress,
                                    args=(self.compl_queue, frac, fl_count))
-            pr3.start()
-            pr4 = LogListFiller([self.list_queue, self.compl_queue],
+            progress_thread.start()
+            db_insert_process = LogListFiller([self.list_queue, self.compl_queue],
                                 self.stp_compl,
                                 loglist)
-            pr4.start()
+            db_insert_process.start()
             self.show_button.set_sensitive(False)
 
 if __name__ == '__main__':

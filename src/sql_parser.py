@@ -4,24 +4,39 @@ from pyparsing import *
 SelectStmt = Forward()
 expr = Forward()
 
-LiteralValue = Word(alphanums)
-BindParameter = Regex(".+?")
-DatabaseName = Word(alphanums)
+NumericLiteral = (Word(nums) + Optional(Dot + Word(nums)) |\
+                 Dot + Word(nums)) +\
+                 Optional(Literal("E") + Optional(OneOf("+ -")) + Word(nums))
+
+StringLiteral = Word(alphanums+"_")
+
+NULL,CURRENT_TIME,CURRENT_DATE,CURRENT_TIMESTAMP = map(CaselessKeyword,
+                "null current_time current_date current_timestamp".split())
+literalValue = NumericLiteral |\
+               StringLiteral |\
+               NULL |\
+               CURRENT_TIME |\
+               CURRENT_DATE |\
+               CURRENT_TIMESTAMP
+
+
+DatabaseName = Word(alphanums+"_")
 Dot = Literal(".")
-TableName = Word(alphanums)
-TableAlias = Word(alphanums)
-IndexName = Word(alphanums)
-ColumnName = Word(alphanums)
-UnraryOperator = Word(alphanums)
-BinaryOperator = Word(alphanums)
-ColumnAlias = Word(alphanums)
-CollationName = Word(alphanums)
-TypeName = Word(alphanums)
+TableName = Word(alphanums+"_")
+TableAlias = Word(alphanums+"_")
+IndexName = Word(alphanums+"_")
+ColumnName = Word(alphanums+"_")
+UnraryOperator = OneOf("- + ~")
+BinaryOperator = OneOf("+ - / * % & |") | Literal("||") |\
+                 Literal(">>", "<<",
+ColumnAlias = Word(alphanums+"_")
+CollationName = Word(alphanums+"_")
+TypeName = Word(alphanums+"_")
 AllColumns = Literal("*")
 Comma = Literal(",")
 LPAREN = Literal("(")
 RPAREN = Literal(")")
-FunctionName = Word(alphanums)
+FunctionName = Word(alphanums+"_")
 ISNULL,NOTNULL,NOT,NULL,IS,IN,EXISTS,CAST = map(CaselessKeyword,
             "isnull notnull not null is in exists cast".split())
 COLLATE,ASC,DESC = map(CaselessKeyword,"collate asc desc".split())
@@ -61,8 +76,10 @@ INDEXED,NOT = map(CaselessKeyword, "indexed not".split())
 
 
 
-ResultColumn = AllColumns | TableName + Dot + AllColumns | \
+ResultColumn = AllColumns | \
+               TableName + Dot + AllColumns | \
                expr + Optional(Optional(AS) + ColumnAlias)
+               
 
 OrderingTerm = expr + Optional(COLLATE + CollationName) + Optional(ASC|DESC)
 
@@ -74,15 +91,16 @@ JoinOp = Comma | Optional(NATURAL) + \
 JoinConstraint = Optional(ON + expr | USING + LPAREN + \
                           delimitedList(ColumnName) + RPAREN)
 
-JoinSource = Forward()
+SingleSource = Forward()
+JoinSource = SingleSource + ZeroOrMore(JoinOp+SingleSource+JoinConstraint)
 
-SingleSource = DbTable +\
-               Optional(Optional(AS)+TableAlias) + \
+SingleSource << (DbTable +\
+               Optional(AS+TableAlias) + \
                Optional(INDEXED + BY + IndexName | NOT + INDEXED) | \
                LPAREN + SelectStmt + RPAREN + Optional(Optional(AS) + \
-               TableAlias) | LPAREN + JoinSource + RPAREN
+               TableAlias) | LPAREN + JoinSource + RPAREN)
 
-JoinSource << (SingleSource + ZeroOrMore(JoinOp+SingleSource+JoinConstraint))
+
 
 SelectCore = SELECT + Optional(DISTINCT|ALL) + delimitedList(ResultColumn) +\
              Optional(FROM + JoinSource) + Optional(WHERE + expr) + \
@@ -93,53 +111,19 @@ CompoundOperator = UNION + Optional(ALL) |\
                    INTERSECT |\
                    EXCEPT
 
-SelectStmt << (delimitedList(SelectCore, delim=CompoundOperator) +\
+SelectStmt << (SelectCore + ZeroOrMore(CompoundOperator+SelectCore) +\
              Optional(ORDER + BY + delimitedList(OrderingTerm))+\
              Optional(LIMIT + expr + Optional((OFFSET|Comma) + expr)))
 
-
-
-
-
-
- 
-#arithSign = Word("+-",exact=1)
-# 
-#realNum = Combine( Optional(arithSign) + ( Word( nums ) + "." + Optional( Word(nums) ) |
-#            ( "." + Word(nums) ) ) + Optional( E + Optional(arithSign) + Word(nums) ) )
-#intNum = Combine( Optional(arithSign) + Word( nums ) +
-#            Optional( E + Optional("+") + Word(nums) ) )
-#keywords = DEFAULT | NULL | TRUE | FALSE
-# 
-#comment = "--" + restOfLine
-# 
-#name = ~major_keywords + Word(alphanums + alphas8bit + "_")
-#value = realNum | intNum | quotedString | name | keywords # need to add support for alg expressions
-# 
-# 
-##INSERT Statement
-#"""
-#    INSERT INTO table [ ( column [, ...] ) ]
-#    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }
-#    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]
-#    """
-# 
-#ins_columns = Group(delimitedList( name ))
-#ins_values = Group(delimitedList( value ))
-## define the grammar
-#insert_stmt = INSERT + INTO + name.setResultsName( "table" ) \
-#            + Optional( "(" + ins_columns.setResultsName( "columns" ) + ")") \
-#            + VALUES + "(" + ins_values.setResultsName( "vals" ) + ")" + ';'
-#insert_stmt.ignore( comment )
  
 def select(query):
     try:
-        ParserElement.enablePackrat()
-        tokens = SelectStmt.parseString( query )
+        #ParserElement.enablePackrat()
+        tokens = SelectStmt.parseString(query)
     except ParseException:
         return False
     else:
         return tokens
  
-tokens = select("SELECT * FROM (select * from this);")
+tokens = select("SELECT date FROM test")
 print tokens.dump()
