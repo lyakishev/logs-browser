@@ -1,0 +1,2 @@
+select log, msgs/cast((select count(*) from this) as real) as percent from
+(select log, cast (count(1) as integer) as msgs from this group by log order by msgs desc)

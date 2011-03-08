@@ -6,6 +6,7 @@ import time
 import datetime
 from collections import deque
 from buf_read import mmap_block_read
+from operator import itemgetter
 
 def get_time(tm_dt):
     return datetime.datetime(tm_dt.tm_year,
@@ -26,7 +27,7 @@ def file_preparator(folders):
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
                 flf.append([fullf, pfn])
-    return flf
+    return sorted(flf, key=itemgetter(1))
 
 def filelogworker(dates, path, log):
         try:

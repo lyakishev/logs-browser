@@ -3,8 +3,7 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
-from log_window import SeveralLogsWindow
-
+from log_window import SeveralLogsWindow  #TODO remove after move tol LoglList
 from widgets.logs_list import LogListWindow
 
 
@@ -88,7 +87,7 @@ class LogsNotebook(gtk.Notebook):
 
     def add_new_page(self):
         tab_lab = gtk.HBox()
-        label = gtk.Label("Page " + str(self.counter))
+        label = gtk.Label("Page %s" % self.counter)
         e = gtk.EventBox()
         e.add(label)
         e.add_events(gtk.gdk.BUTTON_PRESS_MASK)
@@ -167,12 +166,14 @@ class LogsNotebook(gtk.Notebook):
         self.set_current_page(self.page_num(log_list))
 
     def copy_to_new_page(self, *args):
+        #TODO# move to loglist
         #self.counter+=1
         new_pagenum = self.add_new_page()
         new_page = self.get_nth_page(new_pagenum)
         self.copy_to_page(None, new_page)
 
     def copy_to_page(self, menuitem, log_list):
+        #TODO# move to loglist
         view = self.get_current_view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -222,6 +223,7 @@ class LogsNotebook(gtk.Notebook):
             return True
 
     def show_all_in_one(self, *args):
+        #TODO# move to loglist
         view = self.get_current_view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()

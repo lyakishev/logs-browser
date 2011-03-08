@@ -56,6 +56,7 @@ class StatusIcon:
         #print self.active
 
     def right_click_event(self, icon, button, time):
+        #TODO hide after release mouse
         menu = gtk.Menu()
         time_mode = gtk.CheckMenuItem("First-click mode")
         time_mode.set_active(self.active)

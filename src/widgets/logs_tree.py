@@ -12,6 +12,7 @@ import ConfigParser
 from config_editor import ConfigEditor
 
 
+
 class ServersModel(object):
     def __init__(self):
         self.conf_dir = os.sep.join(os.path.dirname(__file__)\
@@ -226,10 +227,8 @@ class FileServersModel(ServersModel):
                     prev_parent = self.parents.get("|".join([parent_str,
                                                  os.sep.join(parts[:n])]),
                                                  parent)
-                    gtk.gdk.threads_enter()
                     self.parents[new_node_path] = tsappend(prev_parent,
                                         [p, gtk.STOCK_DIRECTORY, None, 'd'])
-                    gtk.gdk.threads_leave()
 
     def add_logdir(self, path, parent):
         try:
@@ -255,19 +254,15 @@ class FileServersModel(ServersModel):
                             if not name:
                                 name = "undefined"
                             if name not in fls:
-                                gtk.gdk.threads_enter()
                                 self.treestore.append(true_parent,
                                         [name, gtk.STOCK_FILE, None, 'f'])
-                                gtk.gdk.threads_leave()
                                 fls.append(name)
                 else:
                     node = self.parents.get(node_name)
                     if not node:
-                        gtk.gdk.threads_enter()
                         node = self.treestore.append(true_parent, \
                                 [f, gtk.STOCK_DIRECTORY, None, 'd'])
                         self.parents[node_name] = node
-                        gtk.gdk.threads_leave()
                     self.walk(fullf, node, pstr)
         except:
             pass
@@ -381,7 +376,7 @@ def tree_model_pre_order(model, treeiter):
             yield it
 
 
-class ServersTree(gtk.Frame):
+class EvlogsServersTree(gtk.Frame):
     def __init__(self):
         super(ServersTree, self).__init__()
         self.model = EventServersModel()

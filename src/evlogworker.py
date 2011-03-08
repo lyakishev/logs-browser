@@ -60,9 +60,9 @@ def log_for_insert(log):
             log['source'],
             msg)
 
-def evlogworker(dates, server, log):
+def evlogworker(dates, server, logtype):
         try:
-            hand = win32evtlog.OpenEventLog(self.server, self.logtype)
+            hand = win32evtlog.OpenEventLog(server, logtype)
         except pywintypes.error:
             #print "Error: %s %s" % (self.server, self.logtype)
             return
@@ -76,16 +76,16 @@ def evlogworker(dates, server, log):
                     #print "Pause %s %s" % (self.server, self.logtype)
                     hand.Detach()  # need?
                     time.sleep(1)
-                    hand = win32evtlog.OpenEventLog(self.server, self.logtype)
+                    hand = win32evtlog.OpenEventLog(server, logtype)
                 else:
                     break
             if events:
                 for ev_obj in events:
-                    plog = get_event_log(ev_obj, server, log)
-                    if plog['the_time'] < dates[0]:
+                    log = get_event_log(ev_obj, server, logtype)
+                    if log['the_time'] < dates[0]:
                         raise StopIteration
-                    if plog['the_time'] <= dates[1]:
-                        return log_for_insert(plog)
+                    if log['the_time'] <= dates[1]:
+                        yield log_for_insert(log)
             else:
                 try:
                     win32evtlog.CloseEventLog(hand)
