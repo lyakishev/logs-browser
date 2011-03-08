@@ -141,15 +141,14 @@ class GUI_Controller:
                 loglist.clear()
                 self.progressbar.set_fraction(0.0)
                 self.progressbar.set_text("")
-                self.show_button.set_sensitive(True)
             else:
                 self.progressbar.set_text("Filling table...")
-                loglist.execute("""select date, log, type, source from this group by
+                loglist.execute("""select date, log, type from this group by
                                    date order by date desc""""")
                 print datetime.datetime.now() - dt
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
-                self.show_button.set_sensitive(True)
+        self.show_button.set_sensitive(True)
             
 
 if __name__ == '__main__':

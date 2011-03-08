@@ -177,9 +177,9 @@ class DateFilter(CommonFilter):
                                                    last_date_radio)
         self.fromto_option.from_radio.set_active(True)
         self.add(self.date_box)
-        self.date_box.pack_start(self.last_option, False, False)
         self.date_box.pack_start(self.fromto_option, False, False)
         self.date_box.pack_start(self.this_option, False, False)
+        self.date_box.pack_start(self.last_option, False, False)
         self.set_start_active(True)
 
     @property

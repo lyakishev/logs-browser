@@ -3,6 +3,7 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
+import pango
 import os
 from parse import parse_filename
 from itertools import groupby
@@ -419,26 +420,55 @@ class FileServersTree(gtk.Frame):
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.view.view)
         self.hide_log = gtk.Entry()
+        self.hide_log.set_text("Filter...")
+        self.hide_log.modify_text(gtk.STATE_NORMAL,
+                            gtk.gdk.color_parse("#929292"))
+        self.hide_log.modify_font(pango.FontDescription("italic"))
         self.box = gtk.VBox()
         self.add(self.box)
         self.box.pack_start(self.logs_window, True, True)
         self.box.pack_start(self.hide_log, False, False)
         self.hide_log.connect("changed", self.on_advanced_entry_changed)
+        self.hide_log.connect("focus-in-event", self.on_hide_log_focus_in)
+        self.hide_log.connect("focus-out-event", self.on_hide_log_focus_out)
+        self.ft = False
         self.model.get_model().set_visible_func(self.visible_func)
+        self.filter_text = ""
+    
+    def on_hide_log_focus_in(self, *args):
+        self.ft = True
+        self.hide_log.set_text(self.filter_text)
+        self.hide_log.modify_text(gtk.STATE_NORMAL,
+                            gtk.gdk.color_parse("black"))
+        self.hide_log.modify_font(pango.FontDescription("normal"))
+
+    def on_hide_log_focus_out(self, *args):
+        if not self.filter_text:
+            self.ft = False
+            self.hide_log.set_text("Filter...")
+            self.filter_text = ""
+            self.hide_log.modify_text(gtk.STATE_NORMAL,
+                                gtk.gdk.color_parse("#929292"))
+            self.hide_log.modify_font(pango.FontDescription("italic"))
 
     def on_advanced_entry_changed(self, widget):
         self.model.get_model().refilter()
-        if not widget.get_text():
+        self.filter_text = widget.get_text()
+        if not self.filter_text or not self.ft:
             self.view.view.collapse_all()
         else:
+            self.ft = True
             self.view.view.expand_all()
 
     def visible_func(self, model, treeiter):
-        search_string = self.hide_log.get_text().lower()
-        for it in tree_model_pre_order(model, treeiter):
-            try:
-                if search_string in model[it][0].lower():
-                    return True
-            except:
-                pass
-        return False
+        if self.ft:
+            search_string = self.filter_text.lower()
+            for it in tree_model_pre_order(model, treeiter):
+                try:
+                    if search_string in model[it][0].lower():
+                        return True
+                except:
+                    pass
+            return False
+        else:
+            return True
