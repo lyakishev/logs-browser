@@ -91,7 +91,7 @@ def define_format(line):
 
 def parse_logline_re(line, cdate, re_obj):
     """Get datetime from string"""
-    parsed_line = re_obj.search(line)
+    parsed_line = re_obj.match(line)
     if re_obj != LOG4J:
         if parsed_line:
             paresd_dict = parsed_line.groupdict()

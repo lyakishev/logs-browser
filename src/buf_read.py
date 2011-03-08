@@ -17,7 +17,7 @@ def mmap_read(path):
         yield data[0:end_pos+1]
 
 
-def mmap_block_read(path, block_size=1850):
+def mmap_block_read(path, block_size=8192):
     with open(path, 'rb') as mapped_file:
         try:
             data = mmap.mmap(mapped_file.fileno(), 0, access=mmap.ACCESS_READ)

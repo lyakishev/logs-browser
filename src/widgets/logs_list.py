@@ -68,7 +68,7 @@ def add_rows_to_select(sql):
     return "".join(new_sql)
 
 class LogList:
-    db_conn = sqlite3.connect("", check_same_thread = False,
+    db_conn = sqlite3.connect(":memory:", check_same_thread = False,
                       detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     db_conn.text_factory = sqlite3.OptimizedUnicode
     db_conn.row_factory = sqlite3.Row
@@ -88,13 +88,15 @@ class LogList:
         self.model = None
         self.columns = []
         self.cur = self.db_conn.cursor()
-        #self.cur.execute("PRAGMA synchronous=OFF;")
+        self.cur.execute("PRAGMA synchronous=OFF;")
         self.sql = ""
         self.headers = []
 
 
     def create_new_table(self):
-        sql = """create virtual table %s using fts4(date text, computer text, log text,
+        #sql = """create virtual table %s using fts4(date text, computer text, log text,
+        #         type text, source text, msg text);""" % self.hash_value
+        sql = """create table %s (date text, computer text, log text,
                  type text, source text, msg text);""" % self.hash_value
         self.cur.execute(sql)
         self.db_conn.commit()
@@ -102,7 +104,9 @@ class LogList:
     def insert(self, log):
         self.cur.execute("insert into %s values (?,?,?,?,?,?);" % self.hash_value,
                          log)
-        #self.db_conn.commit()
+
+    def insert_many(self, iter_):
+        self.cur.executemany("insert into %s values (?,?,?,?,?,?);" % self.hash_value, iter_)
 
     def execute(self, sql):
         now = datetime.now
@@ -114,7 +118,6 @@ class LogList:
         self.cur.execute(rows_sql)
         print "Select *:", now() - dt
         rows = self.cur.fetchall()
-        self.cur.close()
         if rows:
             self.headers = rows[0].keys()
             headers = self.headers
@@ -125,10 +128,10 @@ class LogList:
             for row in rows:
                 sib = self.model.insert_after(sib, tuple(row))
             print "Filling Liststore: ", now() - dt
-            dt = now()
-            if 'date' in headers:
-                self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
-            print "Ordering: ", now() - dt
+            #dt = now()
+            #if 'date' in headers:
+            #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
+            #print "Ordering: ", now() - dt
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
@@ -168,7 +171,6 @@ class LogList:
         if self.model:
             self.model.clear()
         if self.hash_value:
-            self.cur.execute("VACUUM;")
             self.cur.execute("drop table %s;" % self.hash_value)
             self.db_conn.commit()
         

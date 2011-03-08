@@ -1,22 +1,11 @@
 #! -*- coding: utf8 -*-
 
-import pygtk
-pygtk.require("2.0")
-import gtk
-import gobject
-import gio
 from parse import parse_filename, parse_logline_re, define_format
 import os
 import time
 import datetime
-from itertools import islice
 from collections import deque
-import multiprocessing
-import threading
-from operator import itemgetter as ig
-import Queue
 from buf_read import mmap_block_read
-import sys
 
 def get_time(tm_dt):
     return datetime.datetime(tm_dt.tm_year,
@@ -25,11 +14,6 @@ def get_time(tm_dt):
                     tm_dt.tm_hour,
                     tm_dt.tm_min,
                     tm_dt.tm_sec)
-
-
-def queue_filler(logs, queue):
-    for i in logs:
-        queue.put(i)
 
 
 def file_preparator(folders):
@@ -44,107 +28,84 @@ def file_preparator(folders):
                 flf.append([fullf, pfn])
     return flf
 
-
-class FileLogWorker(multiprocessing.Process):
-    def __init__(self, queues, stp, dates):
-        multiprocessing.Process.__init__(self)
-        self.queues = queues
-        self.stop = stp
-        self.dates = dates
-        self.formats = {}#f_cache
-        self.path, self.common_log_name = "", "" # defines in self.run()
-
-    def load(self):
+def filelogworker(dates, path, log):
         try:
-            cdate = time.localtime(os.path.getctime(self.path))
+            cdate = time.localtime(os.path.getctime(path))
         except WindowsError:
-            #print "WindowsError: %s" % self.path
+            #print "WindowsError: %s" % path
             raise StopIteration
-        if get_time(cdate) > self.dates[1]:
+        if get_time(cdate) > dates[1]:
             raise StopIteration
-        pformat = self.formats.get(self.common_log_name)
-        if not pformat:
-            try:
-                file_ = open(self.path, 'r')
-            except IOError:
-                #print "IOError: %s" % self.path
-                raise StopIteration
-            line = True
-            while line and (not pformat):
-                line = file_.readline()
-                pformat = define_format(line)
-            self.formats[self.common_log_name] = pformat
-            file_.close()
-        if not pformat:
-            #print "Not found the format for file %s" % self.path
+        try:
+            file_ = open(path, 'r')
+        except IOError:
             raise StopIteration
-        at_err = [0, 0]
-        buff = deque()
-        for string in mmap_block_read(self.path, 8192):
-            if self.stop.is_set():
+        for line in file_:
+            pformat = define_format(line)
+            if pformat:
                 break
-            at_err[0] += string.lstrip().startswith("at")
-            at_err[1] += ("Exception" in string)
+        file_.close()
+        try:
+            if not pformat:
+                #print "Not found format for file %s" % path
+                raise StopIteration
+        except UnboundLocalError:
+            raise StopIteration
+        buff = deque()
+        for string in mmap_block_read(path, 16*1024):
             parsed_s = parse_logline_re(string, cdate, pformat)
             if not parsed_s:
                 buff.appendleft(string)
             else:
                 date = parsed_s[0]
-                if date < self.dates[0]:
-                    buff.clear()
-                    raise StopIteration
-                if date <= self.dates[1]:
-                    l_type = (at_err[0] > 0 and at_err[1] > 0) and "ERROR" or "?"
+                if date < dates[0]:
+                    return
+                if date <= dates[1]:
                     buff.appendleft(string)
                     msg = "".join(buff)
-                    yield (parsed_s[0],
+                    yield (date,
                            "",
-                           self.common_log_name,
-                           l_type,
-                           self.path,
+                           log,
+                           "ERROR" if ("Exception" in msg and "  at " in msg) \
+                                   else "?",
+                           path,
                            msg)
                 buff.clear()
-                at_err = [0, 0]
 
-    def run(self):
-        while 1:
-            self.path, self.common_log_name = self.queues[0].get()
-            for log in self.load():
-                self.queues[1].put(log)
-            self.queues[2].put(1)
+if __name__ == "__main__":
+    def test(dates,path,log,block,im):
+        for i in filelogworker(dates,path,log,block,im):
+            i
+    #import pstats
+    #import cProfile
+    dates=(datetime.datetime.min,
+           datetime.datetime.max)
+    #path = "/home/user/sharew7/logs/log/20101206_FORIS.TelCRM.Interfaces.OTCP.Log"
+    log = "FORIS.TelCRM.Interfaces.RD.Log"
+    import sqlite3
+    conn = sqlite3.connect("bench.db")
+    c = conn.cursor()
+    c.execute("create table bench_mmap (path text, block_size int,logs int, time real);")
+    conn.commit()
+    for root,dirs,files in os.walk("/home/user/sharew7/logs/log/"):
+        for file_ in files:
+            fullf = os.path.join(root,file_)
+            print fullf
+            for b in map(lambda x: x*1024, map(lambda x: 2**x, range(11))):
+                for i in range(1,100):
+                    dt = time.time()
+                    test(dates,fullf,log,b, i)
+                    time_ = time.time() - dt
+                    c.execute("insert into bench_mmap values(?,?,?,?);", (fullf,b,
+                                                            i,time_))
+    conn.commit()
+    c.close()
+    conn.close()
 
 
-class LogListFiller(threading.Thread):
-    def __init__(self, queues, stp, loglist):  # , pg):
-        threading.Thread.__init__(self)
-        self.queues = queues
-        self.stp = stp
-        self.loglist = loglist
+    #cProfile.runctx("test()",
+    #                 globals(), locals(), "flw")
+    #p = pstats.Stats('flw')
+    #p.strip_dirs().sort_stats(-1).print_stats()
 
-    def run(self):
-        now = datetime.datetime.now
-        self.loglist.create_new_table()
-        insert = self.loglist.insert
-        get = self.queues[0].get
-        dt = now()
-        while 1:
-            try:
-                log = get(True, 1)
-            except Queue.Empty:
-                break
-            else:
-                insert(log)
-        print "Insert: ", now() - dt
-        #get = self.queues[0].get_nowait
-        #while 1:
-        #    try:
-        #        log = get()
-        #        insert(log)
-        #        self.count+=1
-        #    except Queue.Empty:
-        #        break
-        self.loglist.db_conn.commit()
-        self.loglist.execute("""select date, log, type, source from this
-                                group by date
-                                ;""")
-        self.queues[1].put(1)
+    
