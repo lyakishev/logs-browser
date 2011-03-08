@@ -59,7 +59,7 @@ def filelogworker(dates, path, log):
             else:
                 date = parsed_s[0]
                 if date < dates[0]:
-                    return
+                    raise StopIteration
                 if date <= dates[1]:
                     buff.appendleft(string)
                     msg = "".join(buff)
@@ -73,39 +73,39 @@ def filelogworker(dates, path, log):
                 buff.clear()
 
 if __name__ == "__main__":
-    def test(dates,path,log,block,im):
-        for i in filelogworker(dates,path,log,block,im):
+    def test():
+        for i in filelogworker(dates,path,log):
             i
-    #import pstats
-    #import cProfile
-    dates=(datetime.datetime.min,
-           datetime.datetime.max)
-    #path = "/home/user/sharew7/logs/log/20101206_FORIS.TelCRM.Interfaces.OTCP.Log"
+    import pstats
+    import cProfile
+    dates=(datetime.min,
+           datetime.max)
+    path = "/home/user/sharew7/logs/log/20101206_FORIS.TelCRM.Interfaces.RD.Log"
     log = "FORIS.TelCRM.Interfaces.RD.Log"
-    import sqlite3
-    conn = sqlite3.connect("bench.db")
-    c = conn.cursor()
-    c.execute("create table bench_mmap (path text, block_size int,logs int, time real);")
-    conn.commit()
-    for root,dirs,files in os.walk("/home/user/sharew7/logs/log/"):
-        for file_ in files:
-            fullf = os.path.join(root,file_)
-            print fullf
-            for b in map(lambda x: x*1024, map(lambda x: 2**x, range(11))):
-                for i in range(1,100):
-                    dt = time.time()
-                    test(dates,fullf,log,b, i)
-                    time_ = time.time() - dt
-                    c.execute("insert into bench_mmap values(?,?,?,?);", (fullf,b,
-                                                            i,time_))
-    conn.commit()
-    c.close()
-    conn.close()
+    #import sqlite3
+    #conn = sqlite3.connect("bench.db")
+    #c = conn.cursor()
+    #c.execute("create table bench_mmap (path text, block_size int,logs int, time real);")
+    #conn.commit()
+    #for root,dirs,files in os.walk("/home/user/sharew7/logs/log/"):
+    #    for file_ in files:
+    #        fullf = os.path.join(root,file_)
+    #        print fullf
+    #        for b in map(lambda x: x*1024, map(lambda x: 2**x, range(11))):
+    #            for i in range(1,100):
+    #                dt = time.time()
+    #                test(dates,fullf,log,b, i)
+    #                time_ = time.time() - dt
+    #                c.execute("insert into bench_mmap values(?,?,?,?);", (fullf,b,
+    #                                                        i,time_))
+    #conn.commit()
+    #c.close()
+    #conn.close()
 
 
-    #cProfile.runctx("test()",
-    #                 globals(), locals(), "flw")
-    #p = pstats.Stats('flw')
-    #p.strip_dirs().sort_stats(-1).print_stats()
+    cProfile.runctx("test()",
+                     globals(), locals(), "flw")
+    p = pstats.Stats('flw')
+    p.strip_dirs().sort_stats(-1).print_stats()
 
     

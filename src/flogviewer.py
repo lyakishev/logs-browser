@@ -18,7 +18,7 @@ from Queue import Empty as qEmpty
 import threading
 from widgets.status_icon import StatusIcon
 if sys.platform == 'win32':
-    from evlogworker import LogWorker, EVT_DICT
+    from evlogworker import *
     from widgets.evt_type import EventTypeFilter
 
 
@@ -26,7 +26,6 @@ class GUI_Controller:
     """ The GUI class is the controller for our application """
     def __init__(self):
         # setup the main window
-        self.stp_compl = threading.Event()
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Log Viewer")
         self.root.connect("destroy", self.destroy_cb)
@@ -45,8 +44,7 @@ class GUI_Controller:
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
         self.stop_all_btn = gtk.Button('Stop')
-        self.stop_all_btn.connect('clicked', self.stop_all)
-        self.allstop = threading.Event()
+        #self.stop_all_btn.connect('clicked', self.stop_all)
         self.main_box = gtk.HPaned()
         self.control_box = gtk.VBox()
         self.serversw1 = FileServersTree()
@@ -61,9 +59,8 @@ class GUI_Controller:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
         self.build_interface()
         self.root.show_all()
-        if sys.platform == 'win32':
-            self.show_ev_widgets()
-        self.stop_evt = Event()
+        #if sys.platform == 'win32':
+        #    self.show_ev_widgets()
         return
 
     def show_ev_widgets(self):
@@ -83,25 +80,6 @@ class GUI_Controller:
             self.ev_filter.hide()
         else:
             self.ev_filter.show()
-
-    def stop_all(self, *args):
-        def queue_clear():
-            while not self.proc_queue.empty():
-                try:
-                    self.proc_queue.get_nowait()
-                except qEmpty:
-                    break
-                else:
-                    self.compl_queue.put(1)
-            while not self.evt_queue.empty():
-                try:
-                    self.evt_queue.get_nowait()
-                except qEmpty:
-                    break
-                else:
-                    self.compl_queue.put(1)
-        threading.Thread(target=queue_clear).start()
-        self.stop_evt.set()
 
     def build_interface(self):
         self.filter_frame.add(self.filter_box)
@@ -148,8 +126,6 @@ class GUI_Controller:
         print datetime.datetime.now() - tm
 
     def show_logs(self, params):
-        self.stop_evt.clear()
-        self.stp_compl.clear()
         self.cur_view = self.logframe.get_current_view
         self.cur_model = self.logframe.get_current_loglist
         flogs = self.serversw1.model.prepare_files_for_parse()
@@ -159,10 +135,6 @@ class GUI_Controller:
         except AttributeError:
             evlogs = []
         if flogs or evlogs:
-            proc_queue = Queue()
-            list_queue = Queue()
-            evt_queue = Queue()
-            compl_queue = Queue()
             loglist = self.logframe.get_current_logs_store
             loglist.clear()
             dates = self.date_filter.get_active() and\
@@ -172,34 +144,19 @@ class GUI_Controller:
             if GetTrueTime.time_error_flag:
                 GetTrueTime.show_time_warning(self.root)
             n_flogs = file_preparator(flogs)
-            fl_count = len(n_flogs) + len(evlogs) + 1
+            fl_count = len(n_flogs) + len(evlogs)
             frac = 1.0 / (fl_count)
             loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
-            if evlogs:
-                eventlogs_queue = Process(target=queue_filler,
-                             args=(evlogs, self.evt_queue,))
-                event_process = LogWorker([evt_queue, list_queue,
-                                                compl_queue], self.stop_evt,
-                                                dates)
-                eventlogs_queue.start()
-                event_process.start()
-            if flogs:
-                filelogs_queue = Process(target=queue_filler,
-                             args=(n_flogs, proc_queue,))
-                filelogs_queue.start()
-                for t in range(5):#fileprocess_nums):
-                    t = FileLogWorker([proc_queue, list_queue,
-                                      compl_queue], self.stop_evt,
-                                      dates)
-                    t.start()
-            progress_thread = threading.Thread(target=self.progress,
-                                   args=(compl_queue, frac, fl_count))
-            progress_thread.start()
-            db_insert_process = LogListFiller([list_queue, compl_queue],
-                                self.stp_compl,
-                                loglist)
-            db_insert_process.start()
-            self.show_button.set_sensitive(False)
+            loglist.create_new_table()
+            dt = datetime.datetime.now()
+            for path, log in n_flogs:
+                loglist.insert_many(filelogworker(dates,path,log))
+                loglist.db_conn.commit()
+            print datetime.datetime.now() - dt
+            loglist.execute("""select date, log, type, source from this group by
+                               date order by date desc""""")
+            print datetime.datetime.now() - dt
+            
 
 if __name__ == '__main__':
     freeze_support()
