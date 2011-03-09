@@ -18,13 +18,10 @@ except:
     pass
 
 #xml_re = re.compile("<\?xml(.+)>")
-xml_spl = re.compile(r"(<\?xml.+?>)")
-xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
-xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
-xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
-xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
+#xml_spl = re.compile(r"(<\?xml.+?>)")
+#xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
+#xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
-empty_lines = re.compile("^$")
 
 
 class LogWindow:
@@ -391,10 +388,6 @@ class LogWindow:
     def fill(self):
         #self.files = set([self.model.get_value(self.iter, 4)])
         self.txt = self.loglist.get_msg_by_rowids(self.iter)
-        try:
-            self.txt = self.txt.decode('utf-8').encode('utf-8')
-        except UnicodeDecodeError:
-            self.txt = self.txt.decode('cp1251').encode('utf-8')
         #self.open_label.set_text(self.model.get_value(self.iter, 4))
         #self.info_label.set_markup(
         #    '<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
@@ -404,14 +397,13 @@ class LogWindow:
         #    self.model.get_value(self.iter, 3) ==\
         #        "ERROR" and '<span foreground="red">ERROR</span>' or "",\
         #    ))
-        txt = self.pretty_xml(self.txt)
-        self.log_text.get_buffer().set_text(txt)
+        self.log_text.get_buffer().set_text(self.txt)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
         self.s = 0
         self.e = len(self.txt)
         self.insert_search(None)
-        self.procs = self.motion_text(txt)
+        self.procs = self.motion_text(self.txt)
 
     def show_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
@@ -442,25 +434,6 @@ class LogWindow:
         self.view.scroll_to_cell(prevPath)
         self.fill()
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
-
-    def pretty_xml(self, text):
-        def xml_pretty(m):
-            txt = m.group()
-            try:
-                xparse = xml.dom.minidom.parseString
-                pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
-            except xml.parsers.expat.ExpatError:
-                #print traceback.format_exc()
-                pretty_xml = txt.replace("><", ">\n<")
-            return "\n" + pretty_xml
-
-        def xml_bad_pretty(m):
-            txt = xml_pretty(m)
-            new_txt = txt.splitlines()[2:]
-            return "\n".join(new_txt)
-
-        text = xml_bad.sub(xml_bad_pretty, text)
-        return empty_lines.sub("",xml_new.sub(xml_pretty, text))
 
 
 class SeveralLogsWindow(LogWindow):

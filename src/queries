@@ -5,3 +5,7 @@ select log, msgs/cast((select count(*) from this) as real) as percent from
 Group by timeinterval
  group by strftime('%Y%m%d%H0', date) + strftime('%M', date)/10
 order by date desc
+
+
+select lower(regex(log,'(?i)\Wsts.(\w+)\W',1)) as name, count(log) as c 
+from this where regexp(log,'(?i)\Wsts.(\w+)\W') group by name order by c desc

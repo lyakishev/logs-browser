@@ -15,15 +15,36 @@ from datetime import datetime
 import pango
 from operator import itemgetter
 import os
+import xml.dom.minidom
 
+
+xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
+xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
+empty_lines = re.compile("^$")
+
+def xml_pretty(m):
+        txt = m.group()
+        try:
+            xparse = xml.dom.minidom.parseString
+            pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
+        except xml.parsers.expat.ExpatError:
+            #print traceback.format_exc()
+            pretty_xml = txt.replace("><", ">\n<")
+        return "\n" + pretty_xml
+
+def xml_bad_pretty(m):
+    txt = xml_pretty(m)
+    new_txt = txt.splitlines()[2:]
+    return "\n".join(new_txt)
+
+def pretty_xml(t):
+    text = xml_bad.sub(xml_bad_pretty, t)
+    return empty_lines.sub("",xml_new.sub(xml_pretty, text))
 
 
 def callback():
     while gtk.events_pending():
         gtk.main_iteration()
-
-def comp(t):
-    return [p for p in t.split(os.sep) if p][0]
 
 def strip(t):
     return t.strip()
@@ -44,13 +65,6 @@ def regex(t, pattern, gr):
     else:
         return ret
 
-def utf_decode(t):
-    try:
-        txt = t.decode('utf-8').encode('utf-8')
-    except UnicodeDecodeError:
-        txt = t.decode('cp1251').encode('utf-8')
-    return txt
-
 class AggError:
     def __init__(self):
         self.type_ = '?'
@@ -62,29 +76,19 @@ class AggError:
     def finalize(self):
         return self.type_
 
-class RowIDsList:
-    def __init__(self):
-        self.rowids = []
-
-    def step(self, value):
-        self.rowids.append(value)
-
-    def finalize(self):
-        return str(self.rowids)[1:-1]
-
 SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
         "(.+?)",
         "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
 
-def add_rows_to_select(sql):
-    new_sql = []
-    start = 0
-    for m in SQL_RE.finditer(sql):
-        begin = sql[start:m.start(1)]
-        new_sql.append("".join([begin,m.group(1),", rows(rowid) as rows_for_log_window"]))
-        start = m.end(1)
-    new_sql.append(sql[start:])
-    return "".join(new_sql)
+#def add_rows_to_select(sql):
+#    new_sql = []
+#    start = 0
+#    for m in SQL_RE.finditer(sql):
+#        begin = sql[start:m.start(1)]
+#        new_sql.append("".join([begin,m.group(1),", rows(rowid) as rows_for_log_window"]))
+#        start = m.end(1)
+#    new_sql.append(sql[start:])
+#    return "".join(new_sql)
 
 class LogList:
     db_conn = sqlite3.connect(":memory:", check_same_thread = False,
@@ -93,10 +97,9 @@ class LogList:
     db_conn.create_function("regexp", 2, regexp)
     db_conn.create_function("regex", 3, regex)
     db_conn.create_function("comp", 1, comp)
+    db_conn.create_function("pretty", 1, pretty_xml)
     db_conn.create_aggregate("error", 1, AggError)
     db_conn.create_aggregate("rows", 1, RowIDsList)
-    #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
-    db_conn.text_factory = utf_decode
     db_conn.set_progress_handler(callback, 1000)
 
     def __init__(self):
@@ -212,13 +215,23 @@ class LogList:
     def get_msg_by_rowids(self, iter_):
         rows = self.model.get_value(iter_,
                                self.headers.index('rows_for_log_window'))
-        msg_sql = "select group_concat(log) from %s where %s in (%s) order by date asc;" % \
+        rowids = rows.split(",")
+        if len(rowids) < 1000:
+            rows_clause = " or ".join(["rowid=%s" % s for s in rows.split(",")])
+        else:
+            rows_clause = "rowid in (%s)" % rows
+        msg_sql = """select pretty(log) from %s where %s order by date asc, rowid
+                            asc;""" % \
                                             (self.hash_value,
-                                            "docid" if self.fts else "rowid",
-                                            rows)
+                                            rows_clause)
+        dt = datetime.now()
         self.cur.execute(msg_sql)
+        print datetime.now() - dt
         result = self.cur.fetchall()
-        return result[0][0]
+        dt = datetime.now()
+        ret = "".join([r[0] for r in result])
+        print datetime.now() - dt
+        return ret
 
 
 class LogListWindow(gtk.Frame):

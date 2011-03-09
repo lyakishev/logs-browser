@@ -2,6 +2,7 @@
 import mmap
 
 
+
 def mmap_read(path):
     with open(path, 'rb') as mapped_file:
         try:

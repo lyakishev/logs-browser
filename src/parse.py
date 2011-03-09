@@ -92,33 +92,29 @@ def define_format(line):
 def parse_logline_re(line, cdate, re_obj):
     """Get datetime from string"""
     parsed_line = re_obj.match(line)
-    if re_obj != LOG4J:
-        if parsed_line:
-            paresd_dict = parsed_line.groupdict()
-            millisecs = paresd_dict["ms"]
-            millisecs = int(millisecs and str(1000 * int(millisecs))[:6] or 0)
-            year = paresd_dict.get("year")
-            if year:
-                if len(year) != 2:
-                    year = int(year)
-                else:
-                    year = int("20" + year)
-            else:
+    if parsed_line:
+        if re_obj is not LOG4J:
+            groups = parsed_line.group
+            millisecs = groups("ms")
+            millisecs = int((millisecs+'000')[:6] if millisecs else 0)
+            try:
+                year = int(("20"+groups("year"))[-4:])
+            except IndexError:
                 year = cdate.tm_year
-            log_datetime = datetime(year,
-                          int(paresd_dict.get("month", cdate.tm_mon)),
-                          int(paresd_dict.get("day", cdate.tm_mday)),
-                          int(paresd_dict["hour"]),
-                          int(paresd_dict["min"]),
-                          int(paresd_dict["sec"]),
-                          millisecs)
-            return (log_datetime, paresd_dict['msg'])
+                month = cdate.tm_mon
+                day = cdate.tm_mday
+            else:
+                month = int(groups("month"))
+                day = int(groups("day"))
+            log_datetime = datetime(year,month,day,
+                                  int(groups('hour')),
+                                  int(groups('min')),
+                                  int(groups('sec')),
+                                  millisecs)
+            return log_datetime#, groups('msg'))
         else:
-            return None
-    else:
-        if parsed_line:
             tstamp = parsed_line.group('datetime')
             log_datetime = datetime.fromtimestamp(float(tstamp) / 1000)
-            return (log_datetime, line)
-        else:
-            return None
+            return log_datetime#, line)
+    else:
+        return None

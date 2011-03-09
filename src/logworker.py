@@ -48,24 +48,27 @@ def filelogworker(dates, path, log):
         file_.close()
         try:
             if not pformat:
-                #print "Not found format for file %s" % path
+                print "Not found format for file %s" % path
                 raise StopIteration
         except UnboundLocalError:
             raise StopIteration
         comp = [p for p in path.split(os.sep) if p][0]
         buff = deque()
         for string in mmap_block_read(path, 16*1024):
-            parsed_s = parse_logline_re(string, cdate, pformat)
-            if not parsed_s:
+            parsed_date = parse_logline_re(string, cdate, pformat)
+            if not parsed_date:
                 buff.appendleft(string)
             else:
-                date = parsed_s[0]
-                if date < dates[0]:
+                if parsed_date < dates[0]:
                     raise StopIteration
-                if date <= dates[1]:
+                if parsed_date <= dates[1]:
                     buff.appendleft(string)
                     msg = "".join(buff)
-                    yield (date,
+                    try:
+                        msg = msg.decode('utf-8')
+                    except UnicodeDecodeError:
+                        msg = msg.decode('cp1251')
+                    yield (parsed_date,
                            comp,
                            log,
                            "ERROR" if ("Exception" in msg and "  at " in msg) \
@@ -80,8 +83,8 @@ if __name__ == "__main__":
             i
     import pstats
     import cProfile
-    dates=(datetime.min,
-           datetime.max)
+    dates=(datetime.datetime.min,
+           datetime.datetime.max)
     path = "/home/user/sharew7/logs/log/20101206_FORIS.TelCRM.Interfaces.RD.Log"
     log = "FORIS.TelCRM.Interfaces.RD.Log"
     #import sqlite3
@@ -108,6 +111,6 @@ if __name__ == "__main__":
     cProfile.runctx("test()",
                      globals(), locals(), "flw")
     p = pstats.Stats('flw')
-    p.strip_dirs().sort_stats(-1).print_stats()
+    p.strip_dirs().sort_stats('time').print_stats()
 
     
