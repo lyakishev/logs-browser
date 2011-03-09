@@ -29,6 +29,12 @@ class GUI_Controller:
         self.root.set_default_size(1200, 800)
 
         self.date_filter = DateFilter()
+
+        options_frame = gtk.Frame("Options")
+        self.index_t = gtk.CheckButton("Full-text index (enables MATCH operator)")
+        self.index_t.set_active(False)
+        options_frame.add(self.index_t)
+
         self.status = StatusIcon(self.date_filter, self.root)
 
         button_box = gtk.HButtonBox()
@@ -60,6 +66,7 @@ class GUI_Controller:
         button_box.pack_start(break_btn)
         control_box.pack_start(log_ntb, True, True)
         control_box.pack_start(self.date_filter, False, False)
+        control_box.pack_start(options_frame, False, False)
         control_box.pack_start(button_box, False, False, 5)
         control_box.pack_start(self.progressbar, False, False)
         main_box.pack1(control_box, False, False)
@@ -113,7 +120,7 @@ class GUI_Controller:
             count_logs = len(flogs_pathes) + len(evlogs) + 1
             frac = 1.0 / (count_logs)
             loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
-            loglist.create_new_table()
+            loglist.create_new_table(self.index_t.get_active())
             dt = datetime.datetime.now()
             count = 0
             for path, log in flogs_pathes:
@@ -143,7 +150,7 @@ class GUI_Controller:
                 self.progressbar.set_text("")
             else:
                 self.progressbar.set_text("Filling table...")
-                loglist.execute("""select date, log, type from this group by
+                loglist.execute("""select date, log_name, type from this group by
                                    date order by date desc""""")
                 print datetime.datetime.now() - dt
                 self.progressbar.set_fraction(1.0)

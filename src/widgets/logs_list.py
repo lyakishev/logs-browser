@@ -14,16 +14,35 @@ import sqlite3
 from datetime import datetime
 import pango
 from operator import itemgetter
+import os
+
+
 
 def callback():
     while gtk.events_pending():
         gtk.main_iteration()
 
+def comp(t):
+    return [p for p in t.split(os.sep) if p][0]
+
 def strip(t):
     return t.strip()
 
 def regexp(t, pattern):
-    return True if re.compile(pattern).search(t) else False
+    try:
+        ret = re.compile(pattern).search(t)
+    except:
+        return False
+    else:
+        return True if ret else False
+
+def regex(t, pattern, gr):
+    try:
+        ret = re.compile(pattern).search(t).group(gr)
+    except:
+        pass
+    else:
+        return ret
 
 def utf_decode(t):
     try:
@@ -51,11 +70,8 @@ class RowIDsList:
         self.rowids.append(value)
 
     def finalize(self):
-        return str(self.rowids).replace("[","(").replace("]",")")
+        return str(self.rowids)[1:-1]
 
-def add_parens(t):
-    return "("+str(t)+")"
-    
 SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
         "(.+?)",
         "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
@@ -73,15 +89,15 @@ def add_rows_to_select(sql):
 class LogList:
     db_conn = sqlite3.connect(":memory:", check_same_thread = False,
                       detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-    #db_conn.text_factory = sqlite3.OptimizedUnicode
     db_conn.create_function("strip", 1, strip)
     db_conn.create_function("regexp", 2, regexp)
-    db_conn.create_function("add_parens", 1, add_parens)
+    db_conn.create_function("regex", 3, regex)
+    db_conn.create_function("comp", 1, comp)
     db_conn.create_aggregate("error", 1, AggError)
     db_conn.create_aggregate("rows", 1, RowIDsList)
     #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
     db_conn.text_factory = utf_decode
-    db_conn.set_progress_handler(callback, 50000)
+    db_conn.set_progress_handler(callback, 1000)
 
     def __init__(self):
         self.hash_value = ""
@@ -96,11 +112,14 @@ class LogList:
         self.headers = []
 
 
-    def create_new_table(self):
-        #sql = """create virtual table %s using fts4(date text, computer text, log text,
-        #         type text, source text, msg text);""" % self.hash_value
-        sql = """create table %s (date text, computer text, log text,
-                 type text, source text, msg text);""" % self.hash_value
+    def create_new_table(self, index=False):
+        if index:
+            sql = """create virtual table %s using fts4(date text, computer text,
+                     log_name text,
+                     type text, source text, log text);""" % self.hash_value
+        else:
+            sql = """create table %s (date text, computer text, log_name text,
+                     type text, source text, log text);""" % self.hash_value
         self.cur.execute(sql)
         self.db_conn.commit()
 
@@ -113,6 +132,8 @@ class LogList:
                                         self.hash_value, iter_)
 
     def execute(self, sql):
+        self.cur.close()
+        self.cur = self.db_conn.cursor()
         now = datetime.now
         self.view.freeze_child_notify()
         self.view.set_model(None)
@@ -174,6 +195,8 @@ class LogList:
         if self.hash_value:
             self.cur.execute("drop table %s;" % self.hash_value)
             self.db_conn.commit()
+            self.cur.close()
+            self.cur = self.db_conn.cursor()
         
     def show_log(self, path, column, params):
         selection = path.get_selection()
@@ -186,7 +209,7 @@ class LogList:
     def get_msg_by_rowids(self, iter_):
         rows = self.model.get_value(iter_,
                                self.headers.index('rows_for_log_window'))
-        msg_sql = "select group_concat(msg) from %s where rowid in %s order by date asc;" % \
+        msg_sql = "select group_concat(log) from %s where rowid in (%s) order by date asc;" % \
                                             (self.hash_value, rows)
         self.cur.execute(msg_sql)
         result = self.cur.fetchall()

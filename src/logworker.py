@@ -52,6 +52,7 @@ def filelogworker(dates, path, log):
                 raise StopIteration
         except UnboundLocalError:
             raise StopIteration
+        comp = [p for p in path.split(os.sep) if p][0]
         buff = deque()
         for string in mmap_block_read(path, 16*1024):
             parsed_s = parse_logline_re(string, cdate, pformat)
@@ -65,7 +66,7 @@ def filelogworker(dates, path, log):
                     buff.appendleft(string)
                     msg = "".join(buff)
                     yield (date,
-                           "",
+                           comp,
                            log,
                            "ERROR" if ("Exception" in msg and "  at " in msg) \
                                    else "?",

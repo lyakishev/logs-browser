@@ -24,6 +24,7 @@ xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
+empty_lines = re.compile("^$")
 
 
 class LogWindow:
@@ -459,7 +460,7 @@ class LogWindow:
             return "\n".join(new_txt)
 
         text = xml_bad.sub(xml_bad_pretty, text)
-        return xml_new.sub(xml_pretty, text)
+        return empty_lines.sub("",xml_new.sub(xml_pretty, text))
 
 
 class SeveralLogsWindow(LogWindow):
