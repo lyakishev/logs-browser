@@ -150,8 +150,11 @@ class GUI_Controller:
                 self.progressbar.set_text("")
             else:
                 self.progressbar.set_text("Filling table...")
-                loglist.execute("""select date, log_name, type from this group by
-                                   date order by date desc""""")
+                loglist.execute("""select date, log_name, type
+                                    rows(%s) as rows_for_log_window
+                                    from this group by
+                                   date order by date desc""""" % \
+                                    "docid" if loglist.fts else "rowid")
                 print datetime.datetime.now() - dt
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")

@@ -110,14 +110,17 @@ class LogList:
         self.cur.execute("PRAGMA synchronous=OFF;")
         self.sql = ""
         self.headers = []
+        self.fts = False
 
 
     def create_new_table(self, index=False):
         if index:
+            self.fts = True
             sql = """create virtual table %s using fts4(date text, computer text,
                      log_name text,
                      type text, source text, log text);""" % self.hash_value
         else:
+            self.fts = False
             sql = """create table %s (date text, computer text, log_name text,
                      type text, source text, log text);""" % self.hash_value
         self.cur.execute(sql)
@@ -209,8 +212,10 @@ class LogList:
     def get_msg_by_rowids(self, iter_):
         rows = self.model.get_value(iter_,
                                self.headers.index('rows_for_log_window'))
-        msg_sql = "select group_concat(log) from %s where rowid in (%s) order by date asc;" % \
-                                            (self.hash_value, rows)
+        msg_sql = "select group_concat(log) from %s where %s in (%s) order by date asc;" % \
+                                            (self.hash_value,
+                                            "docid" if self.fts else "rowid",
+                                            rows)
         self.cur.execute(msg_sql)
         result = self.cur.fetchall()
         return result[0][0]
