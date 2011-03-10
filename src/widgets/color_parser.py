@@ -41,7 +41,7 @@ class ColorParser(gtk.HBox):
         self.text = gtk.TextView()
         self.text.set_wrap_mode(gtk.WRAP_CHAR)
         self.buf = self.text.get_buffer()
-        filter_button = gtk.Button("Filter")
+        filter_button = gtk.Button("Highlight")
         color_button = gtk.Button("Color")
         self.hide_other = gtk.CheckButton("Hide other")
 

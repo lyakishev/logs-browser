@@ -223,11 +223,10 @@ class LogsNotebook(gtk.Notebook):
             return True
 
     def show_all_in_one(self, *args):
-        #TODO# move to loglist
         view = self.get_current_view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()
-        logs_w = SeveralLogsWindow(model, view,
+        logs_w = SeveralLogsWindow(self.get_current_logs_store,
                                    model.get_iter(pathlist[0]),
                                    selection)
 

@@ -96,6 +96,7 @@ class GUI_Controller:
         return
 
     def show_logs(self, *args):
+        dt = datetime.datetime.now()
         self.show_button.set_sensitive(False)
         self.stop = False
         self.break_ = False
@@ -115,8 +116,8 @@ class GUI_Controller:
                                        self.date_filter.get_dates or\
                                        (datetime.datetime.min,
                                         datetime.datetime.max)
-            if GetTrueTime.time_error_flag:
-                GetTrueTime.show_time_warning(self.root)
+            #if GetTrueTime.time_error_flag:
+            #    GetTrueTime.show_time_warning(self.root)
             flogs_pathes = file_preparator(flogs)
             count_logs = len(flogs_pathes) + len(evlogs) + 1
             frac = 1.0 / (count_logs)
@@ -150,12 +151,13 @@ class GUI_Controller:
             else:
                 self.progressbar.set_text("Filling table...")
                 loglist.execute("""select date, log_name, type,
-                                    group_concat(rowid) as rows_for_log_window
+                                    rows(rowid) as rows_for_log_window
                                     from this group by
                                    date, type order by date desc""")
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
         self.show_button.set_sensitive(True)
+        print datetime.datetime.now() - dt
         
 
 if __name__ == '__main__':

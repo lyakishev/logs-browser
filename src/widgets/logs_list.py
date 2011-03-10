@@ -6,7 +6,7 @@ import gtk
 import gobject
 import gio
 from widgets.log_window import LogWindow
-from widgets.color_parser import ColorParser, SQLExecuter
+from widgets.query_constructor import Query
 import re
 import pickle
 import hashlib
@@ -51,12 +51,8 @@ def strip(t):
     return t.strip()
 
 def regexp(t, pattern):
-    try:
-        ret = re.compile(pattern).search(t)
-    except:
-        return False
-    else:
-        return True if ret else False
+    ret = re.compile(pattern).search(t)
+    return True if ret else False
 
 def regex(t, pattern, gr):
     try:
@@ -65,6 +61,16 @@ def regex(t, pattern, gr):
         pass
     else:
         return ret
+
+class RowIDsList:
+    def __init__(self):
+        self.rowids = []
+
+    def step(self, value):
+        self.rowids.append(value)
+
+    def finalize(self):
+        return str(self.rowids)[1:-1]
 
 class AggError:
     def __init__(self):
@@ -77,10 +83,10 @@ class AggError:
     def finalize(self):
         return self.type_
 
-SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
-        "(.+?)",
-        "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
-
+#SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
+#        "(.+?)",
+#        "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
+#
 #def add_rows_to_select(sql):
 #    new_sql = []
 #    start = 0
@@ -98,6 +104,7 @@ class LogList:
     db_conn.create_function("regexp", 2, regexp)
     db_conn.create_function("regex", 3, regex)
     db_conn.create_function("pretty", 1, pretty_xml)
+    db_conn.create_aggregate("rows", 1, RowIDsList)
     db_conn.create_aggregate("error", 1, AggError)
     db_conn.set_progress_handler(callback, 1000)
 
@@ -214,13 +221,24 @@ class LogList:
             rows_clause = " or ".join(["rowid=%s" % s for s in rows.split(",")])
         else:
             rows_clause = "rowid in (%s)" % rows
-        msg_sql = """select pretty(log) from %s where %s order by date asc, rowid
+        msg_sql = """select date, log_name, type, source, pretty(log) 
+                    from %s where %s order by date asc, rowid
                             asc;""" % \
                                             (self.hash_value,
                                             rows_clause)
         self.cur.execute(msg_sql)
         result = self.cur.fetchall()
-        return "".join([r[0] for r in result])
+        msg = [r[4] for r in result]
+        dates = []
+        for r in result:
+            try:
+                dates.append(datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f"))
+            except ValueError:
+                dates.append(datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S"))
+        log_names = [r[1] for r in result]
+        types = [r[2] for r in result]
+        sources = [r[3] for r in result]
+        return (dates, log_names, types, sources, msg)
 
 
 class LogListWindow(gtk.Frame):
@@ -232,8 +250,7 @@ class LogListWindow(gtk.Frame):
         logs_window.add(self.log_list.view)
         exp = gtk.Expander("Filter")
         exp.connect("activate", self.text_grab_focus)
-        self.filter_logs = SQLExecuter(self.log_list.model, self.log_list.view,
-                            self.log_list)
+        self.filter_logs = Query()
         exp.add(self.filter_logs)
         box = gtk.VBox()
         self.add(box)

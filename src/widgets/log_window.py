@@ -381,22 +381,16 @@ class LogWindow:
                     self.txt_buff.apply_tag(ntag, start_iter, end_iter)
 
     def open_file(self, *args):
-        file_to_open = self.model.get_value(self.iter, 4)
-        threading.Thread(target=os.system,
-                         args=("notepad %s" % file_to_open,)).start()
+        for f in self.files:
+            threading.Thread(target=os.system,
+                             args=("notepad %s" % f,)).start()
 
-    def fill(self):
-        #self.files = set([self.model.get_value(self.iter, 4)])
-        self.txt = self.loglist.get_msg_by_rowids(self.iter)
-        #self.open_label.set_text(self.model.get_value(self.iter, 4))
-        #self.info_label.set_markup(
-        #    '<span background="%s"><big><b>%s</b></big></span>\n%s\n%s\n' % \
-        #    (self.model.get_value(self.iter, 6),\
-        #    self.model.get_value(self.iter, 0),\
-        #    self.model.get_value(self.iter, 2),
-        #    self.model.get_value(self.iter, 3) ==\
-        #        "ERROR" and '<span foreground="red">ERROR</span>' or "",\
-        #    ))
+
+    def filling(self, date_, log_name_, type_):
+        self.open_label.set_text("\n".join(self.files))
+        self.info_label.set_markup('<big><b>%s</b></big>\n%s\n%s\n' % (date_,
+                                                                     log_name_,
+                                                                     type_))
         self.log_text.get_buffer().set_text(self.txt)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
@@ -404,6 +398,23 @@ class LogWindow:
         self.e = len(self.txt)
         self.insert_search(None)
         self.procs = self.motion_text(self.txt)
+        
+
+    def fill(self):
+        select = self.loglist.get_msg_by_rowids(self.iter)
+        self.txt = "".join(select[4])
+        self.files = set(select[3])
+        dates = set(select[0])
+        if len(dates) > 1:
+            start = min(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
+            end = max(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
+            date_ = "%s - %s" % (start, end)
+        else:
+            date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
+        type_ = ("ERROR" in select[2]) and '<span foreground="red">ERROR</span>' or ""
+        log_name_ = "\n".join(set(select[1]))
+        self.filling(date_,log_name_,type_)
+        
 
     def show_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
@@ -411,11 +422,11 @@ class LogWindow:
         if path == 0:
             return None
         prevPath = int(path) + 1
-        self.selection.select_path(prevPath)
         try:
             self.iter = self.model.get_iter_from_string(str(prevPath))
         except ValueError:
-            pass
+            return
+        self.selection.select_path(prevPath)
         self.view.scroll_to_cell(prevPath)
         self.fill()
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
@@ -426,65 +437,50 @@ class LogWindow:
         if path == 0:
             return None
         prevPath = int(path) - 1
-        self.selection.select_path(prevPath)
-        try:
+        if prevPath >= 0:
             self.iter = self.model.get_iter_from_string(str(prevPath))
-        except ValueError:
-            pass
-        self.view.scroll_to_cell(prevPath)
-        self.fill()
-        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
+            self.selection.select_path(prevPath)
+            self.view.scroll_to_cell(prevPath)
+            self.fill()
+            self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 
 class SeveralLogsWindow(LogWindow):
-    def __init__(self, model, view, iter, sel):
-        LogWindow.__init__(self, model, view, iter, sel)
+    def __init__(self, loglist, iter, sel):
+        LogWindow.__init__(self, loglist, iter, sel)
         self.info_box.remove(self.updown_btns)
-
-    def show_next(self):
-        pass
-
-    def show_prev(self):
-        pass
-
-    def open_file(self, *args):
-        for f in self.files:
-            threading.Thread(target=os.system,
-                             args=("notepad %s" % f,)).start()
 
     def fill(self):
         model, pathlist = self.selection.get_selected_rows()
+        dates = []
         text = []
-        self.files = set()
-        pathlist.reverse()
-        for p in pathlist:
-            iter = model.get_iter(p)
-            self.files.add(model.get_value(iter, 4))
+        types = []
+        log_names = []
+        self.files = []
         prev_f = ""
-        for p in pathlist:
-            iter = model.get_iter(p)
-            f = model.get_value(iter, 4)
-            txt = model.get_value(iter, 5)
-            try:
-                txt = txt.decode('utf-8').encode('utf-8')
-            except UnicodeDecodeError:
-                txt = txt.decode('cp1251').encode('utf-8')
-            if len(self.files) == 1:
-                text.append("%s" % self.pretty_xml(txt))
-            else:
+        for p in reversed(pathlist):
+            iter_ = model.get_iter(p)
+            select = self.loglist.get_msg_by_rowids(iter_)
+            dates.extend(select[0])
+            log_names.extend(select[1])
+            types.extend(select[2])
+            files = select[3]
+            txt = select[4]
+            for n,f in enumerate(files):
                 if prev_f == f:
-                    text.append("%s" % self.pretty_xml(txt))
+                    text.append(txt[n])
                 else:
-                    text.append("%s:\n\n%s" % (f, self.pretty_xml(txt)))
-            prev_f = f
-        self.open_label.set_text("\n".join(self.files))
-        begin_it = model.get_iter(pathlist[-1])
-        end_it = model.get_iter(pathlist[0])
-        begin_date = model.get_value(begin_it, 0)
-        end_date = model.get_value(end_it, 0)
-        date = " - ".join([str(begin_date), str(end_date)])
-        self.info_label.set_markup('<b>%s</b>' % date)
-        self.full_text = "\n".join(text)
-        self.log_text.get_buffer().set_text(self.full_text)
-        self.highlight(self.col_str)
-        self.log_text.grab_focus()
+                    text.append("%s:\n\n%s" % (f, txt[n]))
+                prev_f = f
+            self.files.extend(files)
+        self.files = set(self.files)
+        self.txt = "\n".join(text)
+        type_ = ("ERROR" in types) and '<span foreground="red">ERROR</span>' or ""
+        log_name_ = "\n".join(set(log_names))
+        if len(dates) > 1:
+            start = min(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
+            end = max(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
+            date_ = "%s - %s" % (start, end)
+        else:
+            date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
+        self.filling(date_,log_name_,type_)

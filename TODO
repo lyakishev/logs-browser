@@ -17,6 +17,8 @@
 #TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
 #уменьшить вложенность дерева: если один потомок - объединять
 #Ctrl-Z
+#Кнопку Очистить рядом с филтром под деревом логов
+#при переключении между вкладками search...
 src/widgets/logs_notebook.py:from log_window import SeveralLogsWindow  #TODO remove after move tol LoglList
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
