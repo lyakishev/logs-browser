@@ -416,7 +416,7 @@ class FileServersTree(gtk.Frame):
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.view.view)
         self.hide_log = gtk.Entry()
-        self.hide_log.set_text("Filter...")
+        self.hide_log.set_text("Search...")
         self.hide_log.modify_text(gtk.STATE_NORMAL,
                             gtk.gdk.color_parse("#929292"))
         self.hide_log.modify_font(pango.FontDescription("italic"))
@@ -441,15 +441,15 @@ class FileServersTree(gtk.Frame):
     def on_hide_log_focus_out(self, *args):
         if not self.filter_text:
             self.ft = False
-            self.hide_log.set_text("Filter...")
+            self.hide_log.set_text("Search...")
             self.filter_text = ""
             self.hide_log.modify_text(gtk.STATE_NORMAL,
                                 gtk.gdk.color_parse("#929292"))
             self.hide_log.modify_font(pango.FontDescription("italic"))
 
     def on_advanced_entry_changed(self, widget):
-        self.model.get_model().refilter()
         self.filter_text = widget.get_text()
+        self.model.get_model().refilter()
         if not self.filter_text or not self.ft:
             self.view.view.collapse_all()
         else:

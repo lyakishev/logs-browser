@@ -3,20 +3,20 @@
 #FEAT: щелчок - узел дерева, потомки - логи до(после?) этого щелчка до следующего
 #FEAT: gtkmvc
 #TODO: возможность поставить логу метку в окне просмотра и через всплыв меню в таблице (метка слово+картинки, теги?)
-+#TODO: парсить mm/dd/yyyy hh:mm:ss
+#TODO: парсить mm/dd/yyyy hh:mm:ss
+#
 #BUG: удаление пустых путей опять отвалилось
 #FEAT: ntplib
 
-#TODO: PL/SQL analyzer:
+#FEAT#: PL/SQL analyzer:
 	процедура, функция: тело, связи с другими объектами - через from и т1.п1=т2.п1 в where,
 	через другие функции, процедуры,
 	через cairo - диаграмму связей.
 
-#TODO: File Monitor - онлайн заполнение таблицы
+#FEAT#: File Monitor - онлайн заполнение таблицы
 #TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
 #уменьшить вложенность дерева: если один потомок - объединять
 #Ctrl-Z
-src/widgets/logs_list.py:    #TODO# db_conn.create_function("pretty_xml", 1, pretty_xml)
 src/widgets/logs_notebook.py:from log_window import SeveralLogsWindow  #TODO remove after move tol LoglList
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
