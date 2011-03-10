@@ -179,9 +179,6 @@ class FileServersModel(ServersModel):
                                                 None, 'n'])
 
     def remove_empty_dirs(self):
-        dt = datetime.datetime.now()
-        #print "Remove empty dirs"
-
         def walker(it):
             files = 0
             dirs = 0
@@ -205,7 +202,6 @@ class FileServersModel(ServersModel):
         while it:
             walker(it)
             it = self.treestore.iter_next(it)
-        #print datetime.datetime.now() - dt
 
     def add_parents(self, path, parent):
         try:

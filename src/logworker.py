@@ -33,7 +33,7 @@ def filelogworker(dates, path, log):
         try:
             cdate = time.localtime(os.path.getctime(path))
         except WindowsError:
-            #print "WindowsError: %s" % path
+            print "WindowsError: %s" % path
             raise StopIteration
         if get_time(cdate) > dates[1]:
             raise StopIteration
@@ -53,17 +53,16 @@ def filelogworker(dates, path, log):
         except UnboundLocalError:
             raise StopIteration
         comp = [p for p in path.split(os.sep) if p][0]
-        buff = deque()
+        msg = ""
         for string in mmap_block_read(path, 16*1024):
             parsed_date = parse_logline_re(string, cdate, pformat)
             if not parsed_date:
-                buff.appendleft(string)
+                msg = string + msg
             else:
                 if parsed_date < dates[0]:
                     raise StopIteration
                 if parsed_date <= dates[1]:
-                    buff.appendleft(string)
-                    msg = "".join(buff)
+                    msg = string + msg
                     try:
                         msg = msg.decode('utf-8')
                     except UnicodeDecodeError:
@@ -75,42 +74,4 @@ def filelogworker(dates, path, log):
                                    else "?",
                            path,
                            msg)
-                buff.clear()
-
-if __name__ == "__main__":
-    def test():
-        for i in filelogworker(dates,path,log):
-            i
-    import pstats
-    import cProfile
-    dates=(datetime.datetime.min,
-           datetime.datetime.max)
-    path = "/home/user/sharew7/logs/log/20101206_FORIS.TelCRM.Interfaces.RD.Log"
-    log = "FORIS.TelCRM.Interfaces.RD.Log"
-    #import sqlite3
-    #conn = sqlite3.connect("bench.db")
-    #c = conn.cursor()
-    #c.execute("create table bench_mmap (path text, block_size int,logs int, time real);")
-    #conn.commit()
-    #for root,dirs,files in os.walk("/home/user/sharew7/logs/log/"):
-    #    for file_ in files:
-    #        fullf = os.path.join(root,file_)
-    #        print fullf
-    #        for b in map(lambda x: x*1024, map(lambda x: 2**x, range(11))):
-    #            for i in range(1,100):
-    #                dt = time.time()
-    #                test(dates,fullf,log,b, i)
-    #                time_ = time.time() - dt
-    #                c.execute("insert into bench_mmap values(?,?,?,?);", (fullf,b,
-    #                                                        i,time_))
-    #conn.commit()
-    #c.close()
-    #conn.close()
-
-
-    cProfile.runctx("test()",
-                     globals(), locals(), "flw")
-    p = pstats.Stats('flw')
-    p.strip_dirs().sort_stats('time').print_stats()
-
-    
+                msg = ""

@@ -16,6 +16,7 @@ import pango
 from operator import itemgetter
 import os
 import xml.dom.minidom
+import profiler
 
 
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
@@ -96,10 +97,8 @@ class LogList:
     db_conn.create_function("strip", 1, strip)
     db_conn.create_function("regexp", 2, regexp)
     db_conn.create_function("regex", 3, regex)
-    db_conn.create_function("comp", 1, comp)
     db_conn.create_function("pretty", 1, pretty_xml)
     db_conn.create_aggregate("error", 1, AggError)
-    db_conn.create_aggregate("rows", 1, RowIDsList)
     db_conn.set_progress_handler(callback, 1000)
 
     def __init__(self):
@@ -140,24 +139,19 @@ class LogList:
     def execute(self, sql):
         self.cur.close()
         self.cur = self.db_conn.cursor()
-        now = datetime.now
         self.view.freeze_child_notify()
         self.view.set_model(None)
         self.sql = sql.replace("this", self.hash_value)
         rows_sql = self.sql#add_rows_to_select(self.sql)
-        dt = now()
         self.cur.execute(rows_sql)
-        print "Select *:", now() - dt
         rows = self.cur.fetchall()
         if rows:
             self.headers = map(itemgetter(0),self.cur.description)
             headers = self.headers
             self.set_new_list_store(headers)
             self.build_view(headers)
-            dt = now()
             for row in rows:
                 self.model.append(row)
-            print "Filling Liststore: ", now() - dt
             #if 'date' in headers:
             #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
             self.view.set_model(self.model)
@@ -224,14 +218,9 @@ class LogList:
                             asc;""" % \
                                             (self.hash_value,
                                             rows_clause)
-        dt = datetime.now()
         self.cur.execute(msg_sql)
-        print datetime.now() - dt
         result = self.cur.fetchall()
-        dt = datetime.now()
-        ret = "".join([r[0] for r in result])
-        print datetime.now() - dt
-        return ret
+        return "".join([r[0] for r in result])
 
 
 class LogListWindow(gtk.Frame):

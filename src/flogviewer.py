@@ -17,6 +17,7 @@ from widgets.status_icon import StatusIcon
 if sys.platform == 'win32':
     from evlogworker import *
     from widgets.evt_type import EventTypeFilter
+import profiler
 
 
 class GUI_Controller:
@@ -95,78 +96,67 @@ class GUI_Controller:
         return
 
     def show_logs(self, *args):
-        import pstats
-        import cProfile
-        def test():
-            self.show_button.set_sensitive(False)
-            self.stop = False
-            self.break_ = False
-            flogs = self.file_servers_tree.model.prepare_files_for_parse()
+        self.show_button.set_sensitive(False)
+        self.stop = False
+        self.break_ = False
+        flogs = self.file_servers_tree.model.prepare_files_for_parse()
+        try:
+            evlogs = [[s[1], s[0]] for s in\
+                        self.evlogs_servers_tree.model.get_active_servers()]
+        except AttributeError:
+            evlogs = []
+        if flogs or evlogs:
+            loglist = self.logs_notebook.get_current_logs_store
             try:
-                evlogs = [[s[1], s[0]] for s in\
-                            self.evlogs_servers_tree.model.get_active_servers()]
-            except AttributeError:
-                evlogs = []
-            if flogs or evlogs:
-                loglist = self.logs_notebook.get_current_logs_store
-                try:
-                    loglist.clear()
-                except:
-                    pass
-                dates = self.date_filter.get_active() and\
-                                           self.date_filter.get_dates or\
-                                           (datetime.datetime.min,
-                                            datetime.datetime.max)
-                if GetTrueTime.time_error_flag:
-                    GetTrueTime.show_time_warning(self.root)
-                flogs_pathes = file_preparator(flogs)
-                count_logs = len(flogs_pathes) + len(evlogs) + 1
-                frac = 1.0 / (count_logs)
-                loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
-                loglist.create_new_table(self.index_t.get_active())
-                dt = datetime.datetime.now()
-                count = 0
-                for path, log in flogs_pathes:
-                    self.progressbar.set_text(log)
-                    loglist.insert_many(filelogworker(dates,path,log))
-                    loglist.db_conn.commit()
-                    count += 1
-                    self.progressbar.set_fraction(frac*count)
-                    if self.stop or self.break_:
-                        break
-                    while gtk.events_pending():
-                        gtk.main_iteration()
-                for server, logtype in evlogs:
-                    self.progressbar.set_text(logtype)
-                    if self.stop or self.break_:
-                        break
-                    loglist.insert_many(evlogworker(dates,server,logtype))
-                    loglist.db_conn.commit()
-                    count += 1
-                    self.progressbar.set_fraction(frac*count)
-                    while gtk.events_pending():
-                        gtk.main_iteration()
-                print datetime.datetime.now() - dt
-                if self.break_:
-                    loglist.clear()
-                    self.progressbar.set_fraction(0.0)
-                    self.progressbar.set_text("")
-                else:
-                    self.progressbar.set_text("Filling table...")
-                    loglist.execute("""select date, log_name, type,
-                                        group_concat(rowid) as rows_for_log_window
-                                        from this group by
-                                       date order by date desc""")
-                    print datetime.datetime.now() - dt
-                    self.progressbar.set_fraction(1.0)
-                    self.progressbar.set_text("Complete")
-            self.show_button.set_sensitive(True)
-        test()
-        #cProfile.runctx("test()",
-        #                 globals(), locals(), "flw")
-        #p = pstats.Stats('flw')
-        #p.strip_dirs().sort_stats(-1).print_stats()
-            
+                loglist.clear()
+            except:
+                pass
+            dates = self.date_filter.get_active() and\
+                                       self.date_filter.get_dates or\
+                                       (datetime.datetime.min,
+                                        datetime.datetime.max)
+            if GetTrueTime.time_error_flag:
+                GetTrueTime.show_time_warning(self.root)
+            flogs_pathes = file_preparator(flogs)
+            count_logs = len(flogs_pathes) + len(evlogs) + 1
+            frac = 1.0 / (count_logs)
+            loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
+            loglist.create_new_table(self.index_t.get_active())
+            count = 0
+            for path, log in flogs_pathes:
+                self.progressbar.set_text(log)
+                loglist.insert_many(filelogworker(dates,path,log))
+                loglist.db_conn.commit()
+                count += 1
+                self.progressbar.set_fraction(frac*count)
+                if self.stop or self.break_:
+                    break
+                while gtk.events_pending():
+                    gtk.main_iteration()
+            for server, logtype in evlogs:
+                self.progressbar.set_text(logtype)
+                if self.stop or self.break_:
+                    break
+                loglist.insert_many(evlogworker(dates,server,logtype))
+                loglist.db_conn.commit()
+                count += 1
+                self.progressbar.set_fraction(frac*count)
+                while gtk.events_pending():
+                    gtk.main_iteration()
+            if self.break_:
+                loglist.clear()
+                self.progressbar.set_fraction(0.0)
+                self.progressbar.set_text("")
+            else:
+                self.progressbar.set_text("Filling table...")
+                loglist.execute("""select date, log_name, type,
+                                    group_concat(rowid) as rows_for_log_window
+                                    from this group by
+                                   date, type order by date desc""")
+                self.progressbar.set_fraction(1.0)
+                self.progressbar.set_text("Complete")
+        self.show_button.set_sensitive(True)
+        
 
 if __name__ == '__main__':
     myGUI = GUI_Controller()
