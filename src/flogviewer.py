@@ -8,15 +8,14 @@ import gobject
 import gio
 import datetime
 from net_time import GetTrueTime
-from logworker import *
+from logworker import filelogworker, file_preparator
 from widgets.date_time import DateFilter
 from widgets.logs_tree import FileServersTree, EvlogsServersTree
 from widgets.logs_notebook import LogsNotebook
 import sys
 from widgets.status_icon import StatusIcon
 if sys.platform == 'win32':
-    from evlogworker import *
-    from widgets.evt_type import EventTypeFilter
+    from evlogworker import evlogworker
 import profiler
 
 
@@ -32,8 +31,9 @@ class GUI_Controller:
         self.date_filter = DateFilter()
 
         options_frame = gtk.Frame("Options")
-        self.index_t = gtk.CheckButton("Full-text index (enables MATCH operator)")
-        self.index_t.set_active(False)
+        self.index_t = gtk.CheckButton(
+                                "Full-text index (enables MATCH operator)")
+        self.index_t.set_active(True)
         options_frame.add(self.index_t)
 
         self.status = StatusIcon(self.date_filter, self.root)
@@ -98,24 +98,25 @@ class GUI_Controller:
     def show_logs(self, *args):
         dt = datetime.datetime.now()
         self.show_button.set_sensitive(False)
+        self.logs_notebook.set_sensitive(False)
         self.stop = False
         self.break_ = False
         flogs = self.file_servers_tree.model.prepare_files_for_parse()
         try:
-            evlogs = [[s[1], s[0]] for s in\
-                        self.evlogs_servers_tree.model.get_active_servers()]
+            evlogs = ([(s[1], s[0]) for s in
+                      self.evlogs_servers_tree.model.get_active_servers()])
         except AttributeError:
             evlogs = []
         if flogs or evlogs:
-            loglist = self.logs_notebook.get_current_logs_store
+            logw = self.logs_notebook.get_logs_list_window()
+            loglist = logw.log_list
             try:
                 loglist.clear()
             except:
                 pass
-            dates = self.date_filter.get_active() and\
-                                       self.date_filter.get_dates or\
-                                       (datetime.datetime.min,
-                                        datetime.datetime.max)
+            dates = (self.date_filter.get_active() and
+                     self.date_filter.get_dates or
+                     (datetime.datetime.min, datetime.datetime.max))
             #if GetTrueTime.time_error_flag:
             #    GetTrueTime.show_time_warning(self.root)
             flogs_pathes = file_preparator(flogs)
@@ -150,13 +151,11 @@ class GUI_Controller:
                 self.progressbar.set_text("")
             else:
                 self.progressbar.set_text("Filling table...")
-                loglist.execute("""select date, log_name, type,
-                                    rows(rowid) as rows_for_log_window
-                                    from this group by
-                                   date, type order by date desc""")
+                logw.execute()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
         self.show_button.set_sensitive(True)
+        self.logs_notebook.set_sensitive(True)
         print datetime.datetime.now() - dt
         
 

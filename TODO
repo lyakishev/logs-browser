@@ -24,3 +24,9 @@ src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/status_icon.py:        #TODO hide after release mouse
+
+
+В Query:
+drag-n-drop
+
+быстрый поиск в тулбаре сделать цвет... строку и поиск

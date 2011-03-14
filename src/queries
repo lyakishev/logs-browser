@@ -9,3 +9,9 @@ order by date desc
 
 select lower(regex(log,'(?i)\Wsts.(\w+)\W',1)) as name, count(log) as c 
 from this where regexp(log,'(?i)\Wsts.(\w+)\W') group by name order by c desc
+
+select date, log_name, type, rows(rowid) as rows_for_log_window,
+(case when rowid in (select rowid from this where log match 'customer') then '#ff0' end) as bgcolor
+from this
+group by date, bgcolor
+

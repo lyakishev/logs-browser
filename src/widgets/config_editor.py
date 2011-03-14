@@ -43,6 +43,7 @@ class ConfigEditor:
         savetb = gtk.ToolButton(gtk.STOCK_SAVE)
         savetb.connect("clicked", self.save)
         savetb.set_is_important(True)
+        savetb.set_label("Save")
         cimage = gtk.Image()
         cimage.set_from_stock(gtk.STOCK_INDENT, gtk.ICON_SIZE_LARGE_TOOLBAR)
         cimage.show()
@@ -63,6 +64,7 @@ class ConfigEditor:
         quittb = gtk.ToolButton(gtk.STOCK_QUIT)
         quittb.connect("clicked", self.quit)
         quittb.set_is_important(True)
+        quittb.set_label("Quit")
         sep1 = gtk.SeparatorToolItem()
         sep2 = gtk.SeparatorToolItem()
 

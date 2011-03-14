@@ -7,6 +7,7 @@ import gobject
 import gio
 from widgets.log_window import LogWindow
 from widgets.query_constructor import Query
+from log_window import SeveralLogsWindow
 import re
 import pickle
 import hashlib
@@ -18,6 +19,8 @@ import os
 import xml.dom.minidom
 import profiler
 
+
+BREAK_EXECUTE_SQL = False
 
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
@@ -43,15 +46,12 @@ def pretty_xml(t):
     return empty_lines.sub("",xml_new.sub(xml_pretty, text))
 
 
-def callback():
-    while gtk.events_pending():
-        gtk.main_iteration()
 
 def strip(t):
     return t.strip()
 
-def regexp(t, pattern):
-    ret = re.compile(pattern).search(t)
+def regexp(pattern, field):
+    ret = re.compile(pattern).search(field)
     return True if ret else False
 
 def regex(t, pattern, gr):
@@ -97,18 +97,30 @@ class AggError:
 #    new_sql.append(sql[start:])
 #    return "".join(new_sql)
 
-class LogList:
-    db_conn = sqlite3.connect(":memory:", check_same_thread = False,
-                      detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-    db_conn.create_function("strip", 1, strip)
-    db_conn.create_function("regexp", 2, regexp)
-    db_conn.create_function("regex", 3, regex)
-    db_conn.create_function("pretty", 1, pretty_xml)
-    db_conn.create_aggregate("rows", 1, RowIDsList)
-    db_conn.create_aggregate("error", 1, AggError)
-    db_conn.set_progress_handler(callback, 1000)
 
+DB_CONN = sqlite3.connect(":memory:", check_same_thread = False,
+                  detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+DB_CONN.create_function("strip", 1, strip)
+DB_CONN.create_function("regexp", 2, regexp)
+DB_CONN.create_function("regex", 3, regex)
+DB_CONN.create_function("pretty", 1, pretty_xml)
+DB_CONN.create_aggregate("rows", 1, RowIDsList)
+DB_CONN.create_aggregate("error", 1, AggError)
+
+def callback():
+    global BREAK_EXECUTE_SQL
+    if BREAK_EXECUTE_SQL:
+        BREAK_EXECUTE_SQL = False
+        DB_CONN.interrupt()
+    while gtk.events_pending():
+        gtk.main_iteration()
+
+DB_CONN.set_progress_handler(callback, 1000)
+
+class LogList:
+ 
     def __init__(self):
+        self.db_conn = DB_CONN
         self.hash_value = ""
         self.view = gtk.TreeView()
         self.view.connect('row-activated', self.show_log)
@@ -117,7 +129,6 @@ class LogList:
         self.columns = []
         self.cur = self.db_conn.cursor()
         self.cur.execute("PRAGMA synchronous=OFF;")
-        self.sql = ""
         self.headers = []
         self.fts = False
 
@@ -148,9 +159,13 @@ class LogList:
         self.cur = self.db_conn.cursor()
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        self.sql = sql.replace("this", self.hash_value)
-        rows_sql = self.sql#add_rows_to_select(self.sql)
-        self.cur.execute(rows_sql)
+        rows_sql = sql.replace("this", self.hash_value)
+        try:
+            self.cur.execute(rows_sql)
+        except sqlite3.OperationalError:
+            print "Interrupted"
+            self.view.set_model(self.model)
+            self.view.thaw_child_notify()
         rows = self.cur.fetchall()
         if rows:
             self.headers = map(itemgetter(0),self.cur.description)
@@ -205,8 +220,8 @@ class LogList:
             self.cur.close()
             self.cur = self.db_conn.cursor()
         
-    def show_log(self, path, column, params):
-        selection = path.get_selection()
+    def show_log(self, view, *args):
+        selection = view.get_selection()
         selection.set_mode(gtk.SELECTION_SINGLE)
         (model, iter_) = selection.get_selected()
         LogWindow(self, iter_, selection)
@@ -245,18 +260,88 @@ class LogListWindow(gtk.Frame):
     def __init__(self):
         super(LogListWindow, self).__init__()
         self.log_list = LogList()
-        logs_window = gtk.ScrolledWindow()
-        logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        logs_window.add(self.log_list.view)
-        exp = gtk.Expander("Filter")
-        exp.connect("activate", self.text_grab_focus)
+        self.logs_window = gtk.ScrolledWindow()
+        self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.logs_window.add(self.log_list.view)
+        self.stop = False
+
+        toolbar = gtk.Toolbar()
+        toolbar.set_style(gtk.TOOLBAR_ICONS)
+        exec_btn = gtk.ToolButton(gtk.STOCK_EXECUTE)
+        exec_btn.connect("clicked", self.execute)
+
+        self.break_btn = gtk.ToolButton(gtk.STOCK_CANCEL)
+        self.break_btn.connect("clicked", self.cancel)
+
+        sep1 = gtk.SeparatorToolItem()
+
+        query_btn = gtk.ToggleToolButton(gtk.STOCK_PAGE_SETUP)
+        query_btn.connect("clicked", self.show_query)
+        query_btn.set_is_important(True)
+        query_btn.set_label("Edit Query")
+
+
+        sep2 = gtk.SeparatorToolItem()
+
+        lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
+        lwin_btn.connect("clicked", self.show_log_window)
+        lwin_btn.set_is_important(True)
+        lwin_btn.set_label("Show Log")
+        toolbar.insert(exec_btn, 0)
+        toolbar.insert(self.break_btn, 1)
+        toolbar.insert(sep1, 2)
+        toolbar.insert(query_btn, 3)
+        toolbar.insert(sep2, 4)
+        toolbar.insert(lwin_btn, 5)
+        toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
+        toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
+
+
         self.filter_logs = Query()
-        exp.add(self.filter_logs)
-        box = gtk.VBox()
-        self.add(box)
-        box.pack_start(logs_window, True, True)
-        box.pack_start(exp, False, False, 2)
+        self.paned = gtk.VPaned()
+        self.box = gtk.VBox()
+
+        self.box.pack_start(toolbar, False, False)
+        self.box.pack_start(self.logs_window, True, True)
+
+        self.sens_list = [exec_btn, lwin_btn, self.logs_window,
+                          self.filter_logs]
+
+        self.add(self.box)
         self.show_all()
+
+    def execute(self, *args):
+        self.log_list.execute(self.filter_logs.get_sql())
+
+    def cancel(self, *args):
+        global BREAK_EXECUTE_SQL
+        BREAK_EXECUTE_SQL = True
+
+    def show_query(self, button):
+        if button.get_active():
+            self.box.remove(self.logs_window)
+            self.paned.pack1(self.logs_window, True, False)
+            self.paned.pack2(self.filter_logs, False, False)
+            self.paned.set_position(575)
+            self.box.pack_end(self.paned)
+        else:
+            self.paned.remove(self.logs_window)
+            self.paned.remove(self.filter_logs)
+            self.box.remove(self.paned)
+            self.box.pack_end(self.logs_window)
+        self.show_all()
+
+    def show_log_window(self, *args):
+        view = self.log_list.view
+        selection = view.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        if len(pathlist) > 1:
+            SeveralLogsWindow(self.log_list,
+                              self.log_list.model.get_iter(pathlist[0]),
+                              selection)
+        else:
+            self.log_list.show_log(self.log_list.view)
+            
 
     def text_grab_focus(self, *args):
         self.filter_logs.text.grab_focus()

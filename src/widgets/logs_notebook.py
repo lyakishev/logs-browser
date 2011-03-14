@@ -245,6 +245,9 @@ class LogsNotebook(gtk.Notebook):
         logsw = self.get_nth_page(self.get_current_page())
         return logsw.log_list
 
+    def get_logs_list_window(self):
+        return self.get_nth_page(self.get_current_page())
+
     def close_tab(self, args):
         page = self.get_nth_page(self.get_current_page())
         del self.tree_paths[page]
