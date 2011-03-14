@@ -43,7 +43,8 @@ def xml_bad_pretty(m):
 
 def pretty_xml(t):
     text = xml_bad.sub(xml_bad_pretty, t)
-    return empty_lines.sub("",xml_new.sub(xml_pretty, text))
+    text = empty_lines.sub("",xml_new.sub(xml_pretty, text))
+    return text.replace("&quot;", '"').replace("&gt;",">").replace("&lt;","<")
 
 
 

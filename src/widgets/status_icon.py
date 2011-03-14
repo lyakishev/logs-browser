@@ -64,5 +64,5 @@ class StatusIcon:
         menu.append(time_mode)
         menu.show_all()
         menu.show_all()
-        menu.popup(None, None, gtk.status_icon_position_menu,
+        menu.popup(None, None, None,
                    button, time, self.statusicon)

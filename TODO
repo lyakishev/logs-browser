@@ -17,16 +17,25 @@
 #TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
 #уменьшить вложенность дерева: если один потомок - объединять
 #Ctrl-Z
-#Кнопку Очистить рядом с филтром под деревом логов
-#при переключении между вкладками search...
+#Кнопку Очистить рядом с фильтром под деревом логов
 src/widgets/logs_notebook.py:from log_window import SeveralLogsWindow  #TODO remove after move tol LoglList
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist
-src/widgets/status_icon.py:        #TODO hide after release mouse
+#BUG#src/widgets/status_icon.py:        #TODO hide after release mouse
 
 
 В Query:
 drag-n-drop
 
 быстрый поиск в тулбаре сделать цвет... строку и поиск
+
+match по умолчанию в query where при fts
+regexp при без fts
+
+если match  в when ... then формировать по особому...
+
+делать кнопки неактивными при выполнении запроса
+разобраться с юникодом в окне просмотра лога
+search... при переключении между вкладками
+при переключении между вкладками search...

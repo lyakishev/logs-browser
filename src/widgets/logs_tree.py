@@ -375,7 +375,7 @@ def tree_model_pre_order(model, treeiter):
 
 class EvlogsServersTree(gtk.Frame):
     def __init__(self):
-        super(ServersTree, self).__init__()
+        super(EvlogsServersTree, self).__init__()
         self.model = EventServersModel()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()

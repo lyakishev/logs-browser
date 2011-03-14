@@ -108,6 +108,7 @@ class QueryDesigner():
         self.query_model.append([False, '', '','','','','','','#fff'])
         self.plain.set_text(self.get_sql())
 
+        #self.view.set_property("enable-grid-lines", True)
         self.view.set_model(self.query_model)
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
