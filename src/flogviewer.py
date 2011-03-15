@@ -124,6 +124,7 @@ class GUI_Controller:
             frac = 1.0 / (count_logs)
             loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
             loglist.create_new_table(self.index_t.get_active())
+            logw.filter_logs.set_sql()
             count = 0
             for path, log in flogs_pathes:
                 self.progressbar.set_text(log)

@@ -134,7 +134,7 @@ class LogList:
         self.fts = False
 
 
-    def create_new_table(self, index=False):
+    def create_new_table(self, index=True):
         if index:
             self.fts = True
             sql = """create virtual table %s using fts4(date text, computer text,
@@ -298,7 +298,7 @@ class LogListWindow(gtk.Frame):
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
 
-        self.filter_logs = Query()
+        self.filter_logs = Query(self.log_list)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 

@@ -373,44 +373,9 @@ def tree_model_pre_order(model, treeiter):
             yield it
 
 
-class EvlogsServersTree(gtk.Frame):
+class ServersTree(gtk.Frame):
     def __init__(self):
-        super(EvlogsServersTree, self).__init__()
-        self.model = EventServersModel()
-        self.view = DisplayServersModel(self.model.get_model(), self.model)
-        self.logs_window = gtk.ScrolledWindow()
-        self.logs_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.logs_window.add(self.view.view)
-        self.hide_log = gtk.Entry()
-        self.box = gtk.VBox()
-        self.add(self.box)
-        self.box.pack_start(self.logs_window, True, True)
-        self.box.pack_start(self.hide_log, False, False)
-        self.hide_log.connect("changed", self.on_advanced_entry_changed)
-        self.model.get_model().set_visible_func(self.visible_func)
-
-    def on_advanced_entry_changed(self, widget):
-        self.model.get_model().refilter()
-        if not widget.get_text():
-            self.view.view.collapse_all()
-        else:
-            self.view.view.expand_all()
-
-    def visible_func(self, model, treeiter):
-        search_string = self.hide_log.get_text().lower()
-        for it in tree_model_pre_order(model, treeiter):
-            try:
-                if search_string in model[it][0].lower():
-                    return True
-            except:
-                pass
-        return False
-
-
-class FileServersTree(gtk.Frame):
-    def __init__(self):
-        super(FileServersTree, self).__init__()
-        self.model = FileServersModel()
+        super(ServersTree, self).__init__()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -430,6 +395,7 @@ class FileServersTree(gtk.Frame):
         self.ft = False
         self.model.get_model().set_visible_func(self.visible_func)
         self.filter_text = ""
+        self.show_all()
     
     def on_hide_log_focus_in(self, *args):
         self.ft = True
@@ -468,3 +434,14 @@ class FileServersTree(gtk.Frame):
             return False
         else:
             return True
+
+class EvlogsServersTree(ServersTree):
+    def __init__(self):
+        self.model = EventServersModel()
+        super(EvlogsServersTree, self).__init__()
+
+class FileServersTree(ServersTree):
+    def __init__(self):
+        self.model = FileServersModel()
+        super(FileServersTree, self).__init__()
+        

@@ -6,7 +6,8 @@ import gio
 import pango
 
 class QueryDesigner():
-    def __init__(self, plain):
+    def __init__(self, plain, loglist):
+        self.loglist = loglist
         self.plain = plain
         self.query_model = gtk.ListStore(bool,                #show
                                    str,#column
@@ -106,7 +107,7 @@ class QueryDesigner():
         self.query_model.append([True, 'log_name', '','','','','','','#fff'])
         self.query_model.append([True, 'type', '','','group','','','','#fff'])
         self.query_model.append([False, '', '','','','','','','#fff'])
-        self.plain.set_text(self.get_sql())
+        self.plain.set_text(self.get_sql(self.loglist.fts))
 
         #self.view.set_property("enable-grid-lines", True)
         self.view.set_model(self.query_model)
@@ -114,17 +115,20 @@ class QueryDesigner():
         self.view.connect("key-press-event", self.delete_row)
         self.view.connect("row-activated", self.change_color)
 
+    def set_sql(self):
+        self.plain.set_text(self.get_sql(self.loglist.fts))
+
     def col_toggled_cb(self, cell, path, model, col):
         model[path][col] = not model[path][col]
-        self.plain.set_text(self.get_sql())
+        self.set_sql()
 
     def change_func(self, combo, path, iter_, col):
         self.query_model[path][col] = combo.get_property("model").get_value(iter_,0)
-        self.plain.set_text(self.get_sql())
+        self.set_sql()
 
     def change_value(self, cell, path, new_text, col):
         self.query_model[path][col] = new_text
-        self.plain.set_text(self.get_sql())
+        self.set_sql()
 
     def add_row(self, view):
         selection = view.get_selection()
@@ -141,7 +145,7 @@ class QueryDesigner():
             (model, iter_) = selection.get_selected()
             if iter_ is not None and model.iter_next(iter_):
                 model.remove(iter_)
-        self.plain.set_text(self.get_sql())
+        self.set_sql()
 
     def change_color(self, view, path, column):
         selection = view.get_selection()
@@ -160,9 +164,29 @@ class QueryDesigner():
                 col = colorsel.get_current_color()
                 model[path][8]=col
             colordlg.destroy()
-        self.plain.set_text(self.get_sql())
+        self.set_sql()
 
-    def get_sql(self):
+    def get_sql(self, fts):
+
+        def check_clause(clause):
+            words = len(clause.split())
+            if words > 1 and clause.count("'")>1:
+                return clause
+            else:
+                if fts:
+                    return "MATCH '%s'" % clause
+                else:
+                    return "REGEXP '%s'" % clause
+
+        def match(col, clause, color):
+            if 'match' in clause.lower():
+                return ("rowid",
+                        "in (select rowid from this where %s %s)" % (col,
+                                                                    clause),
+                        color)
+            else:
+                return (col, clause, color)
+
         select = "select "
         for r in self.query_model:
             if r[0]:
@@ -173,7 +197,8 @@ class QueryDesigner():
                             (" as %s" % r[2]) if r[2] else "")
 
         from_ = "from this"
-        where_clauses = " AND ".join(["%s %s" % (r[2] or r[1], r[3])
+        where_clauses = " AND ".join(["%s %s" % (r[2] or r[1],
+                                                 check_clause(r[3]))
                                       for r in self.query_model
                                       if r[3] and r[1]])
         where = ("where " + where_clauses) if where_clauses else ""
@@ -190,7 +215,8 @@ class QueryDesigner():
 
         color_fields = [(r[2] or r[1]) for r in self.query_model if r[7]]
         if color_fields:
-            color_clause = " ".join(["when %s %s then '%s'" % (r[1], r[7], r[8]) for r in
+            color_clause = " ".join(["when %s %s then '%s'" % match(r[1],
+                                                    check_clause(r[7]), r[8]) for r in
                                                         self.query_model if
                                                         r[7]])
             color = "(case " + color_clause + " end) as bgcolor"
@@ -222,7 +248,7 @@ class Plain(gtk.ScrolledWindow):
 
 
 class Query(gtk.Notebook):
-    def __init__(self):
+    def __init__(self, loglist):
         super(Query, self).__init__()
         scroll_query = gtk.ScrolledWindow()
         scroll_query.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
@@ -230,8 +256,8 @@ class Query(gtk.Notebook):
         self.plain = Plain()
         plain_query_label = gtk.Label("Plain Query")
 
-        query = QueryDesigner(self.plain)
-        scroll_query.add(query.view)
+        self.query = QueryDesigner(self.plain, loglist)
+        scroll_query.add(self.query.view)
         
         query_label = gtk.Label("Query")
 
@@ -239,9 +265,12 @@ class Query(gtk.Notebook):
         self.append_page(self.plain, plain_query_label)
         self.show_all()
 
+    def set_sql(self):
+        self.query.set_sql()
+
     def get_sql(self):
         return self.plain.get_text()
-    
+        
 
 
 
