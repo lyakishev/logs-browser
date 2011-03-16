@@ -11,6 +11,7 @@ import datetime
 import re
 import ConfigParser
 from config_editor import ConfigEditor
+import sys
 
 
 
@@ -397,6 +398,13 @@ class ServersTree(gtk.Frame):
         self.filter_text = ""
         self.show_all()
     
+    def set_text(self, entry):
+        self.on_hide_log_focus_in()
+        self.hide_log.set_text(entry[0])
+        self.filter_text = entry[0]
+        self.ft = entry[1]
+        self.on_hide_log_focus_out()
+
     def on_hide_log_focus_in(self, *args):
         self.ft = True
         self.hide_log.set_text(self.filter_text)
@@ -444,4 +452,56 @@ class FileServersTree(ServersTree):
     def __init__(self):
         self.model = FileServersModel()
         super(FileServersTree, self).__init__()
+
+
+class LogsTrees(gtk.Notebook):
+    def __init__(self):
+        super(LogsTrees, self).__init__()
+        self.file_servers_tree = FileServersTree()
+        file_label = gtk.Label("Filelogs")
+        file_label.show()
+        self.append_page(self.file_servers_tree, file_label)
+        self.evlogs_servers_tree = None
+        if sys.platform == 'win32':
+            evt_label = gtk.Label("Eventlogs")
+            evt_label.show()
+            self.evlogs_servers_tree = EvlogsServersTree()
+            self.evlogs_servers_tree.show()
+            self.append_page(self.evlogs_servers_tree, evt_label)
+
+        self.state_ = {}
+
+    def load_state(self, page):
+        ftree = self.file_servers_tree
+        etree = self.evlogs_servers_tree
+        state = self.state_.get(page)
+        if state:
+            fpathslist, fentry, epathslist, eentry = state
+        else:
+            fpathslist, fentry, epathslist, eentry = ([],("",False),
+                                                      [],("",False))
+        ftree.model.set_active_from_paths(fpathslist)
+        ftree.set_text(fentry)
+        if etree:
+            etree.model.set_active_from_paths(epathslist)
+            etree.set_text(eentry)
+        
+
+    def save_state(self, page):
+        ftree = self.file_servers_tree
+        fpathslist = ftree.model.get_active_check_paths()
+        fentry = ftree.filter_text, ftree.ft
+        etree = self.evlogs_servers_tree
+        if etree:
+            epathslist = etree.model.get_active_check_paths()
+            eentry = etree.filter_text, ftree.ft
+        else:
+            epathslist = []
+            eentry = ()
+        self.state_[page] = (fpathslist, fentry, epathslist, eentry)
+
+    def free_state(self, page):
+        del self.state_[page]
+
+
         

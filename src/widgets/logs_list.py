@@ -18,6 +18,8 @@ from operator import itemgetter
 import os
 import xml.dom.minidom
 import profiler
+from colorsys import *
+from operator import mul
 
 
 BREAK_EXECUTE_SQL = False
@@ -84,6 +86,36 @@ class AggError:
     def finalize(self):
         return self.type_
 
+class ColorAgg:
+    def __init__(self):
+        self.colors = []
+
+    def circ_ave(self, a0, a1):
+        r = (a0+a1)/2., ((a0+a1+360)/2.)%360 
+        if min(abs(a1-r[0]), abs(a0-r[0])) < min(abs(a0-r[1]), abs(a1-r[1])):
+            return r[0]
+        else:
+            return r[1]
+
+    def step(self, value):
+        if value != '#fff':
+            c = gtk.gdk.color_parse(value)
+            self.colors.append((c.red,c.green,c.blue))
+
+    def finalize(self):
+        if self.colors:
+            new_colors = set([rgb_to_hsv(*c) for c in set(self.colors)])
+            hue = reduce(self.circ_ave, [c[0]*360 for c in new_colors])/360.
+            saturations = [c[1] for c in new_colors]
+            sat = sum(saturations)/float(len(saturations))
+            values = [c[2]/65535. for c in new_colors]
+            value = sum(values)/float(len(values))
+            mix_color=gtk.gdk.color_from_hsv(hue, sat, value)
+            return mix_color.to_string()
+        else:
+            return '#fff'
+
+
 #SQL_RE = re.compile("".join(["(?i)select(?:distinct|all)?",
 #        "(.+?)",
 #        "\s+(?:from|where|group|order|union|intersect|except|limit)"]))
@@ -107,6 +139,7 @@ DB_CONN.create_function("regex", 3, regex)
 DB_CONN.create_function("pretty", 1, pretty_xml)
 DB_CONN.create_aggregate("rows", 1, RowIDsList)
 DB_CONN.create_aggregate("error", 1, AggError)
+DB_CONN.create_aggregate("color_agg", 1, ColorAgg)
 
 def callback():
     global BREAK_EXECUTE_SQL
@@ -163,8 +196,9 @@ class LogList:
         rows_sql = sql.replace("this", self.hash_value)
         try:
             self.cur.execute(rows_sql)
-        except sqlite3.OperationalError:
-            print "Interrupted"
+        except sqlite3.OperationalError, e:
+            #print "Interrupted"
+            print e
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
         rows = self.cur.fetchall()
@@ -258,7 +292,7 @@ class LogList:
 
 
 class LogListWindow(gtk.Frame):
-    def __init__(self):
+    def __init__(self, ntb):
         super(LogListWindow, self).__init__()
         self.log_list = LogList()
         self.logs_window = gtk.ScrolledWindow()
@@ -305,14 +339,22 @@ class LogListWindow(gtk.Frame):
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.logs_window, True, True)
 
-        self.sens_list = [exec_btn, lwin_btn, self.logs_window,
-                          self.filter_logs]
+        self.sens_list = ([exec_btn, lwin_btn, self.logs_window]+
+                            self.filter_logs.sens_list)
 
         self.add(self.box)
         self.show_all()
+        self.break_btn.set_sensitive(False)
+
+        self.sens_list = [exec_btn,lwin_btn]+self.filter_logs.sens_list
+        self.ntb = ntb
 
     def execute(self, *args):
+        self.break_btn.set_sensitive(True)
+        self.ntb.set_sens(False)
         self.log_list.execute(self.filter_logs.get_sql())
+        self.ntb.set_sens(True)
+        self.break_btn.set_sensitive(False)
 
     def cancel(self, *args):
         global BREAK_EXECUTE_SQL

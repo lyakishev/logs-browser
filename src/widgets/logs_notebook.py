@@ -8,7 +8,7 @@ from widgets.logs_list import LogListWindow
 
 
 class LogsNotebook(gtk.Notebook):
-    def __init__(self, tree):
+    def __init__(self, tree, btn):
         super(LogsNotebook, self).__init__()
         self.tree = tree
         act_box = gtk.HBox()
@@ -29,6 +29,7 @@ class LogsNotebook(gtk.Notebook):
         pages_btn.connect("clicked", self.show_all_pages_menu)
         act_box.pack_start(pages_btn)
         self.btns = []
+        self.labels = []
         self.counter = 1
         self.add_new_page()
         self.set_current_page(0)
@@ -38,33 +39,30 @@ class LogsNotebook(gtk.Notebook):
         act_box.show()
         self.set_action_widget(act_box, gtk.PACK_END)
         self.connect("switch_page", self.change_source_tree)
-        self.tree_paths = {}
-        self.entries = {}
+        self.sens = [add_btn, btn]
+
+    def set_sens(self, sens):
+        for b in self.btns:
+            b.set_sensitive(sens)
+        for l in self.labels:
+            l.set_sensitive(sens)
+        page_num = 0
+        page = self.get_nth_page(page_num)
+        while page:
+            for w in page.sens_list:
+                w.set_sensitive(sens)
+            page_num += 1
+            page = self.get_nth_page(page_num)
+        for s in self.sens:
+            s.set_sensitive(sens)
 
     def change_source_tree(self, ntb, page, page_num, *args):
         ncurpage = self.get_current_page()
         if ncurpage >= 0:
-            old_pathslist = self.tree.model.get_active_check_paths()
-            old_entry_text = self.tree.hide_log.get_text()
             cur_page = self.get_nth_page(ncurpage)
-            self.tree_paths[cur_page] = old_pathslist
-            self.entries[cur_page] = old_entry_text
+            self.tree.save_state(cur_page)
         new_page = self.get_nth_page(page_num)
-        new_pathslist = self.tree_paths.get(new_page)
-        new_entry_text = self.entries.get(new_page)
-        if new_pathslist:
-            self.tree.model.set_active_from_paths(new_pathslist)
-            self.tree.hide_log.set_text(new_entry_text)
-        else:
-            try:
-                self.tree.model.set_active_from_paths(old_pathslist)
-            except UnboundLocalError:
-                self.tree.model.set_active_from_paths([])
-                self.tree.hide_log.set_text("")
-            else:
-                self.tree.hide_log.set_text(old_entry_text)
-        self.tree_paths[new_page] = new_pathslist
-        self.entries[new_page] = new_entry_text
+        self.tree.load_state(new_page)
 
     def change_page_name(self, widget, event):
         if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
@@ -93,6 +91,7 @@ class LogsNotebook(gtk.Notebook):
         e.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         e.connect("button-press-event", self.change_page_name)
         e.set_visible_window(False)
+        self.labels.append(e)
         tab_button = gtk.Button()
         tab_button.connect("clicked", self.close_tab)
         tab_button.set_relief(gtk.RELIEF_NONE)
@@ -103,7 +102,7 @@ class LogsNotebook(gtk.Notebook):
         tab_lab.pack_start(e, True, True)
         tab_lab.pack_start(tab_button, False, False)
         tab_lab.show_all()
-        l_list = LogListWindow()
+        l_list = LogListWindow(self)
         l_list.get_view.connect("button-press-event", self.show_menu)
         l_list.show()
         tab_lab.show()
@@ -250,10 +249,10 @@ class LogsNotebook(gtk.Notebook):
 
     def close_tab(self, args):
         page = self.get_nth_page(self.get_current_page())
-        del self.tree_paths[page]
-        del self.entries[page]
+        self.tree.free_state(page)
         child = self.btns.index(args)
         self.btns.pop(child)
+        self.labels.pop(child)
         self.remove_page(child)
         if len(self.get_children()) == 0:
             self.counter = 1

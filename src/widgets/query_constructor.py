@@ -4,6 +4,7 @@ import gtk
 import gobject
 import gio
 import pango
+import re
 
 class QueryDesigner():
     def __init__(self, plain, loglist):
@@ -28,7 +29,7 @@ class QueryDesigner():
             self.group_model.append([c])
 
         for c in ["time","date","comp","log_name","type",
-                  "source","log","snippet","rowid"]:
+                  "source","log","snippet","rowid", "this"]:
             self.field_model.append([c])
 
         for c in ["","DESC","ASC"]:
@@ -197,10 +198,25 @@ class QueryDesigner():
                             (" as %s" % r[2]) if r[2] else "")
 
         from_ = "from this"
-        where_clauses = " AND ".join(["%s %s" % (r[2] or r[1],
-                                                 check_clause(r[3]))
-                                      for r in self.query_model
-                                      if r[3] and r[1]])
+
+        match_re = re.compile("(?i)match '(.+?)'")
+        match_clauses = ""
+        nonmatch_clauses = []
+        for r in self.query_model:
+            if r[3] and r[1]:
+                match_ = check_clause(r[3])
+                if 'match' in match_.lower():
+                    match_clauses+="%s:%s " % (r[1],
+                                match_re.search(match_).group(1))
+                else:
+                    nonmatch_clauses.append("%s %s" % (r[2] or r[1],
+                                                 match_))
+        match_clauses = "this MATCH '%s'" % match_clauses[:-1] if match_clauses else ""
+        nonmatch_clauses = " AND ".join(nonmatch_clauses)
+        where_clauses = ((match_clauses+" AND "+nonmatch_clauses) if match_clauses
+                         and nonmatch_clauses else (match_clauses or
+                         nonmatch_clauses))
+            
         where = ("where " + where_clauses) if where_clauses else ""
 
         groups = ", ".join([(r[2] or r[1]) for r in self.query_model
@@ -218,8 +234,8 @@ class QueryDesigner():
             color_clause = " ".join(["when %s %s then '%s'" % match(r[1],
                                                     check_clause(r[7]), r[8]) for r in
                                                         self.query_model if
-                                                        r[7]])
-            color = "(case " + color_clause + " end) as bgcolor"
+                                                        r[7] and r[1]])
+            color = "(case " + color_clause + " else '#fff' end) as bgcolor"
             select += "%s, " % color
         
         if agg:
@@ -263,7 +279,11 @@ class Query(gtk.Notebook):
 
         self.append_page(scroll_query, query_label)
         self.append_page(self.plain, plain_query_label)
+
+        self.sens_list = [self.plain, self.query.view]
+
         self.show_all()
+
 
     def set_sql(self):
         self.query.set_sql()

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # vim: ts=4:sw=4:tw=78:nowrap
-""" Demonstration using editable and activatable CellRenderers """
 import pygtk
 pygtk.require("2.0")
 import gtk
@@ -10,7 +9,7 @@ import datetime
 from net_time import GetTrueTime
 from logworker import filelogworker, file_preparator
 from widgets.date_time import DateFilter
-from widgets.logs_tree import FileServersTree, EvlogsServersTree
+from widgets.logs_tree import LogsTrees
 from widgets.logs_notebook import LogsNotebook
 import sys
 from widgets.status_icon import StatusIcon
@@ -19,7 +18,7 @@ if sys.platform == 'win32':
 import profiler
 
 
-class GUI_Controller:
+class LogViewer:
     """ The GUI class is the controller for application """
     def __init__(self):
         # setup the main window
@@ -49,15 +48,10 @@ class GUI_Controller:
 
         main_box = gtk.HPaned()
         control_box = gtk.VBox()
-        self.file_servers_tree = FileServersTree()
-        self.file_servers_tree.show()
-        self.logs_notebook = LogsNotebook(self.file_servers_tree)
 
-        log_ntb = gtk.Notebook()
-        file_label = gtk.Label("Filelogs")
-        file_label.show()
-        log_ntb.append_page(self.file_servers_tree, file_label)
-        log_ntb.show_all()
+        log_ntb = LogsTrees()
+
+        self.logs_notebook = LogsNotebook(log_ntb, self.show_button)
 
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
@@ -73,14 +67,6 @@ class GUI_Controller:
         main_box.pack1(control_box, False, False)
         main_box.pack2(self.logs_notebook, True, False)
         self.root.add(main_box)
-
-        if sys.platform == 'win32':
-            evt_label = gtk.Label("Eventlogs")
-            evt_label.show()
-            self.evlogs_servers_tree = EvlogsServersTree()
-            self.evlogs_servers_tree.show()
-            log_ntb.append_page(self.evlogs_servers_tree, evt_label)
-
         self.root.show_all()
 
     def stop_all(self, *args):
@@ -97,8 +83,7 @@ class GUI_Controller:
 
     def show_logs(self, *args):
         dt = datetime.datetime.now()
-        self.show_button.set_sensitive(False)
-        self.logs_notebook.set_sensitive(False)
+        self.logs_notebook.set_sens(False)
         self.stop = False
         self.break_ = False
         flogs = self.file_servers_tree.model.prepare_files_for_parse()
@@ -155,11 +140,10 @@ class GUI_Controller:
                 logw.execute()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
-        self.show_button.set_sensitive(True)
-        self.logs_notebook.set_sensitive(True)
+        self.logs_notebook.set_sens(True)
         print datetime.datetime.now() - dt
         
 
 if __name__ == '__main__':
-    myGUI = GUI_Controller()
+    log_viewer = LogViewer()
     gtk.main()
