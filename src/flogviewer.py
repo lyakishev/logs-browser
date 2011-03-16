@@ -49,9 +49,9 @@ class LogViewer:
         main_box = gtk.HPaned()
         control_box = gtk.VBox()
 
-        log_ntb = LogsTrees()
+        self.log_ntb = LogsTrees()
 
-        self.logs_notebook = LogsNotebook(log_ntb, self.show_button)
+        self.logs_notebook = LogsNotebook(self.log_ntb, self.show_button)
 
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
@@ -59,7 +59,7 @@ class LogViewer:
         button_box.pack_start(self.show_button)
         button_box.pack_start(stop_all_btn)
         button_box.pack_start(break_btn)
-        control_box.pack_start(log_ntb, True, True)
+        control_box.pack_start(self.log_ntb, True, True)
         control_box.pack_start(self.date_filter, False, False)
         control_box.pack_start(options_frame, False, False)
         control_box.pack_start(button_box, False, False, 5)
@@ -86,10 +86,10 @@ class LogViewer:
         self.logs_notebook.set_sens(False)
         self.stop = False
         self.break_ = False
-        flogs = self.file_servers_tree.model.prepare_files_for_parse()
+        flogs = self.log_ntb.file_servers_tree.model.prepare_files_for_parse()
         try:
             evlogs = ([(s[1], s[0]) for s in
-                      self.evlogs_servers_tree.model.get_active_servers()])
+                      self.log_ntb.evlogs_servers_tree.model.get_active_servers()])
         except AttributeError:
             evlogs = []
         if flogs or evlogs:

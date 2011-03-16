@@ -20,6 +20,7 @@ import xml.dom.minidom
 import profiler
 from colorsys import *
 from operator import mul
+from message_dialogs import merror
 
 
 BREAK_EXECUTE_SQL = False
@@ -197,8 +198,7 @@ class LogList:
         try:
             self.cur.execute(rows_sql)
         except sqlite3.OperationalError, e:
-            #print "Interrupted"
-            print e
+            merror(str(e))
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
         rows = self.cur.fetchall()
