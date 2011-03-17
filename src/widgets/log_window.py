@@ -101,6 +101,8 @@ class LogWindow:
         self.syntax.connect("changed", self.combo_hl)
         syntax_item = gtk.ToolItem()
         syntax_item.add(self.syntax)
+        sims_btn = gtk.ToolButton(gtk.STOCK_FIND)
+        sims_btn.connect("clicked", self.find_sims)
 
         toolbar.insert(open_btn, 0)
         toolbar.insert(save_btn, 1)
@@ -114,6 +116,7 @@ class LogWindow:
         toolbar.insert(sep2, 9)
         toolbar.insert(syntax_item, 10)
         toolbar.insert(hl_btn, 11)
+        toolbar.insert(sims_btn, 12)
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
@@ -142,6 +145,9 @@ class LogWindow:
 
         self.popup.show_all()
         self.filter.hide()
+
+    def find_sims(self, *args):
+        self.loglist.find_similar(self.get_text())
 
     def show_body(self, widget, event, *args):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
@@ -226,8 +232,8 @@ class LogWindow:
                                        #self.txt_buff.get_end_iter())
 
     def b_search(self, start_pos):
-        text = self.get_text().decode('utf-8').lower()[::-1]
-        string_to_search = self.find_entry.get_text().lower()[::-1]
+        text = self.get_text().lower()[::-1]
+        string_to_search = self.find_entry.get_text().decode('utf8').lower()[::-1]
         chars = len(string_to_search)
         ltext = len(text)
         if chars > 0:
@@ -241,9 +247,10 @@ class LogWindow:
             return (None, None)
 
     def f_search(self, start_pos):
-        text = self.get_text().decode('utf-8').lower()
-        string_to_search = self.find_entry.get_text().lower()
+        text = self.get_text().lower()
+        string_to_search = self.find_entry.get_text().decode('utf8').lower()
         chars = len(string_to_search)
+        print chars
         if chars > 0:
             pos = text.find(string_to_search, start_pos)
             if pos > 0:
@@ -257,8 +264,8 @@ class LogWindow:
             return (None, None)
 
     def f_re_search(self, start_pos):
-        text = self.get_text().decode('utf-8')
-        string_to_search = self.find_entry.get_text()
+        text = self.get_text()
+        string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
             re_string = re.compile(string_to_search, re.U)
             searched = re_string.search(text[start_pos:])
@@ -275,8 +282,8 @@ class LogWindow:
             return (None, None)
 
     def b_re_search(self, start_pos):
-        text = self.get_text().decode('utf-8')
-        string_to_search = self.find_entry.get_text()
+        text = self.get_text()
+        string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
             re_string = re.compile(string_to_search, re.U)
             searched = list(re_string.finditer(text[:start_pos]))
@@ -356,8 +363,9 @@ class LogWindow:
         self.txt_buff.remove_all_tags(start, end)
         txt = self.txt_buff.get_text(start, end)
         for pattern in col_str[1]:
-            fre = re.compile(pattern.decode('utf8'), re.U)
-            for m in fre.finditer(txt.decode('utf8')):
+            fre = re.compile(pattern)
+            for m in fre.finditer(txt):
+                print m.end() - m.start()
                 start_iter = self.txt_buff.get_iter_at_offset(m.start())
                 end_iter = self.txt_buff.get_iter_at_offset(m.end())
                 self.txt_buff.remove_all_tags(start_iter, end_iter)

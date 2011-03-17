@@ -386,10 +386,19 @@ class ServersTree(gtk.Frame):
         self.hide_log.modify_text(gtk.STATE_NORMAL,
                             gtk.gdk.color_parse("#929292"))
         self.hide_log.modify_font(pango.FontDescription("italic"))
+        entry_box = gtk.HBox()
+        clear_btn = gtk.Button()
+        clear = gtk.Image()
+        clear.set_from_stock(gtk.STOCK_CLEAR,gtk.ICON_SIZE_MENU)
+        clear_btn.add(clear)
+        clear_btn.connect("clicked", self.clear_entry)
+        entry_box.pack_start(self.hide_log, True,True)
+        entry_box.pack_start(clear_btn,False,False)
+
         self.box = gtk.VBox()
         self.add(self.box)
         self.box.pack_start(self.logs_window, True, True)
-        self.box.pack_start(self.hide_log, False, False)
+        self.box.pack_start(entry_box, False, False)
         self.hide_log.connect("changed", self.on_advanced_entry_changed)
         self.hide_log.connect("focus-in-event", self.on_hide_log_focus_in)
         self.hide_log.connect("focus-out-event", self.on_hide_log_focus_out)
@@ -397,6 +406,11 @@ class ServersTree(gtk.Frame):
         self.model.get_model().set_visible_func(self.visible_func)
         self.filter_text = ""
         self.show_all()
+
+    def clear_entry(self, *args):
+        self.on_hide_log_focus_in()
+        self.filter_text = ""
+        self.on_hide_log_focus_out()
     
     def set_text(self, entry):
         self.on_hide_log_focus_in()

@@ -18,7 +18,6 @@
 ####уменьшить вложенность дерева: если один потомок - объединять
 ####Ctrl-Z
 
-#Кнопку Очистить рядом с фильтром под деревом логов
 src/widgets/logs_notebook.py:from log_window import SeveralLogsWindow  #TODO remove after move tol LoglList
 src/widgets/logs_notebook.py:        #TODO# move to loglist
 src/widgets/logs_notebook.py:        #TODO# move to loglist

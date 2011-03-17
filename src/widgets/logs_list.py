@@ -21,6 +21,7 @@ import profiler
 from colorsys import *
 from operator import mul
 from message_dialogs import merror
+import profiler
 
 
 BREAK_EXECUTE_SQL = False
@@ -132,7 +133,7 @@ class ColorAgg:
 #    return "".join(new_sql)
 
 
-DB_CONN = sqlite3.connect(":memory:", check_same_thread = False,
+DB_CONN = sqlite3.connect("temp.db", check_same_thread = False,
                   detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 DB_CONN.create_function("strip", 1, strip)
 DB_CONN.create_function("regexp", 2, regexp)
@@ -290,6 +291,44 @@ class LogList:
         sources = [r[3] for r in result]
         return (dates, log_names, types, sources, msg)
 
+    def find_similar(self, txt):
+        def distance(v1,v2):
+            s1 = set(v1)
+            s2 = set(v2)
+            return len(s1 & s2)/float(len(s1 | s2))
+        re_spl = re.compile('[^0-9^a-z^A-Z^_]')
+        cur_words = re_spl.split(txt)
+        c = self.db_conn.cursor()
+        print 'Exec start'
+        c.execute('select rowid, log from %s' % self.hash_value)
+        print 'Exec end'
+        logs = c.fetchall()
+        c.close()
+        sims_case = "case "
+        c.execute('drop table if exists sims')
+        self.db_conn.commit()
+        c.execute("create temp table sims (id integer, dist real)")
+        self.db_conn.commit()
+        n = len(logs)
+        i=0
+        for rowid, log in logs:
+            i+=1
+            print i, "of", n
+            l_words = re_spl.split(log)
+            dist = distance(cur_words, l_words)
+            c.execute("insert into sims values(?,?)", (rowid,dist))
+            #sims_case+="when rowid=%s then %s " % (rowid, dist)
+        print 'Exec start'
+        self.execute("select t.date, t.log_name, t.type, s.dist"
+                     ", t.rowid as rows_for_log_window"    
+                      " from %s as t, sims as s where t.rowid = s.id"
+                      " order by s.dist desc" % self.hash_value)
+        print 'Exec end'
+        #sims_case+="end"
+        #self.execute("select date, log_name, type,"
+        #            "rowid as rows_for_log_window,"
+        #            "(%s) as similarity "
+        #             "from this order by similarity desc" % sims_case)
 
 class LogListWindow(gtk.Frame):
     def __init__(self, ntb):
