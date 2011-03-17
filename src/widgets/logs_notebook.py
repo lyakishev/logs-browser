@@ -31,7 +31,8 @@ class LogsNotebook(gtk.Notebook):
         self.btns = []
         self.labels = []
         self.counter = 1
-        self.add_new_page()
+        ll=self.add_new_page()
+        self.tree.save_state(ll)
         self.set_current_page(0)
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.set_scrollable(True)
@@ -63,6 +64,7 @@ class LogsNotebook(gtk.Notebook):
             self.tree.save_state(cur_page)
         new_page = self.get_nth_page(page_num)
         self.tree.load_state(new_page)
+        self.tree.save_state(new_page)
 
     def change_page_name(self, widget, event):
         if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
@@ -109,7 +111,7 @@ class LogsNotebook(gtk.Notebook):
         num = self.append_page(l_list, tab_lab)
         self.show_all()
         self.counter += 1
-        return num
+        return l_list
 
     def add_new(self, *args):
         self.add_new_page()
@@ -248,9 +250,9 @@ class LogsNotebook(gtk.Notebook):
         return self.get_nth_page(self.get_current_page())
 
     def close_tab(self, args):
-        page = self.get_nth_page(self.get_current_page())
-        self.tree.free_state(page)
         child = self.btns.index(args)
+        page = self.get_nth_page(child)
+        self.tree.free_state(page)
         self.btns.pop(child)
         self.labels.pop(child)
         self.remove_page(child)
