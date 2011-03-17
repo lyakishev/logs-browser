@@ -232,7 +232,7 @@ class LogWindow:
                                        #self.txt_buff.get_end_iter())
 
     def b_search(self, start_pos):
-        text = self.get_text().lower()[::-1]
+        text = self.get_text().decode('utf8').lower()[::-1]
         string_to_search = self.find_entry.get_text().decode('utf8').lower()[::-1]
         chars = len(string_to_search)
         ltext = len(text)
@@ -247,10 +247,9 @@ class LogWindow:
             return (None, None)
 
     def f_search(self, start_pos):
-        text = self.get_text().lower()
+        text = self.get_text().decode('utf-8').lower()
         string_to_search = self.find_entry.get_text().decode('utf8').lower()
         chars = len(string_to_search)
-        print chars
         if chars > 0:
             pos = text.find(string_to_search, start_pos)
             if pos > 0:
@@ -264,10 +263,10 @@ class LogWindow:
             return (None, None)
 
     def f_re_search(self, start_pos):
-        text = self.get_text()
+        text = self.get_text().decode('utf8')
         string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
-            re_string = re.compile(string_to_search, re.U)
+            re_string = re.compile(string_to_search)
             searched = re_string.search(text[start_pos:])
             if searched:
                 s_pos = searched.start() + start_pos
@@ -282,10 +281,10 @@ class LogWindow:
             return (None, None)
 
     def b_re_search(self, start_pos):
-        text = self.get_text()
+        text = self.get_text().decode('utf8')
         string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
-            re_string = re.compile(string_to_search, re.U)
+            re_string = re.compile(string_to_search)
             searched = list(re_string.finditer(text[:start_pos]))
             if searched:
                 s_pos = searched[-1].start()
@@ -361,7 +360,7 @@ class LogWindow:
         start = self.txt_buff.get_start_iter()
         end = self.txt_buff.get_end_iter()
         self.txt_buff.remove_all_tags(start, end)
-        txt = self.txt_buff.get_text(start, end)
+        txt = self.txt_buff.get_text(start, end).decode('utf-8')
         for pattern in col_str[1]:
             fre = re.compile(pattern)
             for m in fre.finditer(txt):

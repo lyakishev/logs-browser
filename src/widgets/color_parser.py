@@ -7,7 +7,7 @@ import re
 import pango
 from itertools import permutations
 
-cparser = re.compile(r"(#[a-fA-F0-9]{3,}):", re.U)
+cparser = re.compile(r"(#[a-fA-F0-9]{3,}):")
 
 BACKGROUND = "(?P<bg>b#[A-Fa-f0-9]{3,})"
 FOREGROUND = "(?P<fg>f#[A-Fa-f0-9]{3,})"
@@ -24,7 +24,7 @@ STYLE_RE = "(" +\
                 replace("style", "style%d" % n)\
                 for n, e in enumerate(STYLE_VARIANTS)]) +\
             "):"
-STYLE = re.compile(STYLE_RE, re.U)
+STYLE = re.compile(STYLE_RE)
 
 
 class ColorParser(gtk.HBox):
@@ -100,7 +100,7 @@ class ColorParser(gtk.HBox):
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
         self.buf.remove_all_tags(start, end)
-        txt = self.buf.get_text(start, end)
+        txt = self.buf.get_text(start, end).decode('utf-8')
         for match in cparser.finditer(txt):
             start = match.start()
             end = match.end()
@@ -138,7 +138,7 @@ class ColorParser(gtk.HBox):
     def filter_logs(self, *args):
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
-        txt = self.buf.get_text(start, end)
+        txt = self.buf.get_text(start, end).decode('utf-8')
         col_str = cparser.split(txt)[1:]
         self.model.highlight(col_str)
         if self.hide_other.get_active():
@@ -231,7 +231,7 @@ class LogColorParser(gtk.HBox):
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
         self.buf.remove_all_tags(start, end)
-        txt = self.buf.get_text(start, end)
+        txt = self.buf.get_text(start, end).decode('utf-8')
         for match in STYLE.finditer(txt):
             start = match.start()
             end = match.end()
@@ -321,7 +321,7 @@ class LogColorParser(gtk.HBox):
             if prev_start:
                 tstart = self.buf.get_iter_at_offset(prev_start)
                 tend = self.buf.get_iter_at_offset(end)
-                exp = self.buf.get_text(tstart, tend).strip()
+                exp = self.buf.get_text(tstart, tend).decode('utf-8').strip()
                 text_range[exp] = tgs
                 pat_list.append(exp)
             prev_start = tag_range[1]
@@ -329,7 +329,7 @@ class LogColorParser(gtk.HBox):
         if prev_start:
             tstart = self.buf.get_iter_at_offset(prev_start)
             tend = self.buf.get_end_iter()
-            exp = self.buf.get_text(tstart, tend).strip()
+            exp = self.buf.get_text(tstart, tend).decode('utf-8').strip()
             text_range[exp] = tgs
             pat_list.append(exp)
         return (text_range, pat_list)
@@ -337,16 +337,4 @@ class LogColorParser(gtk.HBox):
     def filter_logs(self, *args):
         col_str = self.def_text_ranges()
         self.logw.highlight(col_str)
-
-class SQLExecuter(ColorParser):
-    def __init__(self,model,view,loglist):
-        ColorParser.__init__(self,model,view)
-        self.loglist = loglist
-
-    def filter_logs(self, *args):
-        start = self.buf.get_start_iter()
-        end = self.buf.get_end_iter()
-        txt = self.buf.get_text(start, end)
-        col_str = cparser.split(txt)[1:]
-        self.loglist.execute(txt)
 

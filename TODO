@@ -29,5 +29,3 @@ src/widgets/logs_notebook.py:        #TODO# move to loglist
 drag-n-drop
 
 быстрый поиск в тулбаре сделать цвет... строку и поиск
-
-разобраться с юникодом в окне просмотра лога
