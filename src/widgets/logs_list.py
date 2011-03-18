@@ -202,16 +202,16 @@ class LogList:
             merror(str(e))
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
-        #rows = self.cur.fetchall()
-        #if rows:
-        self.headers = map(itemgetter(0),self.cur.description)
-        headers = self.headers
-        self.set_new_list_store(headers)
-        self.build_view(headers)
-        for row in self.cur:#iter(rows):
-            self.model.append(row)
-        #if 'date' in headers:
-        #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
+        rows = self.cur.fetchall()
+        if rows:
+            self.headers = map(itemgetter(0),self.cur.description)
+            headers = self.headers
+            self.set_new_list_store(headers)
+            self.build_view(headers)
+            for row in self.cur:#iter(rows):
+                self.model.append(row)
+            #if 'date' in headers:
+            #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
         self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
@@ -292,10 +292,24 @@ class LogList:
         return (dates, log_names, types, sources, msg)
 
     def find_similar(self, txt):
-        def distance(v1,v2):
+        def tanimoto(v1,v2):
             s1 = set(v1)
             s2 = set(v2)
             return len(s1 & s2)/float(len(s1 | s2))
+        def euclid(v1,v2):
+            dv1={}
+            dv2={}
+            words = (set(v1) & set(v2))
+            for v in v1:
+                if v:
+                    dv1.setdefault(v,0)
+                    dv1[v]+=1
+            for v in v2:
+                if v:
+                    dv2.setdefault(v,0)
+                    dv2[v]+=1
+            return 1/(1+pow(sum([pow(dv1.get(v,0)-dv2.get(v,0),2) for v in words if v]),
+                       0.5))
         re_spl = re.compile('[^0-9^a-z^A-Z^_]+')
         cur_words = re_spl.split(txt)
         c = self.db_conn.cursor()
@@ -305,7 +319,7 @@ class LogList:
         self.db_conn.commit()
         c.execute('select rowid, log from %s' % self.hash_value)
         logs = iter(c.fetchall())
-        igen = ((rowid,distance(re_spl.split(log),cur_words))
+        igen = ((rowid,euclid(re_spl.split(log),cur_words))
                     for rowid, log in logs)
         c.executemany("insert into sims values(?,?)", igen)
         self.execute("select t.date, t.log_name, t.type, s.dist"
