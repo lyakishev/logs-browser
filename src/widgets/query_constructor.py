@@ -105,7 +105,7 @@ class QueryDesigner():
         self.view.append_column(hidden_color)
 
         self.query_model.append([True, 'time', 'time','','group','DESC','','','#fff'])
-        self.query_model.append([True, 'log_name', '','','','','','','#fff'])
+        self.query_model.append([True, 'log_name', '','','group','','','','#fff'])
         self.query_model.append([True, 'type', '','','group','','','','#fff'])
         self.query_model.append([False, '', '','','','','','','#fff'])
         self.plain.set_text(self.get_sql(self.loglist.fts))

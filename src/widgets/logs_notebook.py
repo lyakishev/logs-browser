@@ -255,6 +255,7 @@ class LogsNotebook(gtk.Notebook):
         self.tree.free_state(page)
         self.btns.pop(child)
         self.labels.pop(child)
+        page.log_list.clear()
         self.remove_page(child)
         if len(self.get_children()) == 0:
             self.counter = 1
