@@ -111,7 +111,7 @@ class LogViewer:
             loglist.create_new_table(self.index_t.get_active())
             logw.filter_logs.set_sql()
             count = 0
-            for path, log in flogs_pathes:
+            for path, log in iter(flogs_pathes):
                 self.progressbar.set_text(log)
                 loglist.insert_many(filelogworker(dates,path,log))
                 loglist.db_conn.commit()
@@ -121,7 +121,7 @@ class LogViewer:
                     break
                 while gtk.events_pending():
                     gtk.main_iteration()
-            for server, logtype in evlogs:
+            for server, logtype in iter(evlogs):
                 self.progressbar.set_text(logtype)
                 if self.stop or self.break_:
                     break

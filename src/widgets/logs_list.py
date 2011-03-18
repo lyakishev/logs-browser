@@ -22,6 +22,7 @@ from colorsys import *
 from operator import mul
 from message_dialogs import merror
 import profiler
+from operator import itemgetter
 
 
 BREAK_EXECUTE_SQL = False
@@ -133,8 +134,7 @@ class ColorAgg:
 #    return "".join(new_sql)
 
 
-DB_CONN = sqlite3.connect("", check_same_thread = False,
-                  detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+DB_CONN = sqlite3.connect(":memory:")#, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 DB_CONN.create_function("strip", 1, strip)
 DB_CONN.create_function("regexp", 2, regexp)
 DB_CONN.create_function("regex", 3, regex)
@@ -151,7 +151,7 @@ def callback():
     while gtk.events_pending():
         gtk.main_iteration()
 
-DB_CONN.set_progress_handler(callback, 1000)
+DB_CONN.set_progress_handler(callback, 5000)
 
 class LogList:
  
@@ -202,17 +202,17 @@ class LogList:
             merror(str(e))
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
-        rows = self.cur.fetchall()
-        if rows:
-            self.headers = map(itemgetter(0),self.cur.description)
-            headers = self.headers
-            self.set_new_list_store(headers)
-            self.build_view(headers)
-            for row in rows:
-                self.model.append(row)
-            #if 'date' in headers:
-            #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
-            self.view.set_model(self.model)
+        #rows = self.cur.fetchall()
+        #if rows:
+        self.headers = map(itemgetter(0),self.cur.description)
+        headers = self.headers
+        self.set_new_list_store(headers)
+        self.build_view(headers)
+        for row in self.cur:#iter(rows):
+            self.model.append(row)
+        #if 'date' in headers:
+        #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
+        self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
     def set_new_list_store(self, cols):

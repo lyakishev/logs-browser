@@ -35,8 +35,8 @@ def filelogworker(dates, path, log):
         except WindowsError:
             print "WindowsError: %s" % path
             raise StopIteration
-        if get_time(cdate) > dates[1]:
-            raise StopIteration
+        #if get_time(cdate) > dates[1]:
+        #    raise StopIteration
         try:
             file_ = open(path, 'r')
         except IOError:

@@ -15,7 +15,7 @@ REPEATED_EXTENSION = re.compile(r"(\.[a-zA-Z]{3})\1+")
 NULL_WORD = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
 LONG_EXTENSION = re.compile(r"[A-Za-z_]{7,}")
 
-PREFIX = r"^(Time:|\[?\w+\]?|\w+|\(\w+->\w+\))?\s*\[?"
+PREFIX = r"^(Time:|\[?\w+\]?|\(\w+->\w+\))?\s*\[?"
 FORMATS = [
     "".join([r"(?P<year1>\d{4})[.-]",
             r"(?P<month1>\d{2})[.-]",
@@ -43,7 +43,7 @@ FORMATS = [
              r"(?P<sec4>\d{2})",
              r"([,.](?P<ms4>\d+))?"]),
 ]
-SUFFIX = r"\]?\s*(?P<msg>.+)"
+SUFFIX = "" #r"\]?\s*(?P<msg>.+)"
 
 COMMON_PARSER = re.compile(PREFIX + "(" + "|".join(FORMATS) + ")" + SUFFIX)
 
