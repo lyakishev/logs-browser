@@ -22,7 +22,6 @@ from colorsys import *
 from operator import mul
 from message_dialogs import merror
 import profiler
-from operator import itemgetter
 
 
 BREAK_EXECUTE_SQL = False
@@ -134,7 +133,7 @@ class ColorAgg:
 #    return "".join(new_sql)
 
 
-DB_CONN = sqlite3.connect(":memory:")#, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+DB_CONN = sqlite3.connect("")
 DB_CONN.create_function("strip", 1, strip)
 DB_CONN.create_function("regexp", 2, regexp)
 DB_CONN.create_function("regex", 3, regex)
@@ -151,7 +150,7 @@ def callback():
     while gtk.events_pending():
         gtk.main_iteration()
 
-DB_CONN.set_progress_handler(callback, 5000)
+DB_CONN.set_progress_handler(callback, 1000)
 
 class LogList:
  
@@ -208,11 +207,11 @@ class LogList:
             headers = self.headers
             self.set_new_list_store(headers)
             self.build_view(headers)
-            for row in self.cur:#iter(rows):
+            for row in rows:
                 self.model.append(row)
             #if 'date' in headers:
             #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
-        self.view.set_model(self.model)
+            self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
     def set_new_list_store(self, cols):
@@ -292,24 +291,10 @@ class LogList:
         return (dates, log_names, types, sources, msg)
 
     def find_similar(self, txt):
-        def tanimoto(v1,v2):
+        def distance(v1,v2):
             s1 = set(v1)
             s2 = set(v2)
             return len(s1 & s2)/float(len(s1 | s2))
-        def euclid(v1,v2):
-            dv1={}
-            dv2={}
-            words = (set(v1) & set(v2))
-            for v in v1:
-                if v:
-                    dv1.setdefault(v,0)
-                    dv1[v]+=1
-            for v in v2:
-                if v:
-                    dv2.setdefault(v,0)
-                    dv2[v]+=1
-            return 1/(1+pow(sum([pow(dv1.get(v,0)-dv2.get(v,0),2) for v in words if v]),
-                       0.5))
         re_spl = re.compile('[^0-9^a-z^A-Z^_]+')
         cur_words = re_spl.split(txt)
         c = self.db_conn.cursor()
@@ -319,7 +304,7 @@ class LogList:
         self.db_conn.commit()
         c.execute('select rowid, log from %s' % self.hash_value)
         logs = iter(c.fetchall())
-        igen = ((rowid,euclid(re_spl.split(log),cur_words))
+        igen = ((rowid,distance(re_spl.split(log),cur_words))
                     for rowid, log in logs)
         c.executemany("insert into sims values(?,?)", igen)
         self.execute("select t.date, t.log_name, t.type, s.dist"
