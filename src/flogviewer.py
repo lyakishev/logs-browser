@@ -98,6 +98,7 @@ class LogViewer:
         logw.filter_logs.set_sql()
         return (logw, loglist)
 
+    @profiler.time_it
     def show_logs(self, *args):
         self.stop = False
         self.break_ = False

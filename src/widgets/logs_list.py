@@ -141,6 +141,7 @@ DB_CONN.create_function("pretty", 1, pretty_xml)
 DB_CONN.create_aggregate("rows", 1, RowIDsList)
 DB_CONN.create_aggregate("error", 1, AggError)
 DB_CONN.create_aggregate("color_agg", 1, ColorAgg)
+DB_CONN.execute("PRAGMA synchronous=OFF;")
 
 def callback():
     global BREAK_EXECUTE_SQL
@@ -162,38 +163,36 @@ class LogList:
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.model = None
         self.columns = []
-        self.cur = self.db_conn.cursor()
-        self.cur.execute("PRAGMA synchronous=OFF;")
         self.headers = []
         self.fts = False
 
     def insert_many(self, iter_):
-        self.cur.executemany("insert into %s values (?,?,?,?,?,?);" % \
-                                        self.hash_value, iter_)
+        with self.db_conn:
+            self.db_conn.executemany("insert into %s values (?,?,?,?,?,?);" % \
+                                            self.hash_value, iter_)
 
     def execute(self, sql):
-        self.cur.close()
-        self.cur = self.db_conn.cursor()
+        cur = self.db_conn.cursor()
         self.view.freeze_child_notify()
         self.view.set_model(None)
         rows_sql = sql.replace("this", self.hash_value)
         try:
-            self.cur.execute(rows_sql)
+            cur.execute(rows_sql)
         except sqlite3.OperationalError, e:
             merror(str(e))
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
-        rows = self.cur.fetchall()
+        rows = cur.fetchall()
         if rows:
-            self.headers = map(itemgetter(0),self.cur.description)
-            headers = self.headers
-            cols = [gobject.TYPE_STRING for i in headers]
+            self.headers = map(itemgetter(0),cur.description)
+            cols = [gobject.TYPE_STRING for i in self.headers]
             self.model = gtk.ListStore(*cols)
-            self.build_view(headers)
+            self.build_view(self.headers)
             for row in iter(rows):
                 self.model.append(row)
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
+        cur.close()
 
     def build_view(self, args):
         for col in self.columns:
@@ -228,8 +227,8 @@ class LogList:
             self.fts = False
             sql = """create table %s (date text, computer text, log_name text,
                      type text, source text, log text);""" % self.hash_value
-        self.cur.execute(sql)
-        self.db_conn.commit()
+        with self.db_conn:
+            self.db_conn.execute(sql)
 
     def set_hash(self, params):
         pick = pickle.dumps(params)
@@ -240,10 +239,8 @@ class LogList:
         if self.model:
             self.model.clear()
         if self.hash_value:
-            self.cur.execute("drop table if exists %s;" % self.hash_value)
-            self.db_conn.commit()
-            self.cur.close()
-            self.cur = self.db_conn.cursor()
+            with self.db_conn:
+                self.db_conn.execute("drop table if exists %s;" % self.hash_value)
         
     def show_log(self, view, *args):
         selection = view.get_selection()
