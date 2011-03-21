@@ -2,20 +2,23 @@
 
 from parse import parse_filename, parse_logline_re, define_format
 import os
-import time
-import datetime
-from collections import deque
+import datetime as dt
 from buf_read import mmap_block_read
 from operator import itemgetter
+from  utils import to_unicode
 
-def get_time(tm_dt):
-    return datetime.datetime(tm_dt.tm_year,
-                    tm_dt.tm_mon,
-                    tm_dt.tm_mday,
-                    tm_dt.tm_hour,
-                    tm_dt.tm_min,
-                    tm_dt.tm_sec)
+_formats = {}
 
+def memoize_format(function):
+    def wrapper(path, log):
+        pformat = _formats.get(log)
+        if pformat:
+            return pformat
+        else:
+            pformat = function(path, log)
+            _formats[log] = pformat
+            return pformat
+    return wrapper
 
 def file_preparator(folders):
     flf = []
@@ -26,32 +29,40 @@ def file_preparator(folders):
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn])
+                flf.append([fullf, pfn, 'f'])
     return sorted(flf, key=itemgetter(1))
+
+
+@memoize_format
+def date_format(path, log):
+    try:
+        file_ = open(path, 'r')
+    except IOError:
+        raise StopIteration
+    for line in file_:
+        pformat = define_format(line)
+        if pformat:
+            break
+    file_.close()
+    try:
+        if not pformat:
+            print "Not found format for file %s" % path
+            raise StopIteration
+        else:
+            return pformat
+    except UnboundLocalError:
+        raise StopIteration
+    
 
 def filelogworker(dates, path, log):
         try:
-            cdate = time.localtime(os.path.getctime(path))
+            cdate = dt.datetime.fromtimestamp(os.path.getctime(path))
         except WindowsError:
             print "WindowsError: %s" % path
             raise StopIteration
-        #if get_time(cdate) > dates[1]:
-        #    raise StopIteration
-        try:
-            file_ = open(path, 'r')
-        except IOError:
+        if cdate > dates[1]:
             raise StopIteration
-        for line in file_:
-            pformat = define_format(line)
-            if pformat:
-                break
-        file_.close()
-        try:
-            if not pformat:
-                print "Not found format for file %s" % path
-                raise StopIteration
-        except UnboundLocalError:
-            raise StopIteration
+        pformat = date_format(path, log)
         comp = [p for p in path.split(os.sep) if p][0]
         msg = ""
         for string in mmap_block_read(path, 16*1024):
@@ -62,11 +73,7 @@ def filelogworker(dates, path, log):
                 if parsed_date < dates[0]:
                     raise StopIteration
                 if parsed_date <= dates[1]:
-                    msg = string + msg
-                    try:
-                        msg = msg.decode('utf-8')
-                    except UnicodeDecodeError:
-                        msg = msg.decode('cp1251')
+                    msg = to_unicode(string + msg)
                     yield (parsed_date,
                            comp,
                            log,

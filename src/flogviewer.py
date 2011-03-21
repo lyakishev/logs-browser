@@ -5,17 +5,25 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
-import datetime
+from datetime import datetime
 from net_time import GetTrueTime
 from logworker import filelogworker, file_preparator
 from widgets.date_time import DateFilter
 from widgets.logs_tree import LogsTrees
 from widgets.logs_notebook import LogsNotebook
 import sys
+from itertools import chain
 from widgets.status_icon import StatusIcon
 if sys.platform == 'win32':
     from evlogworker import evlogworker
 import profiler
+
+
+def logworker(dates,path,log,type_):
+    if type_ == 'e':
+        return evlogworker(dates,path,log)
+    elif type_ == 'f':
+        return filelogworker(dates,path,log)
 
 
 class LogViewer:
@@ -81,54 +89,35 @@ class LogViewer:
         gtk.main_quit()
         return
 
+    def prepare_loglist(self, evlogs, flogs, dates):
+        logw = self.logs_notebook.get_logs_list_window()
+        loglist = logw.log_list
+        loglist.clear()
+        loglist.set_hash([evlogs,flogs,dates,datetime.now()])
+        loglist.create_new_table(self.index_t.get_active())
+        logw.filter_logs.set_sql()
+        return (logw, loglist)
+
     def show_logs(self, *args):
-        dt = datetime.datetime.now()
-        self.logs_notebook.set_sens(False)
         self.stop = False
         self.break_ = False
-        flogs = self.log_ntb.file_servers_tree.model.prepare_files_for_parse()
-        try:
-            evlogs = ([(s[1], s[0]) for s in
-                      self.log_ntb.evlogs_servers_tree.model.get_active_servers()])
-        except AttributeError:
-            evlogs = []
+        self.logs_notebook.set_sens(False)
+        flogs, evlogs = self.log_ntb.get_log_sources()
         if flogs or evlogs:
-            logw = self.logs_notebook.get_logs_list_window()
-            loglist = logw.log_list
-            try:
-                loglist.clear()
-            except:
-                pass
             dates = (self.date_filter.get_active() and
                      self.date_filter.get_dates or
-                     (datetime.datetime.min, datetime.datetime.max))
+                     (datetime.min, datetime.max))
+            logw, loglist = self.prepare_loglist(evlogs,flogs,dates)
             #if GetTrueTime.time_error_flag:
             #    GetTrueTime.show_time_warning(self.root)
             flogs_pathes = file_preparator(flogs)
-            count_logs = len(flogs_pathes) + len(evlogs) + 1
-            frac = 1.0 / (count_logs)
-            loglist.set_hash([evlogs,flogs,dates,datetime.datetime.now()])
-            loglist.create_new_table(self.index_t.get_active())
-            logw.filter_logs.set_sql()
-            count = 0
-            for path, log in iter(flogs_pathes):
+            frac = 1.0 / (len(flogs_pathes) + len(evlogs) + 1)
+            for n, (path, log, type_) in enumerate(chain(flogs_pathes,evlogs)):
                 self.progressbar.set_text(log)
-                loglist.insert_many(filelogworker(dates,path,log))
-                loglist.db_conn.commit()
-                count += 1
-                self.progressbar.set_fraction(frac*count)
+                loglist.insert_many(logworker(dates,path,log,type_))
+                self.progressbar.set_fraction(frac*n)
                 if self.stop or self.break_:
                     break
-                while gtk.events_pending():
-                    gtk.main_iteration()
-            for server, logtype in iter(evlogs):
-                self.progressbar.set_text(logtype)
-                if self.stop or self.break_:
-                    break
-                loglist.insert_many(evlogworker(dates,server,logtype))
-                loglist.db_conn.commit()
-                count += 1
-                self.progressbar.set_fraction(frac*count)
                 while gtk.events_pending():
                     gtk.main_iteration()
             if self.break_:
@@ -141,7 +130,6 @@ class LogViewer:
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
         self.logs_notebook.set_sens(True)
-        print datetime.datetime.now() - dt
         
 
 if __name__ == '__main__':

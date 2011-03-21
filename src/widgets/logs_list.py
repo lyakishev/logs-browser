@@ -167,24 +167,6 @@ class LogList:
         self.headers = []
         self.fts = False
 
-
-    def create_new_table(self, index=True):
-        if index:
-            self.fts = True
-            sql = """create virtual table %s using fts4(date text, computer text,
-                     log_name text,
-                     type text, source text, log text);""" % self.hash_value
-        else:
-            self.fts = False
-            sql = """create table %s (date text, computer text, log_name text,
-                     type text, source text, log text);""" % self.hash_value
-        self.cur.execute(sql)
-        self.db_conn.commit()
-
-    def insert(self, log):
-        self.cur.execute("insert into %s values (?,?,?,?,?,?);" % self.hash_value,
-                         log)
-
     def insert_many(self, iter_):
         self.cur.executemany("insert into %s values (?,?,?,?,?,?);" % \
                                         self.hash_value, iter_)
@@ -205,18 +187,13 @@ class LogList:
         if rows:
             self.headers = map(itemgetter(0),self.cur.description)
             headers = self.headers
-            self.set_new_list_store(headers)
+            cols = [gobject.TYPE_STRING for i in headers]
+            self.model = gtk.ListStore(*cols)
             self.build_view(headers)
-            for row in rows:
+            for row in iter(rows):
                 self.model.append(row)
-            #if 'date' in headers:
-            #    self.model.set_sort_column_id(headers.index('date'), gtk.SORT_DESCENDING)
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
-
-    def set_new_list_store(self, cols):
-        args = [gobject.TYPE_STRING for i in cols]
-        self.model = gtk.ListStore(*args)
 
     def build_view(self, args):
         for col in self.columns:
@@ -241,6 +218,19 @@ class LogList:
             if header in ('rows_for_log_window', 'bgcolor'):
                 col.set_visible(False)
 
+    def create_new_table(self, index=True):
+        if index:
+            self.fts = True
+            sql = """create virtual table %s using fts4(date text, computer text,
+                     log_name text,
+                     type text, source text, log text);""" % self.hash_value
+        else:
+            self.fts = False
+            sql = """create table %s (date text, computer text, log_name text,
+                     type text, source text, log text);""" % self.hash_value
+        self.cur.execute(sql)
+        self.db_conn.commit()
+
     def set_hash(self, params):
         pick = pickle.dumps(params)
         hash_v = hashlib.md5(pick).hexdigest()
@@ -250,7 +240,7 @@ class LogList:
         if self.model:
             self.model.clear()
         if self.hash_value:
-            self.cur.execute("drop table %s;" % self.hash_value)
+            self.cur.execute("drop table if exists %s;" % self.hash_value)
             self.db_conn.commit()
             self.cur.close()
             self.cur = self.db_conn.cursor()

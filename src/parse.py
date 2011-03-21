@@ -100,9 +100,9 @@ def parse_logline_re(line, cdate, re_obj):
             try:
                 year = int(("20"+groups("year"))[-4:])
             except IndexError:
-                year = cdate.tm_year
-                month = cdate.tm_mon
-                day = cdate.tm_mday
+                year = cdate.year
+                month = cdate.month
+                day = cdate.day
             else:
                 month = int(groups("month"))
                 day = int(groups("day"))

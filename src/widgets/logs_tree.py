@@ -485,6 +485,15 @@ class LogsTrees(gtk.Notebook):
 
         self.state_ = {}
 
+    def get_log_sources(self):
+        flogs = self.file_servers_tree.model.prepare_files_for_parse()
+        if self.evlogs_servers_tree:
+            evlogs = ([(s[1], s[0], 'e') for s in
+                      self.evlogs_servers_tree.model.get_active_servers()])
+        else:
+            evlogs = []
+        return (flogs, evlogs)
+
     def load_state(self, page):
         ftree = self.file_servers_tree
         etree = self.evlogs_servers_tree
