@@ -263,8 +263,9 @@ class LogList:
                             asc;""" % \
                                             (self.hash_value,
                                             rows_clause)
-        self.cur.execute(msg_sql)
-        result = self.cur.fetchall()
+        cur = self.db_conn.cursor()
+        cur.execute(msg_sql)
+        result = cur.fetchall()
         msg = [r[4] for r in result]
         dates = []
         for r in result:

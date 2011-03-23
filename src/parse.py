@@ -15,37 +15,24 @@ REPEATED_EXTENSION = re.compile(r"(\.[a-zA-Z]{3})\1+")
 NULL_WORD = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
 LONG_EXTENSION = re.compile(r"[A-Za-z_]{7,}")
 
-PREFIX = r"^(Time:|\[?\w+\]?|\(\w+->\w+\))?\s*\[?"
+PREFIX = r"^(\[?[A-Za-z:]+\]?|\(\w+->\w+\))?\s?\[?"
 FORMATS = [
-    "".join([r"(?P<year1>\d{4})[.-]",
-            r"(?P<month1>\d{2})[.-]",
-            r"(?P<day1>\d{2})",
-            r"\s*(?P<hour1>\d{2})[:]",
-            r"(?P<min1>\d{2})[:]",
-            r"(?P<sec1>\d{2})",
-            r"([,.](?P<ms1>\d+))?"]),
+    "".join([r"(?P<year1>\d{4})[-.]",
+            r"(?P<month1>\d{2})[-.]",
+            r"(?P<day1>\d{2})\s"]),
     "".join([r"(?P<day2>\d{2})[.-]",
              r"(?P<month2>\d{2})[.-]",
-             r"(?P<year2>\d{4})",
-             r"\s*(?P<hour2>\d{,2})[:]",
-             r"(?P<min2>\d{2})[:]",
-             r"(?P<sec2>\d{2})",
-             r"([,.](?P<ms2>\d+))?"]),
-    "".join([r"(?P<hour3>\d{2})[:]",
-             r"(?P<min3>\d{2})[:]",
-             r"(?P<sec3>\d{2})",
-             r"[,.](?P<ms3>\d+)"]),
-    "".join([r"(?<!\d)(?P<day4>\d{2})[.-]",
-             r"(?P<month4>\d{2})[.-]",
-             r"(?P<year4>\d{2})",
-             r"\s*(?P<hour4>\d{,2})[:]",
-             r"(?P<min4>\d{2})[:]",
-             r"(?P<sec4>\d{2})",
-             r"([,.](?P<ms4>\d+))?"]),
-]
-SUFFIX = "" #r"\]?\s*(?P<msg>.+)"
+             r"(?P<year2>\d{4})\s"]),
+    "".join([r"(?<!\d)(?P<day3>\d{2})[.-]",
+             r"(?P<month3>\d{2})[.-]",
+             r"(?P<short_year3>\d{2})\s"])]
 
-COMMON_PARSER = re.compile(PREFIX + "(" + "|".join(FORMATS) + ")" + SUFFIX)
+SUFFIX = "".join([r"(?P<hour>\d{1,2}):"
+         r"(?P<min>\d{2}):",
+         r"(?P<sec>\d{2})",
+         r"[,.]?(?P<ms>\d{,6})"])
+
+COMMON_PARSER = re.compile(PREFIX + "(" + "|".join(FORMATS) + ")?" + SUFFIX)
 
 LOG4J = re.compile("".join([r'^<log4j.+',
                             r'timestamp="(?P<datetime>\d+)"',
@@ -67,7 +54,7 @@ def parse_filename(path):
 
 def clear_format(pformat, format_number):
     """Remove numbers from format string"""
-    for i in ["year", "month", "day", "hour", "min", "sec", "ms"]:
+    for i in ["year", "month", "day"]:
         pformat = pformat.replace(i + str(format_number), i)
     return pformat
 
@@ -78,11 +65,12 @@ def define_format(line):
     if parsed_line:
         parsed_line_dict = parsed_line.groupdict()
         for format_number in range(1, len(FORMATS) + 1):
-            if parsed_line_dict["hour%d" % format_number]:
+            if parsed_line_dict["day%d" % format_number]:
                 return re.compile(PREFIX +\
                                   clear_format(FORMATS[format_number-1],
                                                format_number) +\
                                   SUFFIX)
+        return re.compile(PREFIX+SUFFIX)
     parsed_line = LOG4J.search(line)
     if parsed_line:
         return LOG4J
@@ -98,23 +86,24 @@ def parse_logline_re(line, cdate, re_obj):
             millisecs = groups("ms")
             millisecs = int((millisecs+'000')[:6] if millisecs else 0)
             try:
-                year = int(("20"+groups("year"))[-4:])
+                day = int(groups("day"))
             except IndexError:
                 year = cdate.year
                 month = cdate.month
                 day = cdate.day
             else:
                 month = int(groups("month"))
-                day = int(groups("day"))
-            log_datetime = datetime(year,month,day,
+                try:
+                    year = int(groups("year"))
+                except IndexError:
+                    year = int(groups("short_year"))+2000
+            return datetime(year,month,day,
                                   int(groups('hour')),
                                   int(groups('min')),
                                   int(groups('sec')),
                                   millisecs)
-            return log_datetime#, groups('msg'))
         else:
             tstamp = parsed_line.group('datetime')
-            log_datetime = datetime.fromtimestamp(float(tstamp) / 1000)
-            return log_datetime#, line)
+            return datetime.fromtimestamp(float(tstamp) / 1000)
     else:
         return None
