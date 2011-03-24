@@ -15,17 +15,17 @@ REPEATED_EXTENSION = re.compile(r"(\.[a-zA-Z]{3})\1+")
 NULL_WORD = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
 LONG_EXTENSION = re.compile(r"[A-Za-z_]{7,}")
 
-PREFIX = r"^(\[?[A-Za-z:]+\]?|\(\w+->\w+\))?\s?\[?"
+PREFIX = r"[^ ]*?[ ]?\[?"
 FORMATS = [
     "".join([r"(?P<year1>\d{4})[-.]",
             r"(?P<month1>\d{2})[-.]",
-            r"(?P<day1>\d{2})\s"]),
+            r"(?P<day1>\d{2}) "]),
     "".join([r"(?P<day2>\d{2})[.-]",
              r"(?P<month2>\d{2})[.-]",
-             r"(?P<year2>\d{4})\s"]),
+             r"(?P<year2>\d{4}) "]),
     "".join([r"(?<!\d)(?P<day3>\d{2})[.-]",
              r"(?P<month3>\d{2})[.-]",
-             r"(?P<short_year3>\d{2})\s"])]
+             r"(?P<short_year3>\d{2}) "])]
 
 SUFFIX = "".join([r"(?P<hour>\d{1,2}):"
          r"(?P<min>\d{2}):",

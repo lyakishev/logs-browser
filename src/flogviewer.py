@@ -95,7 +95,7 @@ class LogViewer:
         loglist.clear()
         loglist.set_hash([evlogs,flogs,dates,datetime.now()])
         loglist.create_new_table(self.index_t.get_active())
-        logw.filter_logs.set_sql()
+        #logw.filter_logs.set_sql()
         return (logw, loglist)
 
     @profiler.time_it
