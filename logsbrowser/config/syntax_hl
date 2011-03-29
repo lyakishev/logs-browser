@@ -1,0 +1,11 @@
+{"xml": """f#ddd: .* f#00f,s#b: <\w+(:\w+)? f#ddd:</\w+> 
+	f#aaa: <.+?/> f#ddd: <|> f#0f0: \d+; 
+	f#f00: (?i)(?<=>)\s+[a-z0-9_#-:]+\s+(?=<) 
+	s#10b: \[|\]""",
+"PL/SQL": """f#00f,s#b: (?<!\()[A-Z_]{4,}(?!\)) f#f00,s#b: (?<=[=]).+ 
+	  f#00005ef70000,s#b: (?<=\s)(\w|_)+\.(\w|_)+(?=\s) 
+	  f#a020f0: (?<=\[)[A-Z][a-z]+(?=\])""",
+"log4j_xml": """s#b: (?s)<log4j:message>.+?</log4j:message> 
+		f#eee: <log4j:message>|</log4j:message>"""
+}
+
