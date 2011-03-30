@@ -1,9 +1,9 @@
 from db.engine import insert_many
-from parser.files.worker import filelogworker as fworker
+from lparser.files.worker import filelogworker as fworker
 from source.worker import file_preparator
 import sys
 if sys.platform == 'win32':
-    from parser.events.worker import evlogworker as eworker
+    from lparser.events.worker import evlogworker as eworker
 
 
 def process(table, sources, dates, callback):

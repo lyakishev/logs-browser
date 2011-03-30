@@ -5,7 +5,7 @@ import os
 import datetime as dt
 from readers import mmap_block_read
 from operator import itemgetter
-from parser.utils import to_unicode
+from lparser.utils import to_unicode
 
 _formats = {}
 

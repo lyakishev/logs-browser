@@ -1,26 +1,40 @@
-from setuptools import setup, find_packages
-import sys, os
+from cx_Freeze import setup, Executable
+import sys
 
-version = '0.0'
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"
+
+version = '0.3.0'
+
+buildOptions = dict(
+            compressed = True,
+            optimize = 2,
+            packages=['logsbrowser', 'logsbrowser.db',
+                      'logsbrowser.lparser','logsbrowser.lparser.events',
+                      'logsbrowser.lparser.files',
+                      'logsbrowser.source',
+                      'logsbrowser.ui', 'logsbrowser.utils'],
+            )
 
 setup(name='logsbrowser',
       version=version,
       description="",
       long_description="""\
 """,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
       author='Andrey V. Lyakishev',
       author_email='lyakav@gmail.com',
       url='',
       license='',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
-      include_package_data=True,
-      zip_safe=False,
-      install_requires=[
-          # -*- Extra requirements: -*-
-      ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      packages=['logsbrowser', 'logsbrowser.db',
+                      'logsbrowser.lparser','logsbrowser.lparser.events',
+                      'logsbrowser.lparser.files',
+                      'logsbrowser.source',
+                      'logsbrowser.ui', 'logsbrowser.utils'],
+      requires=['sqlite3'],
+      options = dict(build_exe = buildOptions),
+      executables=[Executable("logsbrowser/main.py",base=base,
+                              targetName="logsbrowser.exe",
+                                copyDependentFiles = True,
+                              )]
       )
