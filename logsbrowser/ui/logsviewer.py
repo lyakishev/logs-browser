@@ -11,6 +11,7 @@ from logstree import LogsTrees
 from logsnotebook import LogsNotebook
 import sys
 from statusicon import StatusIcon
+import config
 
 class LogsViewer:
     """ The GUI class is the controller for application """
@@ -26,7 +27,7 @@ class LogsViewer:
         options_frame = gtk.Frame("Options")
         self.index_t = gtk.CheckButton(
                                 "Full-text index (enables MATCH operator)")
-        self.index_t.set_active(True)
+        self.index_t.set_active(config.FTSINDEX)
         options_frame.add(self.index_t)
 
         self.status = StatusIcon(self.date_filter, self.root)
