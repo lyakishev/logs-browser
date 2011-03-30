@@ -84,7 +84,7 @@ class LogsViewer:
         return (logw, loglist)
 
     def callback(self, text="Working..."):
-        self.progressbar.set_fraction(self.frac*self.count-1)
+        self.progressbar.set_fraction(self.frac*self.count)
         self.count+=1
         self.progressbar.set_text(text)
         while gtk.events_pending():
@@ -98,8 +98,7 @@ class LogsViewer:
         logw, loglist = self.prepare_loglist()
         sources = self.source_tree.get_log_sources()
         self.frac = 1.0 / (len(sources[0]+sources[1])+1)
-        print self.frac
-        self.count = 1
+        self.count = 0
         dates = (self.date_filter.get_active() and
                  self.date_filter.get_dates or
                  (datetime.min, datetime.max))

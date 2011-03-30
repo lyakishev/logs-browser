@@ -5,16 +5,18 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '0.3.0'
+version = '1.5'
 
 buildOptions = dict(
             compressed = True,
             optimize = 2,
-            packages=['logsbrowser', 'logsbrowser.db',
-                      'logsbrowser.lparser','logsbrowser.lparser.events',
-                      'logsbrowser.lparser.files',
-                      'logsbrowser.source',
-                      'logsbrowser.ui', 'logsbrowser.utils'],
+            #packages=['logsbrowser.db',
+            #          'logsbrowser.lparser','logsbrowser.lparser.events',
+            #          'logsbrowser.lparser.files',
+            #          'logsbrowser.source',
+            #          'logsbrowser.ui', 'logsbrowser.utils'],
+            packages = ['logsbrowser'],
+            path = sys.path+['logsbrowser/']
             )
 
 setup(name='logsbrowser',
@@ -26,12 +28,12 @@ setup(name='logsbrowser',
       author_email='lyakav@gmail.com',
       url='',
       license='',
-      packages=['logsbrowser', 'logsbrowser.db',
-                      'logsbrowser.lparser','logsbrowser.lparser.events',
-                      'logsbrowser.lparser.files',
-                      'logsbrowser.source',
-                      'logsbrowser.ui', 'logsbrowser.utils'],
-      requires=['sqlite3'],
+      #packages=['logsbrowser', 'logsbrowser.db',
+      #                'logsbrowser.lparser','logsbrowser.lparser.events',
+      #                'logsbrowser.lparser.files',
+      #                'logsbrowser.source',
+      #                'logsbrowser.ui', 'logsbrowser.utils'],
+      requires=['sqlite3', 'hashlib'],
       options = dict(build_exe = buildOptions),
       executables=[Executable("logsbrowser/main.py",base=base,
                               targetName="logsbrowser.exe",

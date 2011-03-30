@@ -16,6 +16,6 @@ def time_it(function):
     def wrapper(*args,**kw):
         dt = datetime.datetime.now()
         res = function(*args,**kw)
-        print datetime.datetime.now() - dt
+        print function.__name__, datetime.datetime.now() - dt
         return res
     return wrapper
