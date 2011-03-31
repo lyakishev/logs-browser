@@ -50,6 +50,11 @@ class LogList(object):
         self.table = ""
         self.ids=[]
 
+    def clear_ids(self):
+        for sid in self.ids:
+            glib.source_remove(sid)
+        self.ids=[]
+
     def change_name(self, name):
         try:
             self.sql_context.pop(self.name)
@@ -60,8 +65,7 @@ class LogList(object):
             self.sql_context[self.name] = self.table
 
     def execute(self, sql):
-        for sid in self.ids:
-            glib.source_remove(sid)
+        self.clear_ids()
         self.view.freeze_child_notify()
         self.view.set_model(None)
         try:
@@ -77,6 +81,7 @@ class LogList(object):
             for row in iter(rows):
                 self.model.append(row)
             if 'bgcolor' in self.headers:
+                self.ids=[]
                 bgcolor = self.headers.index('bgcolor')
                 white = set(["#fff", "None"])
                 for row in self.model:
@@ -124,6 +129,7 @@ class LogList(object):
                 col.set_visible(False)
 
     def clear(self):
+        self.clear_ids()
         self.sql_context.pop(self.name)
         if self.model:
             self.model.clear()
