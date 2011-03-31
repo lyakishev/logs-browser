@@ -66,31 +66,14 @@ class AggError:
 
 class ColorAgg:
     def __init__(self):
-        self.colors = []
-
-    def circ_ave(self, a0, a1):
-        r = (a0+a1)/2., ((a0+a1+360)/2.)%360 
-        if min(abs(a1-r[0]), abs(a0-r[0])) < min(abs(a0-r[1]), abs(a1-r[1])):
-            return r[0]
-        else:
-            return r[1]
+        self.colors = set()
 
     def step(self, value):
-        if value != '#fff':
-            c = gtk.gdk.color_parse(value)
-            self.colors.append((c.red,c.green,c.blue))
+        self.colors.add(str(value))
 
     def finalize(self):
-        if self.colors:
-            new_colors = set([rgb_to_hsv(*c) for c in set(self.colors)])
-            hue = reduce(self.circ_ave, [c[0]*360 for c in new_colors])/360.
-            saturations = [c[1] for c in new_colors]
-            sat = sum(saturations)/float(len(saturations))
-            values = [c[2]/65535. for c in new_colors]
-            value = sum(values)/float(len(values))
-            mix_color=gtk.gdk.color_from_hsv(hue, sat, value)
-            return mix_color.to_string()
-        else:
-            return '#fff'
+        return " ".join(self.colors)
+        
+
 
 

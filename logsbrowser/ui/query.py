@@ -192,7 +192,7 @@ class QueryDesigner():
         for r in self.query_model:
             if r[0]:
                 column = r[1].replace("snippet",
-                                      "snippet(this)").replace("time",
+                                      "snippet($this)").replace("time",
                                                             "strftime('%H:%M:%S.%f',date)")
                 select += "%s%s, " % (("%s(%s)" % (r[4], column)) if (r[4] and r[4]!='group') else column,
                             (" as %s" % r[2]) if r[2] else "")
@@ -211,7 +211,7 @@ class QueryDesigner():
                 else:
                     nonmatch_clauses.append("%s %s" % (r[2] or r[1],
                                                  match_))
-        match_clauses = "this MATCH '%s'" % match_clauses[:-1] if match_clauses else ""
+        match_clauses = "$this MATCH '%s'" % match_clauses[:-1] if match_clauses else ""
         nonmatch_clauses = " AND ".join(nonmatch_clauses)
         where_clauses = ((match_clauses+" AND "+nonmatch_clauses) if match_clauses
                          and nonmatch_clauses else (match_clauses or
@@ -231,17 +231,22 @@ class QueryDesigner():
 
         color_fields = [(r[2] or r[1]) for r in self.query_model if r[7]]
         if color_fields:
-            color_clause = " ".join(["when %s %s then '%s'" % match(r[1],
-                                                    check_clause(r[7]), r[8]) for r in
-                                                        self.query_model if
-                                                        r[7] and r[1]])
-            color = "(case " + color_clause + " else '#fff' end) as bgcolor"
-            select += "%s, " % color
-        
+            color = "'#fff' as bgcolor"
+            bgcolor_n = 1
+            for r in self.query_model:
+                if r[7] and r[1]:
+
+                    bgcol="(case when %s %s then '%s' end)" % match(r[1],
+                                                    check_clause(r[7]), r[8])
+                    if groups:
+                        bgcol = "color_agg(%s)" % bgcol
+                    color+=(",\n%s as bgcolor_%d" % (bgcol, bgcolor_n))
+                    bgcolor_n+=1
+            select += ("\n%s," % color)
         if agg:
-            select+="rows(rowid) as rows_for_log_window"
+            select+="\nrows(rowid) as rows_for_log_window"
         else:
-            select+="rowid as rows_for_log_window"
+            select+="\nrowid as rows_for_log_window"
         return "\n".join([select,from_,where,groupby,order_by])
 
 

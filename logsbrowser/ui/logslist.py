@@ -11,12 +11,15 @@ from logwindow import SeveralLogsWindow
 from datetime import datetime
 import pango
 import os
-from operator import mul, itemgetter
+from operator import mul, itemgetter, setitem
 from db.engine import create_new_table, get_msg, execute, set_break,\
                         DBException, drop, set_callback, check_break,\
                         interrupt
 from utils.hash import hash_value
 from dialogs import merror
+import glib
+from itertools import cycle
+import config
 
 def callback():
     if check_break():
@@ -26,6 +29,10 @@ def callback():
         gtk.main_iteration()
 
 set_callback(callback)
+
+def blink(model, iter_, column, colors):
+    model.set_value(iter_, column, colors.next())
+    return True
 
 
 class LogList(object):
@@ -41,6 +48,7 @@ class LogList(object):
         self.fts = True
         self.name = ""
         self.table = ""
+        self.ids=[]
 
     def change_name(self, name):
         try:
@@ -52,6 +60,8 @@ class LogList(object):
             self.sql_context[self.name] = self.table
 
     def execute(self, sql):
+        for sid in self.ids:
+            glib.source_remove(sid)
         self.view.freeze_child_notify()
         self.view.set_model(None)
         try:
@@ -66,6 +76,23 @@ class LogList(object):
             self.build_view(self.headers)
             for row in iter(rows):
                 self.model.append(row)
+            if 'bgcolor' in self.headers:
+                bgcolor = self.headers.index('bgcolor')
+                white = set(["#fff", "None"])
+                for row in self.model:
+                    colorcols = [n for n, c in enumerate(self.headers)\
+                                 if c.startswith('bgcolor')]
+                    colors = set()
+                    for cols in [r for r in [row[c] for c in colorcols] if r]:
+                        for col1 in cols.split():
+                            colors.add(col1)
+                    wowhite = colors - white
+                    if wowhite:
+                        if len(wowhite)>1:
+                            self.ids.append(glib.timeout_add(config.BLINK_MS, blink, self.model, row.iter,\
+                                bgcolor, cycle(wowhite)))
+                        else:
+                            self.model.set_value(row.iter, bgcolor, wowhite.pop())
             self.view.set_model(self.model)
         self.view.thaw_child_notify()
 
@@ -80,7 +107,8 @@ class LogList(object):
             renderer.props.wrap_mode = pango.WRAP_WORD
             if 'bgcolor' in args:
                 col = gtk.TreeViewColumn(header, renderer,
-                                    text=number,
+                                    text=
+                                    number,
                                     cell_background=args.index('bgcolor'))
             else:
                 col = gtk.TreeViewColumn(header, renderer,
@@ -91,7 +119,8 @@ class LogList(object):
             self.view.append_column(col)
             if header == 'rows_for_log_window':
                 self.rflw = number
-            if header in ('rows_for_log_window', 'bgcolor'):
+                col.set_visible(False)
+            if header.startswith('bgcolor'):
                 col.set_visible(False)
 
     def clear(self):

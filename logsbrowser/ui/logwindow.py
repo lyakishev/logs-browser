@@ -469,7 +469,8 @@ class SeveralLogsWindow(LogWindow):
         prev_f = ""
         for p in reversed(pathlist):
             iter_ = model.get_iter(p)
-            select = self.loglist.get_msg_by_rowids(iter_)
+            rows = self.model.get_value(iter_, self.loglist.rflw)
+            select = get_msg(rows, self.loglist.table)
             dates.extend(select[0])
             log_names.extend(select[1])
             types.extend(select[2])

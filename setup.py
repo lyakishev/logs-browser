@@ -5,7 +5,7 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '1.5'
+version = '1.6'
 
 buildOptions = dict(
             compressed = True,
