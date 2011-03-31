@@ -27,7 +27,10 @@ def callback():
 
 set_callback(callback)
 
-class LogList:
+
+class LogList(object):
+    
+    sql_context = {}
 
     def __init__(self):
         self.view = gtk.TreeView()
@@ -36,13 +39,23 @@ class LogList:
         self.columns = []
         self.headers = []
         self.fts = True
+        self.name = ""
         self.table = ""
+
+    def change_name(self, name):
+        try:
+            self.sql_context.pop(self.name)
+        except KeyError:
+            pass
+        finally:
+            self.name = name
+            self.sql_context[self.name] = self.table
 
     def execute(self, sql):
         self.view.freeze_child_notify()
         self.view.set_model(None)
         try:
-            desc, rows = execute(sql, self.table)
+            desc, rows = execute(sql, self.get_context())
         except DBException, e:
             merror(str(e))
             rows = None
@@ -82,14 +95,21 @@ class LogList:
                 col.set_visible(False)
 
     def clear(self):
+        self.sql_context.pop(self.name)
         if self.model:
             self.model.clear()
         if self.table:
             drop(self.table)
+
+    def get_context(self):
+        con = self.sql_context.copy()
+        con.update({"this": self.table})
+        return con
         
     def new_logs(self, index):
         self.clear()
         self.table = hash_value(datetime.now())
+        self.sql_context[self.name] = self.table
         create_new_table(self.table, index)
         self.fts = index
 
@@ -151,6 +171,9 @@ class LogsListWindow(gtk.Frame):
 
         self.sens_list = [exec_btn,lwin_btn]+self.filter_logs.sens_list
         self.ntb = ntb
+
+    def set_name(self, name):
+        self.log_list.change_name(name)
 
     def fill(self, *args):
         self.break_btn.set_sensitive(True)

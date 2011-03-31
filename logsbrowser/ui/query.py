@@ -182,7 +182,7 @@ class QueryDesigner():
         def match(col, clause, color):
             if 'match' in clause.lower():
                 return ("rowid",
-                        "in (select rowid from this where %s %s)" % (col,
+                        "in (select rowid from $this where %s %s)" % (col,
                                                                     clause),
                         color)
             else:
@@ -197,7 +197,7 @@ class QueryDesigner():
                 select += "%s%s, " % (("%s(%s)" % (r[4], column)) if (r[4] and r[4]!='group') else column,
                             (" as %s" % r[2]) if r[2] else "")
 
-        from_ = "from this"
+        from_ = "from $this"
 
         match_re = re.compile("(?i)match '(.+?)'")
         match_clauses = ""

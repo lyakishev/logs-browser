@@ -80,14 +80,17 @@ class LogsNotebook(gtk.Notebook):
             self.entry.grab_focus()
 
     def new_page_name(self, *args):
+        name = self.entry.get_text().replace(" ","_")
         self.mem_tab.get_children()[0].get_children()[0].\
-                           set_text(self.entry.get_text())
+                           set_text(name)
+        self.page.set_name(name)
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
 
     def add_new_page(self):
         tab_lab = gtk.HBox()
-        label = gtk.Label("Page %s" % self.counter)
+        name = "Page_%s" % self.counter
+        label = gtk.Label(name)
         e = gtk.EventBox()
         e.add(label)
         e.add_events(gtk.gdk.BUTTON_PRESS_MASK)
@@ -105,6 +108,7 @@ class LogsNotebook(gtk.Notebook):
         tab_lab.pack_start(tab_button, False, False)
         tab_lab.show_all()
         l_list = LogsListWindow(self)
+        l_list.set_name(name)
         l_list.get_view.connect("button-press-event", self.show_menu)
         l_list.show()
         tab_lab.show()

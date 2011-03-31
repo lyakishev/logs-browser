@@ -2,6 +2,7 @@ import sqlite3
 import config
 from functions import *
 from datetime import datetime
+from string import Template
 
 _break = False
 
@@ -73,10 +74,10 @@ def get_msg(rows, table):
     sources = [r[3] for r in result]
     return (dates, log_names, types, sources, msg)
 
-def execute(sql, table):
+def execute(sql_templ, context):
     cur = _dbconn.cursor()
-    rows_sql = sql.replace("this", table)
-    cur.execute(rows_sql)
+    sql = Template(sql_templ).safe_substitute(context)
+    cur.execute(sql)
     rows = cur.fetchall()
     desc = cur.description
     return (desc, rows)
