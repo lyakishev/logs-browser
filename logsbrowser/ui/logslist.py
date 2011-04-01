@@ -20,6 +20,7 @@ from dialogs import merror
 import glib
 from itertools import cycle
 import config
+from cellrenderercolors import CellRendererColors
 
 def callback():
     if check_break():
@@ -29,10 +30,6 @@ def callback():
         gtk.main_iteration()
 
 set_callback(callback)
-
-def blink(model, iter_, column, colors):
-    model.set_value(iter_, column, colors.next())
-    return True
 
 
 class LogList(object):
@@ -48,12 +45,6 @@ class LogList(object):
         self.fts = True
         self.name = ""
         self.table = ""
-        self.ids=[]
-
-    def clear_ids(self):
-        for sid in self.ids:
-            glib.source_remove(sid)
-        self.ids=[]
 
     def change_name(self, name):
         try:
@@ -65,7 +56,6 @@ class LogList(object):
             self.sql_context[self.name] = self.table
 
     def execute(self, sql):
-        self.clear_ids()
         self.view.freeze_child_notify()
         self.view.set_model(None)
         try:
@@ -81,12 +71,11 @@ class LogList(object):
             for row in iter(rows):
                 self.model.append(row)
             if 'bgcolor' in self.headers:
-                self.ids=[]
                 bgcolor = self.headers.index('bgcolor')
                 white = set(["#fff", "None"])
+                colorcols = [n for n, c in enumerate(self.headers)\
+                             if c.startswith('bgcolor')]
                 for row in self.model:
-                    colorcols = [n for n, c in enumerate(self.headers)\
-                                 if c.startswith('bgcolor')]
                     colors = set()
                     for cols in [r for r in [row[c] for c in colorcols] if r]:
                         for col1 in cols.split():
@@ -94,8 +83,7 @@ class LogList(object):
                     wowhite = colors - white
                     if wowhite:
                         if len(wowhite)>1:
-                            self.ids.append(glib.timeout_add(config.BLINK_MS, blink, self.model, row.iter,\
-                                bgcolor, cycle(wowhite)))
+                            self.model.set_value(row.iter, bgcolor, " ".join(wowhite))
                         else:
                             self.model.set_value(row.iter, bgcolor, wowhite.pop())
             self.view.set_model(self.model)
@@ -106,15 +94,14 @@ class LogList(object):
             self.view.remove_column(col)
         self.columns = []
         for number, header in enumerate(args):
-            renderer = gtk.CellRendererText()
+            renderer = CellRendererColors()
             renderer.set_property('editable', False)
             renderer.props.wrap_width = 640
             renderer.props.wrap_mode = pango.WRAP_WORD
             if 'bgcolor' in args:
                 col = gtk.TreeViewColumn(header, renderer,
-                                    text=
-                                    number,
-                                    cell_background=args.index('bgcolor'))
+                                    text= number,
+                                    backgrounds=args.index('bgcolor'))
             else:
                 col = gtk.TreeViewColumn(header, renderer,
                                     text=number)
@@ -129,7 +116,6 @@ class LogList(object):
                 col.set_visible(False)
 
     def clear(self):
-        self.clear_ids()
         self.sql_context.pop(self.name)
         if self.model:
             self.model.clear()
