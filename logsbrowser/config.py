@@ -14,6 +14,8 @@ _config.read(os.path.join(_config_dir, "logsbrowser.cfg"))
 
 SQL_URI = _config.get("db", 'sql_uri')
 BLINK_MS = _config.getint("colors", 'blink_ms')
+COLOR_RECT_WIDTH = _config.getint("colors", 'color_rectangle_width')
+BOLD_SELECTED = _config.getboolean("colors", 'bold_selected')
 
 FLOGS_CFG = get_path(_config.get("config_files", 'file_logs'))
 ELOGS_CFG = get_path(_config.get("config_files", 'event_logs'))

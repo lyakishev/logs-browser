@@ -15,12 +15,13 @@ from operator import mul, itemgetter, setitem
 from db.engine import create_new_table, get_msg, execute, set_break,\
                         DBException, drop, set_callback, check_break,\
                         interrupt
-from utils.hash import hash_value
+from utils.hash import hash_value, sql_to_hash
 from dialogs import merror
 import glib
 from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
+from string import Template
 
 def callback():
     if check_break():
@@ -35,6 +36,7 @@ set_callback(callback)
 class LogList(object):
     
     sql_context = {}
+    _cache = {}
 
     def __init__(self):
         self.view = gtk.TreeView()
@@ -45,6 +47,7 @@ class LogList(object):
         self.fts = True
         self.name = ""
         self.table = ""
+        self.cached_queries = []
 
     def change_name(self, name):
         try:
@@ -55,39 +58,52 @@ class LogList(object):
             self.name = name
             self.sql_context[self.name] = self.table
 
-    def execute(self, sql):
+    def execute(self, sql_templ):
+        sql = Template(sql_templ).safe_substitute(self.get_context())
         self.view.freeze_child_notify()
         self.view.set_model(None)
-        try:
-            desc, rows = execute(sql, self.get_context())
-        except DBException, e:
-            merror(str(e))
-            rows = None
-        if rows:
-            self.headers = map(itemgetter(0), desc)
-            cols = [gobject.TYPE_STRING for i in self.headers]
-            self.model = gtk.ListStore(*cols)
+        sql_hash = sql_to_hash(sql)
+        model = self._cache.get(sql_hash)
+        if model:
+            self.model = model[0]
+            self.headers = model[1]
             self.build_view(self.headers)
-            for row in iter(rows):
-                self.model.append(row)
-            if 'bgcolor' in self.headers:
-                bgcolor = self.headers.index('bgcolor')
-                white = set(["#fff", "None"])
-                colorcols = [n for n, c in enumerate(self.headers)\
-                             if c.startswith('bgcolor')]
-                for row in self.model:
-                    colors = set()
-                    for cols in [r for r in [row[c] for c in colorcols] if r]:
-                        for col1 in cols.split():
-                            colors.add(col1)
-                    wowhite = colors - white
-                    if wowhite:
-                        if len(wowhite)>1:
-                            self.model.set_value(row.iter, bgcolor, " ".join(wowhite))
-                        else:
-                            self.model.set_value(row.iter, bgcolor, wowhite.pop())
             self.view.set_model(self.model)
-        self.view.thaw_child_notify()
+            self.view.thaw_child_notify()
+            return
+        else:
+            try:
+                desc, rows = execute(sql)
+            except DBException, e:
+                merror(str(e))
+                rows = None
+            if rows:
+                self.headers = map(itemgetter(0), desc)
+                cols = [gobject.TYPE_STRING for i in self.headers]
+                self.model = gtk.ListStore(*cols)
+                self.build_view(self.headers)
+                for row in iter(rows):
+                    self.model.append(row)
+                if 'bgcolor' in self.headers:
+                    bgcolor = self.headers.index('bgcolor')
+                    white = set(["#fff", "None"])
+                    colorcols = [n for n, c in enumerate(self.headers)\
+                                 if c.startswith('bgcolor')]
+                    for row in self.model:
+                        colors = set()
+                        for cols in [r for r in [row[c] for c in colorcols] if r]:
+                            for col1 in cols.split():
+                                colors.add(col1)
+                        wowhite = colors - white
+                        if wowhite:
+                            if len(wowhite)>1:
+                                self.model.set_value(row.iter, bgcolor, " ".join(wowhite))
+                            else:
+                                self.model.set_value(row.iter, bgcolor, wowhite.pop())
+                self._cache[sql_hash] = (self.model, self.headers)
+                self.cached_queries.append(sql_hash)
+                self.view.set_model(self.model)
+            self.view.thaw_child_notify()
 
     def build_view(self, args):
         for col in self.columns:
@@ -116,11 +132,18 @@ class LogList(object):
                 col.set_visible(False)
 
     def clear(self):
-        self.sql_context.pop(self.name)
+        try:
+            self.sql_context.pop(self.name)
+        except KeyError:
+            pass
         if self.model:
             self.model.clear()
         if self.table:
             drop(self.table)
+
+    def clear_cached_queries(self):
+        for q in self.cached_queries:
+            self._cache.pop(q)
 
     def get_context(self):
         con = self.sql_context.copy()

@@ -3,6 +3,7 @@ import pango
 import cairo
 import gobject
 from itertools import cycle
+import config
 
 
 class CellRendererColors(gtk.CellRendererText):
@@ -39,12 +40,15 @@ class CellRendererColors(gtk.CellRendererText):
         h = background_area.height
 
         colors = self.get_property('backgrounds')
-        if colors and not bool(flags & gtk.CELL_RENDERER_SELECTED):
+        if colors and (not bool(flags & gtk.CELL_RENDERER_SELECTED) or \
+                        config.BOLD_SELECTED):
             gdk_colors = [gtk.gdk.color_parse(c) for c in colors.split()]
             self.render_rect(cairo_context, x, y, w, h, gdk_colors)
             context = widget.get_pango_context()
             layout = pango.Layout(context)
             layout.set_text(self.get_property('text'))
+            if (bool(flags & gtk.CELL_RENDERER_SELECTED) and config.BOLD_SELECTED):
+                layout.set_font_description(pango.FontDescription("bold"))
             layout.set_width(cell_area.width * pango.SCALE)
             widget.style.paint_layout(window, gtk.STATE_NORMAL, True,
                                     background_area, widget, 'footext',
@@ -62,7 +66,7 @@ class CellRendererColors(gtk.CellRendererText):
 
     def render_rect(self, cr, x, y, w, h, colors):
         icolors = cycle(colors)
-        width = 20
+        width = config.COLOR_RECT_WIDTH
         y0 = y
         y1 = y+h
         x0 = x
