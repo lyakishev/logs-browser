@@ -33,9 +33,21 @@ drag-n-drop
 #create view current
 #intersect
 #
-#
 #в окне лога подсвечивать дату цветами из таблицы и в тексте лога тоже подсвечивать
 #шрифт подправить при раскрашивании таблицы
 #соединить мигание и "радугу" - сделать опцию выбора режима
 #шаблоны?
 #
+#загружать при старте дерево - опционально
+#$color{log match 'alyakishev', #f00}
+#опция - многопоточность
+#
+#select date, log, type, $color{type match 'error', #f00}, $logw
+#from $this
+#group by date, log, type
+#order by date desc
+#
+#
+#union, distinct... продумать интерфейс запроса
+#
+#pygments?

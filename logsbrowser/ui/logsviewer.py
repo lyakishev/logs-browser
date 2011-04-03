@@ -12,6 +12,8 @@ from logsnotebook import LogsNotebook
 import sys
 from statusicon import StatusIcon
 import config
+import utils.profiler as profiler
+
 
 class LogsViewer:
     """ The GUI class is the controller for application """
@@ -92,6 +94,7 @@ class LogsViewer:
             gtk.main_iteration()
         return self.stop or self.break_
 
+    @profiler.time_it
     def show_logs(self, *args):
         self.browser.set_sens(False)
         self.stop = False
