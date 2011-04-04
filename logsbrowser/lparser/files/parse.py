@@ -15,7 +15,10 @@ _formats = [
              r"(?P<year2>\d{4}) "]),
     "".join([r"(?<!\d)(?P<day3>\d{2})[.-]",
              r"(?P<month3>\d{2})[.-]",
-             r"(?P<short_year3>\d{2}) "])]
+             r"(?P<short_year3>\d{2}) "]),
+    "".join([r"(?P<month4>\d{2})[/]",
+             r"(?P<day4>\d{2})[/]",
+             r"(?P<year4>\d{4}) "])]
 
 _suffix = "".join([r"(?P<hour>\d{1,2}):"
          r"(?P<min>\d{2}):",
@@ -60,27 +63,26 @@ def parse_logline(line, cdate, re_obj):
     if parsed_line:
         if re_obj is not _log4j:
             groups = parsed_line.group
-            millisecs = groups("ms")
-            millisecs = int((millisecs+'000')[:6] if millisecs else 0)
+            millisecs = groups("ms") or '0'
             try:
-                day = int(groups("day"))
+                day = groups("day")
             except IndexError:
                 year = cdate.year
-                month = cdate.month
-                day = cdate.day
+                month = "%02d" % cdate.month
+                day = "%02d" % cdate.day
             else:
-                month = int(groups("month"))
+                month = groups("month")
                 try:
-                    year = int(groups("year"))
+                    year = groups("year")
                 except IndexError:
-                    year = int(groups("short_year"))+2000
-            return datetime(year,month,day,
+                    year = '20'+groups("short_year")
+            return "%s-%s-%s %02d:%s:%s.%s" % (year, month, day,
                                   int(groups('hour')),
-                                  int(groups('min')),
-                                  int(groups('sec')),
+                                  groups('min'),
+                                  groups('sec'),
                                   millisecs)
         else:
             tstamp = parsed_line.group('datetime')
-            return datetime.fromtimestamp(float(tstamp) / 1000)
+            return datetime.fromtimestamp(float(tstamp) / 1000).isoformat(' ')
     else:
         return None

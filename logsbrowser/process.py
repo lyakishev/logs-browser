@@ -4,8 +4,10 @@ from source.worker import file_preparator
 import sys
 if sys.platform == 'win32':
     from lparser.events.worker import evlogworker as eworker
+from utils.profiler import time_it
 
 
+@time_it
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):

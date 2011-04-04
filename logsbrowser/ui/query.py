@@ -244,7 +244,7 @@ class QueryDesigner():
                     bgcolor_n+=1
             select += ("\n%s," % color)
         if agg:
-            select+="\nrows(rowid) as rows_for_log_window"
+            select+="\ngroup_concat(rowid) as rows_for_log_window"
         else:
             select+="\nrowid as rows_for_log_window"
         return "\n".join([select,from_,where,groupby,order_by])

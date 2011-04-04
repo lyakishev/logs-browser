@@ -7,6 +7,12 @@ import datetime
 from common_filter import CommonFilter
 from utils.net_time import GetTrueTime
 
+def isoformat(function):
+    def to_iso_wrapper(*args, **kw):
+        start, end = function(*args, **kw)
+        return (start.isoformat(' '), end.isoformat(' '))
+    return to_iso_wrapper
+
 
 class DateTimeWidget(gtk.Table):
     def __init__(self, d=datetime.timedelta(0)):
@@ -85,6 +91,7 @@ class FromToOption(gtk.HBox):
         else:
             self.to_date.set_sens(False)
 
+    @isoformat
     def get_dates(self):
         if self.to_check:
             return (self.from_date.get_datetime(), self.to_date.get_datetime())
@@ -113,6 +120,7 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_spin, False, False)
         self.pack_start(self.last_date_combo, False, False)
 
+    @isoformat
     def get_dates(self):
         end_date = datetime.datetime.fromtimestamp(GetTrueTime())
         dateunit = [1. * 24 * 60 * 60, 1. * 24 * 60, 1. * 24, 1.]
@@ -138,6 +146,7 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_radio, False, False)
         self.pack_start(self.this_date_combo, False, False)
 
+    @isoformat
     def get_dates(self):
         end_date = datetime.datetime.fromtimestamp(GetTrueTime())
         start_hour = datetime.datetime(end_date.year,

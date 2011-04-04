@@ -2,6 +2,7 @@ import sqlite3
 import config
 from functions import *
 from datetime import datetime
+from utils.profiler import time_it
 
 _break = False
 
@@ -10,9 +11,7 @@ _dbconn.create_function("strip", 1, strip)
 _dbconn.create_function("regexp", 2, regexp)
 _dbconn.create_function("regex", 3, regex)
 _dbconn.create_function("pretty", 1, pretty_xml)
-_dbconn.create_aggregate("rows", 1, RowIDsList)
 _dbconn.create_aggregate("error", 1, AggError)
-_dbconn.create_aggregate("color_agg", 1, ColorAgg)
 _dbconn.execute("PRAGMA synchronous=OFF;")
 
 DBException = sqlite3.OperationalError
@@ -50,7 +49,7 @@ def drop(table):
 def get_msg(rows, table):
     rowids = rows.split(",")
     if len(rowids) < 1000:
-        rows_clause = " or ".join(["rowid=%s" % s for s in rows.split(",")])
+        rows_clause = " or ".join(["rowid=%s" % s for s in rowids])
     else:
         rows_clause = "rowid in (%s)" % rows
     msg_sql = """select date, log_name, type, source, pretty(log) 
@@ -61,16 +60,11 @@ def get_msg(rows, table):
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()
-    msg = [r[4] for r in result]
-    dates = []
-    for r in result:
-        try:
-            dates.append(datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f"))
-        except ValueError:
-            dates.append(datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S"))
+    dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
     log_names = [r[1] for r in result]
     types = [r[2] for r in result]
     sources = [r[3] for r in result]
+    msg = [r[4] for r in result]
     return (dates, log_names, types, sources, msg)
 
 def execute(sql):

@@ -105,7 +105,7 @@ class LogsViewer:
         self.count = 0
         dates = (self.date_filter.get_active() and
                  self.date_filter.get_dates or
-                 (datetime.min, datetime.max))
+                 (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
         self.process(loglist.table, sources, dates, self.callback)
         if self.break_:
             loglist.clear()

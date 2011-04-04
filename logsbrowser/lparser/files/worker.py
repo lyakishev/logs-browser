@@ -48,7 +48,7 @@ def filelogworker(dates, path, log):
         except WindowsError:
             print "WindowsError: %s" % path
             raise StopIteration
-        if cdate > dates[1]:
+        if cdate.isoformat(' ') > dates[1]:
             raise StopIteration
         pformat = date_format(path, log)
         comp = [p for p in path.split(os.sep) if p][0]

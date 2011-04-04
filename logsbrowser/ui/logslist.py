@@ -22,6 +22,7 @@ from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
 from string import Template
+from utils.profiler import time_it
 
 def callback():
     if check_break():
