@@ -8,7 +8,7 @@ try:
 except:
     pass
 from multiprocessing import Value
-from utils.net_time import GetTrueTime
+from utils.net_time import get_true_time
 
 
 class StatusIcon:
@@ -25,7 +25,7 @@ class StatusIcon:
         self.active = True
 
     def change_mode(self, *args):
-        now = GetTrueTime()
+        now = get_true_time()
         if self.record:
             self.statusicon.set_from_stock(gtk.STOCK_YES)
             self.date_filter.fromto_option.to_date.set_date(now)

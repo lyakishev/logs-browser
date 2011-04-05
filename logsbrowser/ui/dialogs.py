@@ -12,3 +12,10 @@ def merror(text):
                            buttons=gtk.BUTTONS_CANCEL, message_format=text)
     md.run()
     md.destroy()
+
+def mwarning(parent, text):
+    message_dialog = gtk.MessageDialog(parent,
+        gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
+        gtk.BUTTONS_CLOSE, text)
+    message_dialog.run()
+    message_dialog.destroy()

@@ -5,7 +5,7 @@ import gobject
 import gio
 import datetime
 from common_filter import CommonFilter
-from utils.net_time import GetTrueTime
+from utils.net_time import get_true_time
 
 def isoformat(function):
     def to_iso_wrapper(*args, **kw):
@@ -42,7 +42,7 @@ class DateTimeWidget(gtk.Table):
         self.set_now()
 
     def set_now(self, *args):
-        now = GetTrueTime()
+        now = get_true_time()
         self.set_date(now)
 
     def set_date(self, ct):
@@ -97,7 +97,7 @@ class FromToOption(gtk.HBox):
             return (self.from_date.get_datetime(), self.to_date.get_datetime())
         else:
             return (self.from_date.get_datetime(),
-                    datetime.datetime.fromtimestamp(GetTrueTime))
+                    datetime.datetime.fromtimestamp(get_true_time))
 
     def get_active(self):
         return self.from_radio.get_active()
@@ -122,7 +122,7 @@ class LastDateOption(gtk.HBox):
 
     @isoformat
     def get_dates(self):
-        end_date = datetime.datetime.fromtimestamp(GetTrueTime())
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         dateunit = [1. * 24 * 60 * 60, 1. * 24 * 60, 1. * 24, 1.]
         active = self.last_date_combo.get_active()
         delta = self.last_date_spin.get_value() / dateunit[active]
@@ -148,7 +148,7 @@ class ThisOption(gtk.HBox):
 
     @isoformat
     def get_dates(self):
-        end_date = datetime.datetime.fromtimestamp(GetTrueTime())
+        end_date = datetime.datetime.fromtimestamp(get_true_time())
         start_hour = datetime.datetime(end_date.year,
             end_date.month,
             end_date.day,
