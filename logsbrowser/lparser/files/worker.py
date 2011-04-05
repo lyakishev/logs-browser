@@ -1,6 +1,6 @@
 #! -*- coding: utf8 -*-
 
-from parse import parse_logline, define_format
+from parse import define_format
 import os
 import datetime as dt
 from readers import mmap_block_read
@@ -28,7 +28,7 @@ def date_format(path, log):
     except IOError:
         raise StopIteration
     for line in file_:
-        pformat = define_format(line)
+        pformat, pfunc = define_format(line)
         if pformat:
             break
     file_.close()
@@ -37,7 +37,7 @@ def date_format(path, log):
             print "Not found format for file %s" % path
             raise StopIteration
         else:
-            return pformat
+            return (pformat, pfunc)
     except UnboundLocalError:
         raise StopIteration
     
@@ -50,11 +50,11 @@ def filelogworker(dates, path, log):
             raise StopIteration
         if cdate.isoformat(' ') > dates[1]:
             raise StopIteration
-        pformat = date_format(path, log)
+        pformat, pfunc = date_format(path, log)
         comp = [p for p in path.split(os.sep) if p][0]
         msg = ""
         for string in mmap_block_read(path, 16*1024):
-            parsed_date = parse_logline(string, cdate, pformat)
+            parsed_date = pfunc(string, cdate, pformat)
             if not parsed_date:
                 msg = string + msg
             else:

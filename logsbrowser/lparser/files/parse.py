@@ -31,7 +31,62 @@ _log4j = re.compile("".join([r'^<log4j.+',
                             r'timestamp="(?P<datetime>\d+)"',
                             r'.+</log4j:event>']))
 
+def _log4j_parser(line, cdate, re_obj):
+    parsed_line = re_obj.match(line)
+    if parsed_line:
+        tstamp = parsed_line.group('datetime')
+        return datetime.fromtimestamp(float(tstamp) / 1000).isoformat(' ')
+    return None
 
+
+def _short_year_parser(line, cdate, re_obj):
+    parsed_line = re_obj.match(line)
+    if parsed_line:
+        groups = parsed_line.group
+        millisecs = groups("ms") or '000'
+        return "20%s-%s-%s %02d:%s:%s.%s" % (groups('short_year'),
+                                             groups('month'),
+                                             groups('day'),
+                                             int(groups('hour')),
+                                             groups('min'),
+                                             groups('sec'),
+                                             millisecs)
+    return None
+
+
+def _only_time_parser(line, cdate, re_obj):
+    parsed_line = re_obj.match(line)
+    if parsed_line:
+        groups = parsed_line.group
+        millisecs = groups("ms") or '000'
+        return "%s-%02d-%02d %02d:%s:%s.%s" % (cdate.year, cdate.month,
+                                               cdate.day,
+                                               int(groups('hour')),
+                                               groups('min'),
+                                               groups('sec'),
+                                               millisecs)
+    return None
+
+def _normal_parser(line, cdate, re_obj):
+    parsed_line = re_obj.match(line)
+    if parsed_line:
+        groups = parsed_line.group
+        millisecs = groups("ms") or '000'
+        return "%s-%s-%s %02d:%s:%s.%s" % (groups('year'),
+                                           groups('month'),
+                                           groups('day'),
+                                           int(groups('hour')),
+                                           groups('min'),
+                                           groups('sec'),
+                                           millisecs)
+    return None
+
+def define_parser(pdict):
+    if pdict.get("short_year"):
+        return _short_year_parser
+    else:
+        return _normal_parser
+    
 def clear_format(pformat, format_number):
     """Remove numbers from format string"""
     for i in ["year", "month", "day"]:
@@ -46,43 +101,12 @@ def define_format(line):
         parsed_line_dict = parsed_line.groupdict()
         for format_number in range(1, len(_formats) + 1):
             if parsed_line_dict["day%d" % format_number]:
-                return re.compile(_prefix +\
+                return (re.compile(_prefix +\
                                   clear_format(_formats[format_number-1],
                                                format_number) +\
-                                  _suffix)
-        return re.compile(_prefix+_suffix)
+                                  _suffix), define_parser(parsed_line_dict))
+        return (re.compile(_prefix+_suffix), _only_time_parser)
     parsed_line = _log4j.search(line)
     if parsed_line:
-        return _log4j
-    return None
-
-
-def parse_logline(line, cdate, re_obj):
-    """Get datetime from string"""
-    parsed_line = re_obj.match(line)
-    if parsed_line:
-        if re_obj is not _log4j:
-            groups = parsed_line.group
-            millisecs = groups("ms") or '0'
-            try:
-                day = groups("day")
-            except IndexError:
-                year = cdate.year
-                month = "%02d" % cdate.month
-                day = "%02d" % cdate.day
-            else:
-                month = groups("month")
-                try:
-                    year = groups("year")
-                except IndexError:
-                    year = '20'+groups("short_year")
-            return "%s-%s-%s %02d:%s:%s.%s" % (year, month, day,
-                                  int(groups('hour')),
-                                  groups('min'),
-                                  groups('sec'),
-                                  millisecs)
-        else:
-            tstamp = parsed_line.group('datetime')
-            return datetime.fromtimestamp(float(tstamp) / 1000).isoformat(' ')
-    else:
-        return None
+        return (_log4j, _log4j_parser)
+    return (None, None)
