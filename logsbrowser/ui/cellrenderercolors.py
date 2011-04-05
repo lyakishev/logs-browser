@@ -18,7 +18,10 @@ class CellRendererColors(gtk.CellRendererText):
     def __init__(self):
         self.__gobject_init__()
         gtk.CellRendererText.__init__(self)
-        self.bgcolors = ""
+
+    def do_get_size(self, widget, cell_area):
+        x,y,w,h = gtk.CellRendererText.do_get_size(self, widget, cell_area)
+        return (x,y,w*pango.SCALE_LARGE if config.BOLD_SELECTED else w,h)
 
     def do_set_property(self, pspec, value):
         if pspec.name == 'backgrounds':
@@ -33,31 +36,29 @@ class CellRendererColors(gtk.CellRendererText):
 
     def do_render(self, window, widget, background_area, cell_area,
                     expose_area, flags):
-        cairo_context = window.cairo_create()
-        x = background_area.x
-        y = background_area.y
-        w = background_area.width
-        h = background_area.height
-
         colors = self.get_property('backgrounds')
         if colors and (not bool(flags & gtk.CELL_RENDERER_SELECTED) or \
                         config.BOLD_SELECTED):
+            cairo_context = window.cairo_create()
+            x = background_area.x
+            y = background_area.y
+            w = background_area.width
+            h = background_area.height
             gdk_colors = [gtk.gdk.color_parse(c) for c in colors.split()]
             self.render_rect(cairo_context, x, y, w, h, gdk_colors)
-            context = widget.get_pango_context()
-            layout = pango.Layout(context)
-            layout.set_text(self.get_property('text'))
             if (bool(flags & gtk.CELL_RENDERER_SELECTED) and config.BOLD_SELECTED):
+                context = widget.get_pango_context()
+                layout = pango.Layout(context)
+                layout.set_text(self.get_property('text'))
                 layout.set_font_description(pango.FontDescription("bold"))
-            layout.set_width(cell_area.width * pango.SCALE)
-            widget.style.paint_layout(window, gtk.STATE_NORMAL, True,
-                                    background_area, widget, 'footext',
-                                    background_area.x, background_area.y,
-                                    layout)
-
-        else:
-            gtk.CellRendererText.do_render(self, window, widget, background_area, cell_area,
-                    expose_area, flags)
+                widget.style.paint_layout(window, gtk.STATE_NORMAL, True,
+                                        background_area, widget, '',
+                                        background_area.x, background_area.y,
+                                        layout)
+                return
+        gtk.CellRendererText.do_render(self, window, widget, background_area, cell_area,
+                expose_area, flags)
+                
 
     def get_cairo_color(self, color):
             ncolor = color/65535.0

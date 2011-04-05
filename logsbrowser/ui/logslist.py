@@ -41,6 +41,7 @@ class LogList(object):
 
     def __init__(self):
         self.view = gtk.TreeView()
+        self.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.model = None
         self.columns = []
@@ -111,17 +112,18 @@ class LogList(object):
             self.view.remove_column(col)
         self.columns = []
         for number, header in enumerate(args):
-            renderer = CellRendererColors()
+            if 'bgcolor' in args:
+                renderer = CellRendererColors()
+                col = gtk.TreeViewColumn(header, renderer,
+                                    text=number,
+                                    backgrounds=args.index('bgcolor'))
+            else:
+                renderer = gtk.CellRendererText()
+                col = gtk.TreeViewColumn(header, renderer,
+                                    text=number)
             renderer.set_property('editable', False)
             renderer.props.wrap_width = 640
             renderer.props.wrap_mode = pango.WRAP_WORD
-            if 'bgcolor' in args:
-                col = gtk.TreeViewColumn(header, renderer,
-                                    text= number,
-                                    backgrounds=args.index('bgcolor'))
-            else:
-                col = gtk.TreeViewColumn(header, renderer,
-                                    text=number)
             self.columns.append(col)
             col.set_sort_column_id(number)
             col.set_resizable(True)
