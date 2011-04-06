@@ -3,7 +3,7 @@ from process import process
 from ui.logsviewer import LogsViewer
 
 def main():
-    logsviewer = LogsViewer(process)
+    logsviewer = LogsViewer()
     gtk.main()
     
 

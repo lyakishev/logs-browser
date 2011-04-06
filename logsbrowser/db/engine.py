@@ -6,7 +6,7 @@ from utils.profiler import time_it
 
 _break = False
 
-_dbconn = sqlite3.connect(config.SQL_URI)
+_dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("strip", 1, strip)
 _dbconn.create_function("regexp", 2, regexp)
 _dbconn.create_function("regex", 3, regex)

@@ -26,3 +26,5 @@ FTSINDEX = _config.getboolean('ui', 'default_ftsindex')
 SYNCRONIZE_TIME = _config.getboolean('time', 'syncronize')
 SYNCRONIZE_SERVER = _config.get('time', 'syncronize_server')
 SERVER_TIME_FORMAT = _config.get('time', 'server_time_format')
+
+MULTIPROCESS = _config.getboolean('multiprocessing', 'multiprocess')

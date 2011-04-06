@@ -13,11 +13,13 @@ import sys
 from statusicon import StatusIcon
 import config
 import utils.profiler as profiler
+from process import process, mp_process
+import time
 
 
 class LogsViewer:
     """ The GUI class is the controller for application """
-    def __init__(self, process):
+    def __init__(self):
         # setup the main window
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Logs Browser")
@@ -65,7 +67,6 @@ class LogsViewer:
         main_box.pack2(self.browser, True, False)
         self.root.add(main_box)
         self.root.show_all()
-        self.process = process
 
     def stop_all(self, *args):
         self.stop = True
@@ -94,6 +95,15 @@ class LogsViewer:
             gtk.main_iteration()
         return self.stop or self.break_
 
+    def mpcallback(self, e_stop):
+        time.sleep(0.2)
+        self.progressbar.pulse()
+        if self.stop or self.break_:
+            e_stop.set()
+        while gtk.events_pending():
+            gtk.main_iteration()
+        
+
     @profiler.time_it
     def show_logs(self, *args):
         self.browser.set_sens(False)
@@ -106,13 +116,19 @@ class LogsViewer:
         dates = (self.date_filter.get_active() and
                  self.date_filter.get_dates or
                  (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
-        self.process(loglist.table, sources, dates, self.callback)
+        if not config.MULTIPROCESS:
+            process(loglist.table, sources, dates, self.callback)
+        else:
+            self.progressbar.set_pulse_step(self.frac)
+            self.progressbar.set_text("Working...")
+            mp_process(loglist.table, sources, dates, self.mpcallback)
         if self.break_:
             loglist.clear()
             self.progressbar.set_fraction(0.0)
             self.progressbar.set_text("")
         else:
-            self.progressbar.set_text("Filling table...")
+            self.progressbar.set_fraction(1 - self.frac)
+            self.progressbar.set_text("Executing query...")
             logw.fill()
             self.progressbar.set_fraction(1.0)
             self.progressbar.set_text("Complete")
