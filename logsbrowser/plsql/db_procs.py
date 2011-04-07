@@ -19,8 +19,8 @@ class ProcAnalyzer():
         self.package, self.proc_name = self.proc.split('.')
 
     def check(self):
-        self.cur.execute("select count(*) from user_objects where object_name\
-            like :pack", pack=self.package)
+        self.cur.execute("""select count(*) from user_objects where object_name
+            like :pack""", pack=self.package)
         exist = self.cur.fetchall()[0][0]
         if not exist:
             #print "Package does not exist"
@@ -29,8 +29,9 @@ class ProcAnalyzer():
             return True
 
     def proc_body(self):
-        self.cur.execute("select text from user_source where type='PACKAGE "\
-            "BODY' and name=:pack order by line", pack=self.package)
+        self.cur.execute("""select text from user_source where
+                            type='PACKAGE BODY' and name=:pack 
+                            order by line""", pack=self.package)
         source = self.cur.fetchall()
         proc_source = []
         line_number = 0

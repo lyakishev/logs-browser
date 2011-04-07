@@ -183,7 +183,7 @@ class LogWindow:
 
     def read_config(self):
         self.conf_dir = os.sep.join(os.path.dirname(__file__).\
-                                    split(os.sep)[:-1] +\
+                                    split(os.sep)[:-1] +
                                     ["config"])
         try:
             f = open(os.path.join(self.conf_dir, "syntax_hl"), 'r')
@@ -382,8 +382,8 @@ class LogWindow:
                             else:
                                 ntag.set_property("weight", pango.WEIGHT_BOLD)
                         elif att == "s":
-                            ntag.set_property("size", int(tag[1:]) *\
-                                                      pango.SCALE)
+                            ntag.set_property("size", (int(tag[1:])*
+                                                      pango.SCALE))
                         elif att == "i":
                             ntag.set_property("style", pango.STYLE_ITALIC)
                     self.txt_buff.apply_tag(ntag, start_iter, end_iter)

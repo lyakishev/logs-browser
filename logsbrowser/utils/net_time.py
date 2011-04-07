@@ -60,8 +60,8 @@ def get_true_time():
         return time.time()
 
 def syncron_warning():
-    text = "Warning! \nFailed to get a date from the"\
-           " server.\nWill use the local time with the adjustment of %d"\
-           " seconds." % _time_delta.seconds
+    text = """Warning! \nFailed to get a date from the
+ server.\nWill use the local time with the adjustment of %d
+ seconds.""" % _time_delta.seconds
     mwarning(text)
 

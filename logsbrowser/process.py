@@ -7,6 +7,7 @@ from utils.profiler import time_it, profile
 from multiprocessing import Pool, Event
 from itertools import chain
 from threading import Thread
+import time
 
 
 @time_it
@@ -29,19 +30,16 @@ _e_stop = Event()
 def _worker(args):
     if _e_stop.is_set():
         raise StopIteration
-    if args[3] == 'f':
-        return list(fworker(args[0],args[1],args[2]))
-    else:
-        return list(eworker(args[0],args[1],args[2]))
+    return list(args[3](args[0],args[1],args[2]))
 
 
 def _mp_process(table, sources, dates):
     pool = Pool()
     sources_for_worker = []
     for s in sources[0]:
-        sources_for_worker.append((dates, s[0], s[1], 'f'))
+        sources_for_worker.append((dates, s[0], s[1], fworker))
     for s in sources[1]:
-        sources_for_worker.append((dates, s[0], s[1], 'e'))
+        sources_for_worker.append((dates, s[0], s[1], eworker))
     work = chain.from_iterable(pool.imap(_worker, sources_for_worker))
     insert_many(table, work)
     pool.close()
@@ -52,6 +50,7 @@ def mp_process(table, sources, dates, callback):
     t.start()
     while t.is_alive():
         callback(_e_stop)
+        time.sleep(0.2)
     _e_stop.clear()
     
 

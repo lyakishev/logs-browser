@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from source.worker import dir_walker, join_path, pathes
 import cStringIO
 import config
+import time #DEBUG
 
 
 class ServersModel(object):
@@ -25,7 +26,6 @@ class ServersModel(object):
                                        gobject.TYPE_STRING)
 
         self.model_filter = self.treestore.filter_new()
-        self.read_config()
 
     def get_model(self):
         """ Returns the model """
@@ -36,16 +36,16 @@ class ServersModel(object):
 
     def get_active_servers(self):
         log_for_process = []
+        getv = self.treestore.get_value
 
         def treewalk(iters):
-            if self.treestore.get_value(iters, 3) == 'f' \
-                and self.treestore.get_value(iters, 2):
-                cur_log = [self.treestore.get_value(iters, 0)]
+            if getv(iters, 3) == 'f' and getv(iters, 2):
+                cur_log = [getv(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
-                    if self.treestore.get_value(parent, 3) == 'n':
+                    if getv(parent, 3) == 'n':
                         break
-                    cur_log.append(self.treestore.get_value(parent, 0))
+                    cur_log.append(getv(parent, 0))
                     parent = self.treestore.iter_parent(parent)
                 log_for_process.append(cur_log)
             it = self.treestore.iter_children(iters)
@@ -61,10 +61,10 @@ class ServersModel(object):
 
     def get_active_check_paths(self):
         pathslist = []
+        getv = self.treestore.get_value
 
         def treewalk(iters):
-            if self.treestore.get_value(iters, 3) == 'f' \
-                and self.treestore.get_value(iters, 2):
+            if getv(iters, 3) == 'f' and getv(iters, 2):
                 pathslist.append(self.treestore.get_string_from_iter(iters))
                 return
             it = self.treestore.iter_children(iters)
@@ -153,6 +153,10 @@ class EventServersModel(ServersModel):
 
 
 class FileServersModel(ServersModel):
+    def __init__(self, progress):
+        self.progress = progress
+        super(FileServersModel, self).__init__()
+
     def read_config(self):
         self.parents = {}
         fake_config = cStringIO.StringIO()
@@ -160,13 +164,23 @@ class FileServersModel(ServersModel):
             fake_config.writelines((line.strip() + " = \n" for line in f))
         fake_config.seek(0)
         config_ = ConfigParser.RawConfigParser()
+        config_.optionxform = str
         config_.readfp(fake_config)
+        c = len([i for s in config_.sections() for i in config_.items(s)])
+        frac = 1./c
+        n=1
         for server in config_.sections():
             parent = self.add_root(server)
             for path, null in config_.items(server):
+                self.progress.set_text("%s: %s" % (server, path))
                 self.add_parents(path, parent, server)
                 self.add_logdir(path, parent, server)
+                self.progress.set_fraction(n*frac)
+                n+=1
+                time.sleep(0.1)
         fake_config.close()
+        self.progress.set_text("")
+        self.progress.set_fraction(0)
         
     def add_parents(self, path, parent, server):
         parts = [p for p in path.split(os.sep) if p]
@@ -179,8 +193,12 @@ class FileServersModel(ServersModel):
             new_node_path = join_path(server, os.sep.join(parts[:n+1]))
             self.new_dir_node(p, parent, new_node_path, prev_node_path)
             prev_node_path = new_node_path
+            while gtk.events_pending():
+                gtk.main_iteration()
 
     def new_dir_node(self, f, parent, ext_parent, ext_prev_parent=None):
+        while gtk.events_pending():
+            gtk.main_iteration()
         node = self.parents.get(ext_parent)
         if not node:
             parent_ = self.parents.get(ext_prev_parent, parent)
@@ -191,6 +209,8 @@ class FileServersModel(ServersModel):
     def file_callback(self, name, parent, ext_parent):
         parent_ = self.parents.get(ext_parent, parent)
         self.add_file(name, parent_)
+        while gtk.events_pending():
+            gtk.main_iteration()
 
     def add_logdir(self, path, parent, server):
         parent_ = self.parents.get(join_path(server, path), parent)
@@ -378,15 +398,15 @@ class EvlogsServersTree(ServersTree):
         super(EvlogsServersTree, self).__init__()
 
 class FileServersTree(ServersTree):
-    def __init__(self):
-        self.model = FileServersModel()
+    def __init__(self, progress):
+        self.model = FileServersModel(progress)
         super(FileServersTree, self).__init__()
 
 
 class LogsTrees(gtk.Notebook):
-    def __init__(self):
+    def __init__(self, progress):
         super(LogsTrees, self).__init__()
-        self.file_servers_tree = FileServersTree()
+        self.file_servers_tree = FileServersTree(progress)
         file_label = gtk.Label("Filelogs")
         file_label.show()
         self.append_page(self.file_servers_tree, file_label)
@@ -399,6 +419,11 @@ class LogsTrees(gtk.Notebook):
             self.append_page(self.evlogs_servers_tree, evt_label)
 
         self.state_ = {}
+
+    def fill(self):
+        self.file_servers_tree.model.read_config()
+        if self.evlogs_servers_tree:
+            self.evlogs_servers_tree.model.read_config()
 
     def get_log_sources(self):
         flogs = pathes(self.file_servers_tree.model.get_active_servers())

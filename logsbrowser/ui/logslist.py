@@ -89,8 +89,8 @@ class LogList(object):
                 if 'bgcolor' in self.headers:
                     bgcolor = self.headers.index('bgcolor')
                     white = set(["#fff", "None"])
-                    colorcols = [n for n, c in enumerate(self.headers)\
-                                 if c.startswith('bgcolor')]
+                    colorcols = [n for n, c in enumerate(self.headers)
+                                             if c.startswith('bgcolor')]
                     for row in self.model:
                         colors = set()
                         for cols in [r for r in [row[c] for c in colorcols] if r]:

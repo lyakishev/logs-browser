@@ -65,8 +65,8 @@ def filelogworker(dates, path, log):
                     yield (parsed_date,
                            comp,
                            log,
-                           "ERROR" if ("Exception" in msg and "  at " in msg) \
-                                   else "?",
+                           ("ERROR" if ("Exception" in msg and "  at " in msg)
+                                   else "?"),
                            path,
                            msg)
                 msg = ""

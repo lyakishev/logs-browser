@@ -101,10 +101,11 @@ def define_format(line):
         parsed_line_dict = parsed_line.groupdict()
         for format_number in range(1, len(_formats) + 1):
             if parsed_line_dict["day%d" % format_number]:
-                return (re.compile(_prefix +\
+                return (re.compile(_prefix +
                                   clear_format(_formats[format_number-1],
-                                               format_number) +\
-                                  _suffix), define_parser(parsed_line_dict))
+                                               format_number) +
+                                  _suffix),
+                        define_parser(parsed_line_dict))
         return (re.compile(_prefix+_suffix), _only_time_parser)
     parsed_line = _log4j.search(line)
     if parsed_line:

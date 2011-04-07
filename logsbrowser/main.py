@@ -1,5 +1,4 @@
 import gtk
-from process import process
 from ui.logsviewer import LogsViewer
 
 def main():

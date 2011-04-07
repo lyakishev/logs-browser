@@ -1,7 +1,7 @@
 import pyHook
 import pythoncom
 from multiprocessing import Process
-from net_time import GetTrueTime
+from net_time import get_true_time
 
 
 class DetectClick(Process):
@@ -10,7 +10,7 @@ class DetectClick(Process):
         self.click_time = click_time
 
     def onclick(self, event):
-        self.click_time.value = GetTrueTime()
+        self.click_time.value = get_true_time()
         raise SystemExit
 
     def run(self):

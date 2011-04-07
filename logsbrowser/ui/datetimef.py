@@ -62,10 +62,10 @@ class DateTimeWidget(gtk.Table):
                 self.seconds_spin.get_value_as_int())
 
     def set_sens(self, sens):
-        for child in [self.hours_spin, \
-                      self.minutes_spin, \
-                      self.seconds_spin, \
-                      self.year_entry, \
+        for child in [self.hours_spin,
+                      self.minutes_spin,
+                      self.seconds_spin,
+                      self.year_entry,
                       self.now_btn]:
             child.set_sensitive(sens)
 

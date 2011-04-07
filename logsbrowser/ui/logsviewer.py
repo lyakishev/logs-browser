@@ -14,7 +14,6 @@ from statusicon import StatusIcon
 import config
 import utils.profiler as profiler
 from process import process, mp_process
-import time
 
 
 class LogsViewer:
@@ -40,24 +39,27 @@ class LogsViewer:
         button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
-        stop_all_btn = gtk.Button('Stop')
-        stop_all_btn.connect('clicked', self.stop_all)
-        break_btn = gtk.Button('Break')
-        break_btn.connect('clicked', self.break_all)
+        self.stop_all_btn = gtk.Button('Stop')
+        self.stop_all_btn.connect('clicked', self.stop_all)
+        self.stop_all_btn.set_sensitive(False)
+        self.break_btn = gtk.Button('Break')
+        self.break_btn.connect('clicked', self.break_all)
+        self.break_btn.set_sensitive(False)
 
         main_box = gtk.HPaned()
         control_box = gtk.VBox()
 
-        self.source_tree = LogsTrees()
-
-        self.browser = LogsNotebook(self.source_tree, self.show_button)
-
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
+        self.source_tree = LogsTrees(self.progressbar)
+
+        self.browser = LogsNotebook(self.source_tree, self.show_button)
+
+
         button_box.pack_start(self.show_button)
-        button_box.pack_start(stop_all_btn)
-        button_box.pack_start(break_btn)
+        button_box.pack_start(self.stop_all_btn)
+        button_box.pack_start(self.break_btn)
         control_box.pack_start(self.source_tree, True, True)
         control_box.pack_start(self.date_filter, False, False)
         control_box.pack_start(options_frame, False, False)
@@ -67,6 +69,16 @@ class LogsViewer:
         main_box.pack2(self.browser, True, False)
         self.root.add(main_box)
         self.root.show_all()
+        self.fill_tree()
+
+    def fill_tree(self):
+        self.browser.set_sens(False)
+        self.stop_all_btn.set_sensitive(True)
+        self.source_tree.set_sensitive(False)
+        self.source_tree.fill()
+        self.browser.set_sens(True)
+        self.stop_all_btn.set_sensitive(False)
+        self.source_tree.set_sensitive(True)
 
     def stop_all(self, *args):
         self.stop = True
@@ -96,7 +108,6 @@ class LogsViewer:
         return self.stop or self.break_
 
     def mpcallback(self, e_stop):
-        time.sleep(0.2)
         self.progressbar.pulse()
         if self.stop or self.break_:
             e_stop.set()
@@ -106,6 +117,8 @@ class LogsViewer:
 
     @profiler.time_it
     def show_logs(self, *args):
+        self.break_btn.set_sensitive(True)
+        self.stop_all_btn.set_sensitive(True)
         self.browser.set_sens(False)
         self.stop = False
         self.break_ = False
@@ -127,6 +140,8 @@ class LogsViewer:
             self.progressbar.set_fraction(0.0)
             self.progressbar.set_text("")
         else:
+            self.break_btn.set_sensitive(False)
+            self.stop_all_btn.set_sensitive(False)
             self.progressbar.set_fraction(1 - self.frac)
             self.progressbar.set_text("Executing query...")
             logw.fill()

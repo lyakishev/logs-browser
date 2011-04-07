@@ -37,8 +37,8 @@ class CellRendererColors(gtk.CellRendererText):
     def do_render(self, window, widget, background_area, cell_area,
                     expose_area, flags):
         colors = self.get_property('backgrounds')
-        if colors and (not bool(flags & gtk.CELL_RENDERER_SELECTED) or \
-                        config.BOLD_SELECTED):
+        if (colors and (not bool(flags & gtk.CELL_RENDERER_SELECTED) or
+                        config.BOLD_SELECTED)):
             cairo_context = window.cairo_create()
             x = background_area.x
             y = background_area.y

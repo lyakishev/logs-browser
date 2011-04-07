@@ -66,8 +66,8 @@ def evlogworker(dates, server, logtype):
         except pywintypes.error:
             #print "Error: %s %s" % (self.server, self.logtype)
             return
-        flags = win32evtlog.EVENTLOG_BACKWARDS_READ | \
-                win32evtlog.EVENTLOG_SEQUENTIAL_READ
+        flags = (win32evtlog.EVENTLOG_BACKWARDS_READ |
+                 win32evtlog.EVENTLOG_SEQUENTIAL_READ)
         while 1:
             while 1:
                 try:

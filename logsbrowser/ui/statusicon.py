@@ -4,7 +4,7 @@ import gtk
 import gobject
 import gio
 try:
-    from mouse_click import DetectClick
+    from utils.mouse_click import DetectClick
 except:
     pass
 from multiprocessing import Value
