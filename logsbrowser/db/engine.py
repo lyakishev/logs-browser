@@ -57,7 +57,7 @@ def get_msg(rows, table):
         rows_clause = "rowid in (%s)" % rows
     msg_sql = """select date, log_name, type, source, pretty(log) 
                  from %s where %s order by date asc, rowid
-                 asc;""" % (table, rows_clause)
+                 desc;""" % (table, rows_clause)
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()

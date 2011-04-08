@@ -152,6 +152,7 @@ class FileServersModel(ServersModel):
         super(FileServersModel, self).__init__()
 
     def _read_config(self, fill):
+        self.treestore.clear()
         self.parents = {}
         fake_config = cStringIO.StringIO()
         with open(config.FLOGS_CFG, 'r') as f:
