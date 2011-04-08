@@ -14,6 +14,7 @@ from statusicon import StatusIcon
 import config
 import utils.profiler as profiler
 from process import process, mp_process
+from db.engine import close_conn
 
 
 class LogsViewer:
@@ -88,6 +89,7 @@ class LogsViewer:
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
+        close_conn()
         self.status.statusicon.set_visible(False)
         gtk.main_quit()
         return

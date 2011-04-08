@@ -32,14 +32,18 @@ def _worker(args):
         raise StopIteration
     return list(args[3](args[0],args[1],args[2]))
 
+def _mix_sources(sources, dates):
+    sources_for_worker = []
+    for p, l in sources[0]:
+        sources_for_worker.append((dates, p, l, fworker))
+    for p, l in sources[1]:
+        sources_for_worker.append((dates, p, l, eworker))
+    return sources_for_worker
+    
 
 def _mp_process(table, sources, dates):
     pool = Pool()
-    sources_for_worker = []
-    for s in sources[0]:
-        sources_for_worker.append((dates, s[0], s[1], fworker))
-    for s in sources[1]:
-        sources_for_worker.append((dates, s[0], s[1], eworker))
+    sources_for_worker = _mix_sources(sources, dates)
     work = chain.from_iterable(pool.imap(_worker, sources_for_worker))
     insert_many(table, work)
     pool.close()

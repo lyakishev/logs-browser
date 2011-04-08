@@ -13,22 +13,26 @@ from ui.dialogs import mwarning
 _time_delta = timedelta(0)
 _time_error_flag = 0
 
+_format_to_re =dict([('%d', 'd{1,2}'),
+                   ('%m', 'd{1,2}'),
+                   ('%Y', 'd{4}'),
+                   ('%y', 'd{2}'),
+                   ('%H', 'd{1,2}'),
+                   ('%I', 'd{1,2}'),
+                   ('%M', 'd{2}'),
+                   ('%S', 'd{2}'),
+                   ('%w', 'd{1}'),
+                   ('%p', '(AM|PM)'),
+                   ('%B', '[A-Za-z]+'),
+                   ('%b', '[A-Za-z]+'),
+                   ('%a', '[A-Za-z]+'),
+                   ('%A', '[A-Za-z]+'),
+                   ('%f', 'd+')])
+
 def time_re(time_format):
-    return time_format.replace('%d', '\d{1,2}').\
-                       replace('%m', '\d{1,2}').\
-                       replace('%Y', '\d{4}').\
-                       replace('%y', '\d{2}').\
-                       replace('%H', '\d{1,2}').\
-                       replace('%I', '\d{1,2}').\
-                       replace('%M', '\d{2}').\
-                       replace('%S', '\d{2}').\
-                       replace('%w', '\d{1}').\
-                       replace('%p', '(AM|PM)').\
-                       replace('%B', '[A-Za-z]+').\
-                       replace('%b', '[A-Za-z]+').\
-                       replace('%a', '[A-Za-z]+').\
-                       replace('%A', '[A-Za-z]+').\
-                       replace('%f', '\d+')
+    for f, re_ in _format_to_re.iteritems():
+        time_format=time_format.replace(f, re_)
+    return time_format
 
 _true_time_re = re.compile(time_re(config.SERVER_TIME_FORMAT))
 

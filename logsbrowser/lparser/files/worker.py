@@ -24,21 +24,16 @@ def memoize_format(function):
 @memoize_format
 def date_format(path, log):
     try:
-        file_ = open(path, 'r')
-    except IOError:
-        raise StopIteration
-    for line in file_:
-        pformat, pfunc = define_format(line)
-        if pformat:
-            break
-    file_.close()
-    try:
-        if not pformat:
-            print "Not found format for file %s" % path
+        with open(path, 'r') as file_:
+            pfunc = True
+            for line in file_:
+                pformat, pfunc = define_format(line)
+                if pformat:
+                    return (pformat, pfunc)
+            if not pfunc:
+                print "Not found format for file %s" % path
             raise StopIteration
-        else:
-            return (pformat, pfunc)
-    except UnboundLocalError:
+    except IOError:
         raise StopIteration
     
 

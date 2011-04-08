@@ -41,7 +41,6 @@ class LogList(object):
 
     def __init__(self):
         self.view = gtk.TreeView()
-        self.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
         self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
         self.model = None
         self.columns = []
@@ -192,12 +191,21 @@ class LogsListWindow(gtk.Frame):
         lwin_btn.connect("clicked", self.show_log_window)
         lwin_btn.set_is_important(True)
         lwin_btn.set_label("Show Log")
+
+        sep3 = gtk.SeparatorToolItem()
+        grid_btn = gtk.ToggleToolButton(gtk.STOCK_UNDERLINE)
+        grid_btn.connect("clicked", self.show_gridlines)
+        grid_btn.set_is_important(True)
+        grid_btn.set_label("Grid Lines")
+        
         toolbar.insert(exec_btn, 0)
         toolbar.insert(self.break_btn, 1)
         toolbar.insert(sep1, 2)
         toolbar.insert(query_btn, 3)
         toolbar.insert(sep2, 4)
         toolbar.insert(lwin_btn, 5)
+        toolbar.insert(sep3, 6)
+        toolbar.insert(grid_btn, 7)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
@@ -218,6 +226,10 @@ class LogsListWindow(gtk.Frame):
 
         self.sens_list = [exec_btn,lwin_btn]+self.filter_logs.sens_list
         self.ntb = ntb
+
+        if config.GRID_LINES:
+            grid_btn.set_active(True)
+            self.show_gridlines(grid_btn)
 
     def set_name(self, name):
         self.log_list.change_name(name)
@@ -245,6 +257,12 @@ class LogsListWindow(gtk.Frame):
             self.box.remove(self.paned)
             self.box.pack_end(self.logs_window)
         self.show_all()
+
+    def show_gridlines(self, button):
+        if button.get_active():
+            self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
+        else:
+            self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
     def show_log_window(self, *args):
         view = self.log_list.view

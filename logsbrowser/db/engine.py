@@ -16,6 +16,9 @@ _dbconn.execute("PRAGMA synchronous=OFF;")
 
 DBException = sqlite3.OperationalError
 
+def close_conn():
+    _dbconn.close()
+
 def set_callback(callback):
     _dbconn.set_progress_handler(callback, 1000)
 
