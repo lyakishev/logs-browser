@@ -8,7 +8,6 @@ import os
 import ConfigParser
 from configeditor import ConfigEditor
 import sys
-from abc import ABCMeta, abstractmethod
 from source.worker import dir_walker, join_path, pathes
 import cStringIO
 import config
@@ -16,8 +15,6 @@ import time #DEBUG
 
 
 class ServersModel(object):
-
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self.treestore = gtk.TreeStore(gobject.TYPE_STRING,
@@ -135,10 +132,6 @@ class ServersModel(object):
                                             gtk.STOCK_FILE,
                                             None, 'f'])
 
-    @abstractmethod
-    def read_config(self):
-        pass
-
 class EventServersModel(ServersModel):
     def read_config(self):
         self.treestore.clear()
@@ -153,11 +146,12 @@ class EventServersModel(ServersModel):
 
 
 class FileServersModel(ServersModel):
-    def __init__(self, progress):
+    def __init__(self, progress, sens_func):
         self.progress = progress
+        self.read_config = sens_func(self._read_config)
         super(FileServersModel, self).__init__()
 
-    def read_config(self):
+    def _read_config(self, fill):
         self.parents = {}
         fake_config = cStringIO.StringIO()
         with open(config.FLOGS_CFG, 'r') as f:
@@ -174,7 +168,8 @@ class FileServersModel(ServersModel):
             for path, null in config_.items(server):
                 self.progress.set_text("%s: %s" % (server, path))
                 self.add_parents(path, parent, server)
-                self.add_logdir(path, parent, server)
+                if fill:
+                    self.add_logdir(path, parent, server)
                 self.progress.set_fraction(n*frac)
                 n+=1
                 time.sleep(0.1)
@@ -321,19 +316,29 @@ class ServersTree(gtk.Frame):
         self.hide_log.modify_text(gtk.STATE_NORMAL,
                             gtk.gdk.color_parse("#929292"))
         self.hide_log.modify_font(pango.FontDescription("italic"))
-        entry_box = gtk.HBox()
-        clear_btn = gtk.Button()
-        clear = gtk.Image()
-        clear.set_from_stock(gtk.STOCK_CLEAR,gtk.ICON_SIZE_MENU)
-        clear_btn.add(clear)
+
+        toolbar = gtk.Toolbar()
+        reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
+        reload_btn.connect("clicked", lambda args: self.model.read_config(True))
+        search_entry = gtk.ToolItem()
+        search_entry.set_expand(True)
+        search_entry.add(self.hide_log)
+        clear_btn = gtk.ToolButton(gtk.STOCK_CLEAR)
         clear_btn.connect("clicked", self.clear_entry)
-        entry_box.pack_start(self.hide_log, True,True)
-        entry_box.pack_start(clear_btn,False,False)
+        sep = gtk.SeparatorToolItem()
+
+        toolbar.insert(reload_btn, 0)
+        toolbar.insert(sep, 1)
+        toolbar.insert(search_entry, 2)
+        toolbar.insert(clear_btn, 3)
+
+        toolbar.set_style(gtk.TOOLBAR_ICONS)
+        toolbar.set_icon_size(gtk.ICON_SIZE_MENU)
 
         self.box = gtk.VBox()
         self.add(self.box)
         self.box.pack_start(self.logs_window, True, True)
-        self.box.pack_start(entry_box, False, False)
+        self.box.pack_start(toolbar, False, False)
         self.hide_log.connect("changed", self.on_advanced_entry_changed)
         self.hide_log.connect("focus-in-event", self.on_hide_log_focus_in)
         self.hide_log.connect("focus-out-event", self.on_hide_log_focus_out)
@@ -343,9 +348,10 @@ class ServersTree(gtk.Frame):
         self.show_all()
 
     def clear_entry(self, *args):
-        self.on_hide_log_focus_in()
         self.filter_text = ""
-        self.on_hide_log_focus_out()
+        self.on_hide_log_focus_in()
+        if not self.hide_log.is_focus():
+            self.on_hide_log_focus_out()
     
     def set_text(self, entry):
         self.on_hide_log_focus_in()
@@ -398,15 +404,15 @@ class EvlogsServersTree(ServersTree):
         super(EvlogsServersTree, self).__init__()
 
 class FileServersTree(ServersTree):
-    def __init__(self, progress):
-        self.model = FileServersModel(progress)
+    def __init__(self, progress, sens_func):
+        self.model = FileServersModel(progress, sens_func)
         super(FileServersTree, self).__init__()
 
 
 class LogsTrees(gtk.Notebook):
-    def __init__(self, progress):
+    def __init__(self, progress, sens_func):
         super(LogsTrees, self).__init__()
-        self.file_servers_tree = FileServersTree(progress)
+        self.file_servers_tree = FileServersTree(progress, sens_func)
         file_label = gtk.Label("Filelogs")
         file_label.show()
         self.append_page(self.file_servers_tree, file_label)
@@ -420,8 +426,8 @@ class LogsTrees(gtk.Notebook):
 
         self.state_ = {}
 
-    def fill(self):
-        self.file_servers_tree.model.read_config()
+    def fill(self, walk):
+        self.file_servers_tree.model.read_config(walk)
         if self.evlogs_servers_tree:
             self.evlogs_servers_tree.model.read_config()
 

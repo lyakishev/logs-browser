@@ -104,12 +104,10 @@ class ConfigEditor:
         if sel:
             start_line = sel[0].get_line()
             end_line = sel[1].get_line()
-            line = start_line
-            while line != end_line + 1:
+            for line in xrange(start_line, end_line + 1):
                 iter = self.buf.get_iter_at_line(line)
                 if iter.get_char() != "#":
                     self.buf.insert(iter, "#")
-                line += 1
         else:
             pos = self.get_iter_position()
             line = pos.get_line()
@@ -122,13 +120,11 @@ class ConfigEditor:
         if sel:
             start_line = sel[0].get_line()
             end_line = sel[1].get_line()
-            line = start_line
-            while line != end_line + 1:
+            for line in xrange(start_line, end_line + 1):
                 iter = self.buf.get_iter_at_line(line)
                 if iter.get_char() == "#":
                     end_iter = self.buf.get_iter_at_line_offset(line, 1)
                     self.buf.delete(iter, end_iter)
-                line += 1
         else:
             pos = self.get_iter_position()
             line = pos.get_line()

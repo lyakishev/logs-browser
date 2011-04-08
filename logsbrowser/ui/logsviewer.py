@@ -53,7 +53,7 @@ class LogsViewer:
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
-        self.source_tree = LogsTrees(self.progressbar)
+        self.source_tree = LogsTrees(self.progressbar, self.fill_tree_sens)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
 
@@ -70,16 +70,20 @@ class LogsViewer:
         main_box.pack2(self.browser, True, False)
         self.root.add(main_box)
         self.root.show_all()
-        self.fill_tree()
+        self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
 
-    def fill_tree(self):
-        self.browser.set_sens(False)
-        self.stop_all_btn.set_sensitive(True)
-        self.source_tree.set_sensitive(False)
-        self.source_tree.fill()
-        self.browser.set_sens(True)
-        self.stop_all_btn.set_sensitive(False)
-        self.source_tree.set_sensitive(True)
+    def fill_tree_sens(self, function):
+        def wrapper(*args,**kw):
+            self.browser.set_sens(False)
+            self.stop_all_btn.set_sensitive(True)
+            self.source_tree.set_sensitive(False)
+            function(*args, **kw)
+            self.browser.set_sens(True)
+            self.stop_all_btn.set_sensitive(False)
+            self.source_tree.set_sensitive(True)
+        return wrapper
+
+
 
     def stop_all(self, *args):
         self.stop = True

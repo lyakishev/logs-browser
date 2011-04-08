@@ -16,6 +16,9 @@ EVT_DICT = {win32con.EVENTLOG_AUDIT_FAILURE: 'AUDIT_FAILURE',
             win32con.EVENTLOG_WARNING_TYPE: 'WARNING',
             win32con.EVENTLOG_ERROR_TYPE: 'ERROR'}
 
+_flags = (win32evtlog.EVENTLOG_BACKWARDS_READ |
+         win32evtlog.EVENTLOG_SEQUENTIAL_READ)
+
 DATETIME_REGEXP = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 UNICODE_SYMBOL_REGEXP = re.compile(r"\u\w{4}")
 DESCRIPTION_REGEXP = re.compile(r'''<The description for'''
@@ -61,35 +64,28 @@ def log_for_insert(log):
             msg)
 
 def evlogworker(dates, server, logtype):
-        try:
-            hand = win32evtlog.OpenEventLog(server, logtype)
-        except pywintypes.error:
-            #print "Error: %s %s" % (self.server, self.logtype)
-            return
-        flags = (win32evtlog.EVENTLOG_BACKWARDS_READ |
-                 win32evtlog.EVENTLOG_SEQUENTIAL_READ)
-        while 1:
-            while 1:
-                try:
-                    events = win32evtlog.ReadEventLog(hand, flags, 0)
-                except pywintypes.error:
-                    #print "Pause %s %s" % (self.server, self.logtype)
-                    hand.Detach()  # need?
-                    time.sleep(1)
-                    hand = win32evtlog.OpenEventLog(server, logtype)
-                else:
-                    break
-            if events:
-                for ev_obj in events:
-                    log = get_event_log(ev_obj, server, logtype)
-                    if log['the_time'] < dates[0]:
-                        raise StopIteration
-                    if log['the_time'] <= dates[1]:
-                        yield log_for_insert(log)
+    while 1:
+        for attempt in xrange(6):
+            try:
+                hand = win32evtlog.OpenEventLog(server, logtype)
+                events = win32evtlog.ReadEventLog(hand, _flags, 0)
+            except pywintypes.error:
+                #hand.Detach()  # need?
+                time.sleep(1)
             else:
-                try:
-                    win32evtlog.CloseEventLog(hand)
-                except pywintypes.error:
-                    #print "Can't close"
-                    raise StopIteration
+                break
+        else:
+            print "Can't read eventlogs: %s %s " % (serve,logtype)
+            try:
+                win32evtlog.CloseEventLog(hand)
+            except pywintypes.error:
+                pass
+            finally:
+                raise StopIteration
+        for ev_obj in events:
+            log = get_event_log(ev_obj, server, logtype)
+            if log['the_time'] < dates[0]:
+                raise StopIteration
+            if log['the_time'] <= dates[1]:
+                yield log_for_insert(log)
 
