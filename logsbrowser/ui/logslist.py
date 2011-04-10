@@ -27,7 +27,7 @@ from utils.profiler import time_it
 def callback():
     if check_break():
         set_break(False)
-        interupt()
+        interrupt()
     while gtk.events_pending():
         gtk.main_iteration()
 

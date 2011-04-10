@@ -23,6 +23,7 @@ def set_callback(callback):
     _dbconn.set_progress_handler(callback, 1000)
 
 def set_break(value):
+    global _break
     _break = value
 
 def interrupt():
