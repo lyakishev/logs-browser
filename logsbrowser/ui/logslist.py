@@ -212,9 +212,6 @@ class LogsListWindow(gtk.Frame):
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.logs_window, True, True)
 
-        self.sens_list = ([exec_btn, lwin_btn, self.logs_window]+
-                            self.filter_logs.sens_list)
-
         self.add(self.box)
         self.show_all()
         self.break_btn.set_sensitive(False)

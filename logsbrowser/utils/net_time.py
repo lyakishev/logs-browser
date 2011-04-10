@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from subprocess import Popen, PIPE
 import re
 import pygtk
@@ -10,7 +9,7 @@ import time
 import config
 from ui.dialogs import mwarning
 
-_time_delta = timedelta(0)
+_time_delta = 0
 _time_error_flag = 0
 
 _format_to_re =dict([('%d', 'd{1,2}'),
@@ -38,30 +37,32 @@ _true_time_re = re.compile(time_re(config.SERVER_TIME_FORMAT))
 
 
 def get_true_time():
+    now = time.time()
     if config.SYNCRONIZE_TIME:
-        now = datetime.now()
         try:
             proc = Popen([r"C:\Windows\System32\net.exe",
                           "time", config.SYNCRONIZE_SERVER],
                           stdout=PIPE)
+            nowd = time.time()
             time_string = proc.communicate()[0]
         except Exception:
             server_time = now + _time_delta
+            global _time_error_flag
             _time_error_flag = 1
         else:
-            now = datetime.now()
             try:
                 s_time = _true_time_re.search(time_string)
-                server_time = datetime.strptime(s_time.group(0),
-                                                config.SERVER_TIME_FORMAT)
+                server_time = time.mktime(time.strptime(s_time.group(0),
+                                                config.SERVER_TIME_FORMAT))
             except Exception:
                 server_time = now
             else:
-                _time_delta = timedelta(seconds=(now - server_time).seconds)
+                global _time_delta
+                _time_delta = int(nowd - server_time)
                 _time_error_flag = 0
-        return time.mktime(server_time.timetuple())
+        return server_time
     else:
-        return time.time()
+        return now
 
 def syncron_warning():
     text = """Warning! \nFailed to get a date from the
