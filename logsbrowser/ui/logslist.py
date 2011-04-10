@@ -12,9 +12,7 @@ from datetime import datetime
 import pango
 import os
 from operator import mul, itemgetter, setitem
-from db.engine import create_new_table, get_msg, execute, set_break,\
-                        DBException, drop, set_callback, check_break,\
-                        interrupt
+from db.engine import *
 from utils.hash import hash_value, sql_to_hash
 from dialogs import merror
 import glib
@@ -25,9 +23,6 @@ from string import Template
 from utils.profiler import time_it
 
 def callback():
-    if check_break():
-        set_break(False)
-        interrupt()
     while gtk.events_pending():
         gtk.main_iteration()
 
@@ -242,7 +237,7 @@ class LogsListWindow(gtk.Frame):
         self.break_btn.set_sensitive(False)
 
     def cancel(self, *args):
-        set_break(True)
+        interrupt()
 
     def show_query(self, button):
         if button.get_active():

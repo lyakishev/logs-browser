@@ -4,8 +4,6 @@ from functions import *
 from datetime import datetime
 from utils.profiler import time_it
 
-_break = False
-
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("strip", 1, strip)
 _dbconn.create_function("regexp", 2, regexp)
@@ -22,15 +20,8 @@ def close_conn():
 def set_callback(callback):
     _dbconn.set_progress_handler(callback, 1000)
 
-def set_break(value):
-    global _break
-    _break = value
-
 def interrupt():
     _dbconn.interrupt()
-
-def check_break():
-    return _break
 
 def insert_many(table, iter_):
     _dbconn.executemany("insert into %s values (?,?,?,?,?,?);" %
