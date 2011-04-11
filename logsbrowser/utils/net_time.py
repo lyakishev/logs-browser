@@ -39,6 +39,8 @@ _true_time_re = re.compile(time_re(config.SERVER_TIME_FORMAT))
 def get_true_time():
     now = time.time()
     if config.SYNCRONIZE_TIME:
+        global _time_error_flag
+        global _time_delta
         try:
             proc = Popen([r"C:\Windows\System32\net.exe",
                           "time", config.SYNCRONIZE_SERVER],
@@ -47,7 +49,6 @@ def get_true_time():
             time_string = proc.communicate()[0]
         except Exception:
             server_time = now + _time_delta
-            global _time_error_flag
             _time_error_flag = 1
         else:
             try:
@@ -57,7 +58,6 @@ def get_true_time():
             except Exception:
                 server_time = now
             else:
-                global _time_delta
                 _time_delta = int(nowd - server_time)
                 _time_error_flag = 0
         return server_time

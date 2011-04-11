@@ -12,6 +12,7 @@ from source.worker import dir_walker, join_path, pathes
 import cStringIO
 import config
 import time #DEBUG
+from itertools import count
 
 
 class ServersModel(object):
@@ -146,8 +147,9 @@ class EventServersModel(ServersModel):
 
 
 class FileServersModel(ServersModel):
-    def __init__(self, progress, sens_func):
+    def __init__(self, progress, sens_func, signals):
         self.progress = progress
+        self.signals = signals
         self.read_config = sens_func(self._read_config)
         super(FileServersModel, self).__init__()
 
@@ -161,20 +163,28 @@ class FileServersModel(ServersModel):
         config_ = ConfigParser.RawConfigParser()
         config_.optionxform = str
         config_.readfp(fake_config)
-        c = len([i for s in config_.sections() for i in config_.items(s)])
-        frac = 1./c
-        n=1
-        for server in config_.sections():
-            parent = self.add_root(server)
-            for path, null in config_.items(server):
-                self.progress.set_text("%s: %s" % (server, path))
-                self.add_parents(path, parent, server)
-                if fill:
-                    self.add_logdir(path, parent, server)
-                self.progress.set_fraction(n*frac)
-                n+=1
-                time.sleep(0.1)
-        fake_config.close()
+        frac = 1./len([i for s in config_.sections() for i in config_.items(s)])
+        n = count(1)
+        try:
+            for server in config_.sections():
+                parent = self.add_root(server)
+                for path, null in config_.items(server):
+                    self.progress.set_text("%s: %s" % (server, path))
+                    if self.signals['stop'] or self.signals['break']:
+                        raise StopIteration
+                    self.add_parents(path, parent, server)
+                    if fill:
+                        self.add_logdir(path, parent, server)
+                    self.progress.set_fraction(next(n)*frac)
+        except StopIteration:
+            pass
+        finally:
+            self.close_conf(fake_config)
+            self.signals['stop'] = False
+            self.signals['break'] = False
+
+    def close_conf(self, conf):
+        conf.close()
         self.progress.set_text("")
         self.progress.set_fraction(0)
         
@@ -192,9 +202,14 @@ class FileServersModel(ServersModel):
             while gtk.events_pending():
                 gtk.main_iteration()
 
+    def check_break(self):
+        if self.signals['break']:
+            raise StopIteration
+
     def new_dir_node(self, f, parent, ext_parent, ext_prev_parent=None):
         while gtk.events_pending():
             gtk.main_iteration()
+        self.check_break()
         node = self.parents.get(ext_parent)
         if not node:
             parent_ = self.parents.get(ext_prev_parent, parent)
@@ -203,10 +218,11 @@ class FileServersModel(ServersModel):
         return node
 
     def file_callback(self, name, parent, ext_parent):
-        parent_ = self.parents.get(ext_parent, parent)
-        self.add_file(name, parent_)
         while gtk.events_pending():
             gtk.main_iteration()
+        self.check_break()
+        parent_ = self.parents.get(ext_parent, parent)
+        self.add_file(name, parent_)
 
     def add_logdir(self, path, parent, server):
         parent_ = self.parents.get(join_path(server, path), parent)
@@ -405,15 +421,15 @@ class EvlogsServersTree(ServersTree):
         super(EvlogsServersTree, self).__init__()
 
 class FileServersTree(ServersTree):
-    def __init__(self, progress, sens_func):
-        self.model = FileServersModel(progress, sens_func)
+    def __init__(self, progress, sens_func, signals):
+        self.model = FileServersModel(progress, sens_func, signals)
         super(FileServersTree, self).__init__()
 
 
 class LogsTrees(gtk.Notebook):
-    def __init__(self, progress, sens_func):
+    def __init__(self, progress, sens_func, signals):
         super(LogsTrees, self).__init__()
-        self.file_servers_tree = FileServersTree(progress, sens_func)
+        self.file_servers_tree = FileServersTree(progress, sens_func, signals)
         file_label = gtk.Label("Filelogs")
         file_label.show()
         self.append_page(self.file_servers_tree, file_label)

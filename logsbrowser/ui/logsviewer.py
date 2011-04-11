@@ -15,6 +15,7 @@ import config
 import utils.profiler as profiler
 from process import process, mp_process
 from db.engine import close_conn
+from operator import setitem
 
 
 class LogsViewer:
@@ -36,15 +37,18 @@ class LogsViewer:
 
         self.status = StatusIcon(self.date_filter, self.root)
 
+        self.signals = {'stop': False, 'break': False}
         button_box = gtk.HButtonBox()
         button_box.set_layout(gtk.BUTTONBOX_SPREAD)
         self.show_button = gtk.Button("Show")
         self.show_button.connect("clicked", self.show_logs)
         self.stop_all_btn = gtk.Button('Stop')
-        self.stop_all_btn.connect('clicked', self.stop_all)
+        self.stop_all_btn.connect('clicked',
+                            lambda btn: setitem(self.signals,'stop',True))
         self.stop_all_btn.set_sensitive(False)
         self.break_btn = gtk.Button('Break')
-        self.break_btn.connect('clicked', self.break_all)
+        self.break_btn.connect('clicked',
+                            lambda btn: setitem(self.signals,'break',True))
         self.break_btn.set_sensitive(False)
 
         main_box = gtk.HPaned()
@@ -53,7 +57,9 @@ class LogsViewer:
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
-        self.source_tree = LogsTrees(self.progressbar, self.fill_tree_sens)
+
+        self.source_tree = LogsTrees(self.progressbar, self.fill_tree_sens,
+                                     self.signals)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
 
@@ -76,20 +82,14 @@ class LogsViewer:
         def wrapper(*args,**kw):
             self.browser.set_sens(False)
             self.stop_all_btn.set_sensitive(True)
+            self.break_btn.set_sensitive(True)
             self.source_tree.set_sensitive(False)
             function(*args, **kw)
             self.browser.set_sens(True)
             self.stop_all_btn.set_sensitive(False)
+            self.break_btn.set_sensitive(False)
             self.source_tree.set_sensitive(True)
         return wrapper
-
-
-
-    def stop_all(self, *args):
-        self.stop = True
-
-    def break_all(self, *args):
-        self.break_ = True
 
     def destroy_cb(self, *kw):
         """ Destroy callback to shutdown the app """
@@ -115,7 +115,7 @@ class LogsViewer:
 
     def mpcallback(self, e_stop):
         self.progressbar.pulse()
-        if self.stop or self.break_:
+        if self.signals['stop'] or self.signals['break']:
             e_stop.set()
         while gtk.events_pending():
             gtk.main_iteration()
@@ -126,8 +126,8 @@ class LogsViewer:
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)
         self.browser.set_sens(False)
-        self.stop = False
-        self.break_ = False
+        self.signals['stop'] = False
+        self.signals['break'] = False
         logw, loglist = self.prepare_loglist()
         sources = self.source_tree.get_log_sources()
         self.frac = 1.0 / (len(sources[0]+sources[1])+1)
@@ -141,7 +141,7 @@ class LogsViewer:
             self.progressbar.set_pulse_step(self.frac)
             self.progressbar.set_text("Working...")
             mp_process(loglist.table, sources, dates, self.mpcallback)
-        if self.break_:
+        if self.signals['break']:
             loglist.clear()
             self.progressbar.set_fraction(0.0)
             self.progressbar.set_text("")
