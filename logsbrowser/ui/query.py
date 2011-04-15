@@ -6,6 +6,7 @@ import gio
 import pango
 import re
 
+
 class QueryDesigner():
     def __init__(self, plain, loglist):
         self.loglist = loglist
@@ -39,8 +40,8 @@ class QueryDesigner():
         select_renderer.set_property('activatable', True)
         select_renderer.connect('toggled', self.col_toggled_cb,
                                 self.query_model, 0)
-        select_column = gtk.TreeViewColumn("show", select_renderer )
-        select_column.add_attribute(select_renderer, "active", 0)
+        self.select_column = gtk.TreeViewColumn("show", select_renderer )
+        self.select_column.add_attribute(select_renderer, "active", 0)
 
         field_renderer = gtk.CellRendererCombo()
         field_renderer.set_property("model", self.field_model)
@@ -78,7 +79,7 @@ class QueryDesigner():
         
         color_renderer = gtk.CellRendererText()
         color_renderer.set_property("editable", False)
-        color_column = gtk.TreeViewColumn("color", color_renderer,
+        self.color_column = gtk.TreeViewColumn("color", color_renderer,
                                                 text=6, cell_background=8)
 
         color_case_renderer = gtk.CellRendererText()
@@ -94,13 +95,13 @@ class QueryDesigner():
         hidden_color.set_visible(False)
 
         self.view = gtk.TreeView()
-        self.view.append_column(select_column)
+        self.view.append_column(self.select_column)
         self.view.append_column(field_column)
         self.view.append_column(alias_column)
         self.view.append_column(where_column)
         self.view.append_column(groupby_column)
         self.view.append_column(order_column)
-        self.view.append_column(color_column)
+        self.view.append_column(self.color_column)
         self.view.append_column(color_case_column)
         self.view.append_column(hidden_color)
 
@@ -114,7 +115,23 @@ class QueryDesigner():
         self.view.set_model(self.query_model)
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
-        self.view.connect("row-activated", self.change_color)
+        self.view.connect("button-press-event", self.activate_cell)
+
+    def activate_cell(self, view, event):
+        if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
+            path = view.get_path_at_pos(int(event.x), int(event.y))
+            if path[1] == self.color_column:
+                colordlg = gtk.ColorSelectionDialog("Select color")
+                colorsel = colordlg.colorsel
+                colorsel.set_has_palette(True)
+                response = colordlg.run()
+                if response == gtk.RESPONSE_OK:
+                    col = colorsel.get_current_color()
+                    view.get_model()[path[0]][8]=col
+                colordlg.destroy()
+            if path[1] != self.select_column:
+                view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            
 
     def set_sql(self):
         self.plain.set_text(self.get_sql(self.loglist.fts))
@@ -146,25 +163,6 @@ class QueryDesigner():
             (model, iter_) = selection.get_selected()
             if iter_ is not None and model.iter_next(iter_):
                 model.remove(iter_)
-        self.set_sql()
-
-    def change_color(self, view, path, column):
-        selection = view.get_selection()
-        selection.set_mode(gtk.SELECTION_SINGLE)
-        (model, iter_) = selection.get_selected()
-        ncol = None
-        for n,c in enumerate(view.get_columns()):
-            if c == column:
-                ncol = n
-        if ncol and ncol == 6:
-            colordlg = gtk.ColorSelectionDialog("Select color")
-            colorsel = colordlg.colorsel
-            colorsel.set_has_palette(True)
-            response = colordlg.run()
-            if response == gtk.RESPONSE_OK:
-                col = colorsel.get_current_color()
-                model[path][8]=col
-            colordlg.destroy()
         self.set_sql()
 
     def get_sql(self, fts):
