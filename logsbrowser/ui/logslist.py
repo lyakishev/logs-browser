@@ -12,7 +12,7 @@ from datetime import datetime
 import pango
 import os
 from operator import mul, itemgetter, setitem
-from db.engine import *
+import db.engine as db
 from utils.hash import hash_value, sql_to_hash
 from dialogs import merror
 import glib
@@ -20,13 +20,15 @@ from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
 from string import Template
-from utils.profiler import time_it
+from utils.profiler import time_it, profile
+import utils.ctemplate as ct
+import pdb
 
 def callback():
     while gtk.events_pending():
         gtk.main_iteration()
 
-set_callback(callback)
+db.set_callback(callback)
 
 
 class LogList(object):
@@ -55,7 +57,12 @@ class LogList(object):
             self.sql_context[self.name] = self.table
 
     def execute(self, sql_templ):
-        sql = Template(sql_templ).safe_substitute(self.get_context())
+        try:
+            sql = ct.CTemplate(sql_templ).safe_substitute(self.get_context())
+        except ct.NestedColor, e:
+            merror(str(e))
+            return
+        print sql
         self.view.freeze_child_notify()
         self.view.set_model(None)
         sql_hash = sql_to_hash(sql)
@@ -69,8 +76,8 @@ class LogList(object):
             return
         else:
             try:
-                desc, rows = execute(sql)
-            except DBException, e:
+                desc, rows = db.execute(sql)
+            except db.DBException, e:
                 merror(str(e))
                 rows = None
             if rows:
@@ -82,9 +89,11 @@ class LogList(object):
                     self.model.append(row)
                 if 'bgcolor' in self.headers:
                     bgcolor = self.headers.index('bgcolor')
+                    print bgcolor
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
                                              if c.startswith('bgcolor')]
+                    print colorcols
                     for row in self.model:
                         colors = set()
                         for cols in [r for r in [row[c] for c in colorcols] if r]:
@@ -96,6 +105,9 @@ class LogList(object):
                                 self.model.set_value(row.iter, bgcolor, " ".join(wowhite))
                             else:
                                 self.model.set_value(row.iter, bgcolor, wowhite.pop())
+                        else:
+                            self.model.set_value(row.iter, bgcolor, "#fff")
+                            
                 self._cache[sql_hash] = (self.model, self.headers)
                 self.cached_queries.append(sql_hash)
                 self.view.set_model(self.model)
@@ -136,7 +148,7 @@ class LogList(object):
         if self.model:
             self.model.clear()
         if self.table:
-            drop(self.table)
+            db.drop(self.table)
 
     def clear_cached_queries(self):
         for q in self.cached_queries:
@@ -151,7 +163,7 @@ class LogList(object):
         self.clear()
         self.table = hash_value(datetime.now())
         self.sql_context[self.name] = self.table
-        create_new_table(self.table, index)
+        db.create_new_table(self.table, index)
         self.fts = index
 
 
@@ -234,7 +246,7 @@ class LogsListWindow(gtk.Frame):
         self.break_btn.set_sensitive(False)
 
     def cancel(self, *args):
-        interrupt()
+        db.interrupt()
 
     def show_query(self, button):
         if button.get_active():
@@ -256,7 +268,10 @@ class LogsListWindow(gtk.Frame):
         else:
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
+    @profile
     def show_log_window(self, *args):
+        self.break_btn.set_sensitive(True)
+        self.ntb.set_sens(False)
         view = self.log_list.view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -269,6 +284,8 @@ class LogsListWindow(gtk.Frame):
             LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
                         selection)
             selection.set_mode(gtk.SELECTION_MULTIPLE)
+        self.ntb.set_sens(True)
+        self.break_btn.set_sensitive(False)
             
 
     def text_grab_focus(self, *args):

@@ -56,11 +56,13 @@ def log_for_insert(log):
     description = DESCRIPTION_REGEXP.search(msg)
     if description:
         msg = description.group(1)
-    return (log['the_time'],
+    return (None,
+            log['the_time'],
             log['computer'],
             log['logtype'],
             log['evt_type'],
             log['source'],
+            1,
             msg)
 
 def evlogworker(dates, server, logtype):

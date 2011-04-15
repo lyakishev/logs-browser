@@ -134,9 +134,14 @@ class ServersModel(object):
                                             None, 'f'])
 
 class EventServersModel(ServersModel):
+    def __init__(self):
+        self.file = config.ELOGS_CFG
+        super(ServersModel, self).__init__()
+
     def read_config(self):
         self.treestore.clear()
         config_ = ConfigParser.RawConfigParser()
+        self.file = config.FLOGS_CFG
         config_.read(config.ELOGS_CFG)
         for section in config_.sections():
             parent = self.add_root(section)
@@ -151,12 +156,14 @@ class FileServersModel(ServersModel):
         self.progress = progress
         self.signals = signals
         self.read_config = sens_func(self._read_config)
+        self.file = config.FLOGS_CFG
         super(FileServersModel, self).__init__()
 
     def _read_config(self, fill):
         self.treestore.clear()
         self.parents = {}
         fake_config = cStringIO.StringIO()
+        self.file = config.FLOGS_CFG
         with open(config.FLOGS_CFG, 'r') as f:
             fake_config.writelines((line.strip() + " = \n" for line in f))
         fake_config.seek(0)
@@ -279,7 +286,10 @@ class DisplayServersModel:
         self.popup.show_all()
 
     def show_config_editor(self, *args):
-        ConfigEditor(self.srvrs.file)
+        if not config.EXT_CONFIG_EDITOR:
+            ConfigEditor(self.srvrs.file)
+        else:
+            os.system('%s %s' % (config.EXT_CONFIG_EDITOR, self.srvrs.file))
 
     def reload_all(self, *args):
         self.srvrs.read_config()
@@ -337,6 +347,8 @@ class ServersTree(gtk.Frame):
         toolbar = gtk.Toolbar()
         reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
         reload_btn.connect("clicked", lambda args: self.model.read_config(True))
+        editconf_btn = gtk.ToolButton(gtk.STOCK_EDIT)
+        editconf_btn.connect("clicked", lambda args: self.view.show_config_editor())
         search_entry = gtk.ToolItem()
         search_entry.set_expand(True)
         search_entry.add(self.hide_log)
@@ -345,9 +357,10 @@ class ServersTree(gtk.Frame):
         sep = gtk.SeparatorToolItem()
 
         toolbar.insert(reload_btn, 0)
-        toolbar.insert(sep, 1)
-        toolbar.insert(search_entry, 2)
-        toolbar.insert(clear_btn, 3)
+        toolbar.insert(editconf_btn, 1)
+        toolbar.insert(sep, 2)
+        toolbar.insert(search_entry, 3)
+        toolbar.insert(clear_btn, 4)
 
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_MENU)

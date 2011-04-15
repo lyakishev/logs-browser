@@ -52,3 +52,23 @@ class AggError:
 
     def finalize(self):
         return self.type_
+
+class RowIDsList:
+    def __init__(self):
+        self.rowids = []
+
+    def step(self, value):
+        self.rowids.append(value)
+
+    def finalize(self):
+        return str(self.rowids)[1:-1]
+
+class ColorAgg:
+    def __init__(self):
+        self.colors = set()
+
+    def step(self, value):
+        self.colors.add(str(value))
+
+    def finalize(self):
+        return " ".join(self.colors)

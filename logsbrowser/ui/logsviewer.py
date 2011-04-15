@@ -128,29 +128,33 @@ class LogsViewer:
         self.browser.set_sens(False)
         self.signals['stop'] = False
         self.signals['break'] = False
-        logw, loglist = self.prepare_loglist()
         sources = self.source_tree.get_log_sources()
-        self.frac = 1.0 / (len(sources[0]+sources[1])+1)
-        self.count = 0
-        dates = (self.date_filter.get_active() and
-                 self.date_filter.get_dates or
-                 (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
-        if not config.MULTIPROCESS:
-            process(loglist.table, sources, dates, self.callback)
-        else:
-            self.progressbar.set_pulse_step(self.frac)
-            self.progressbar.set_text("Working...")
-            mp_process(loglist.table, sources, dates, self.mpcallback)
-        if self.signals['break']:
-            loglist.clear()
-            self.progressbar.set_fraction(0.0)
-            self.progressbar.set_text("")
+        if sources[0] or sources[1]:
+            logw, loglist = self.prepare_loglist()
+            self.frac = 1.0 / (len(sources[0]+sources[1])+1)
+            self.count = 0
+            dates = (self.date_filter.get_active() and
+                     self.date_filter.get_dates or
+                     (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
+            if not config.MULTIPROCESS:
+                process(loglist.table, sources, dates, self.callback)
+            else:
+                self.progressbar.set_pulse_step(self.frac)
+                self.progressbar.set_text("Working...")
+                mp_process(loglist.table, sources, dates, self.mpcallback)
+            if self.signals['break']:
+                loglist.clear()
+                self.progressbar.set_fraction(0.0)
+                self.progressbar.set_text("")
+            else:
+                self.break_btn.set_sensitive(False)
+                self.stop_all_btn.set_sensitive(False)
+                self.progressbar.set_fraction(1 - self.frac)
+                self.progressbar.set_text("Executing query...")
+                logw.fill()
+                self.progressbar.set_fraction(1.0)
+                self.progressbar.set_text("Complete")
         else:
             self.break_btn.set_sensitive(False)
             self.stop_all_btn.set_sensitive(False)
-            self.progressbar.set_fraction(1 - self.frac)
-            self.progressbar.set_text("Executing query...")
-            logw.fill()
-            self.progressbar.set_fraction(1.0)
-            self.progressbar.set_text("Complete")
         self.browser.set_sens(True)

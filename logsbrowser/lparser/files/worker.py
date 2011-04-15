@@ -57,11 +57,13 @@ def filelogworker(dates, path, log):
                     raise StopIteration
                 if parsed_date <= dates[1]:
                     msg = to_unicode(string + msg)
-                    yield (parsed_date,
+                    yield (None,
+                           parsed_date,
                            comp,
                            log,
                            ("ERROR" if ("Exception" in msg and "  at " in msg)
                                    else "?"),
                            path,
+                           0,
                            msg)
                 msg = ""

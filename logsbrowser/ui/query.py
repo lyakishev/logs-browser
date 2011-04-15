@@ -25,6 +25,7 @@ class QueryDesigner():
         self.field_model = gtk.ListStore(str)
         self.order_model = gtk.ListStore(str)
         self.group_model = gtk.ListStore(str)
+        self.logical_model = gtk.ListStore(str)
 
         for c in ["","group","avg","count","min","max","sum","error","group_concat","rows"]:
             self.group_model.append([c])
@@ -35,6 +36,9 @@ class QueryDesigner():
 
         for c in ["","DESC","ASC"]:
             self.order_model.append([c])
+
+        for c in ["","AND","OR", 'AND (', 'OR (', 'AND )', 'OR )']:
+            self.logical_model.append([c])
 
         select_renderer = gtk.CellRendererToggle()
         select_renderer.set_property('activatable', True)
@@ -47,25 +51,28 @@ class QueryDesigner():
         field_renderer.set_property("model", self.field_model)
         field_renderer.set_property('text-column', 0)
         field_renderer.set_property('editable', True)
+        field_renderer.set_property('has-entry', True)
         field_renderer.connect("changed", self.change_func, 1)
         field_column = gtk.TreeViewColumn("column", field_renderer, text=1)
-
-        alias_renderer = gtk.CellRendererText()
-        alias_renderer.set_property('editable',True)
-        alias_renderer.connect("edited", self.change_value, 2)
-        alias_column = gtk.TreeViewColumn("as", alias_renderer,
-                                                text=2)
-
+        
         where_renderer = gtk.CellRendererText()
         where_renderer.set_property('editable',True)
         where_renderer.connect("edited", self.change_value, 3)
         where_column = gtk.TreeViewColumn("where", where_renderer,
                                                 text=3)
+        logic_renderer = gtk.CellRendererCombo()
+        logic_renderer.set_property("model", self.logical_model)
+        logic_renderer.set_property('text-column', 0)
+        logic_renderer.set_property('editable', True)
+        logic_renderer.set_property('has-entry', True)
+        logic_renderer.connect("changed", self.change_func, 2)
+        logic_column = gtk.TreeViewColumn("and-or", logic_renderer, text=2)
 
         groupby_renderer = gtk.CellRendererCombo()
         groupby_renderer.set_property("model", self.group_model)
         groupby_renderer.set_property('text-column', 0)
         groupby_renderer.set_property('editable', True)
+        groupby_renderer.set_property('has-entry', True)
         groupby_renderer.connect("changed", self.change_func, 4)
         groupby_column = gtk.TreeViewColumn("group by", groupby_renderer, text=4)
 
@@ -73,6 +80,7 @@ class QueryDesigner():
         order_renderer.set_property("model", self.order_model)
         order_renderer.set_property('text-column', 0)
         order_renderer.set_property('editable', True)
+        order_renderer.set_property('has-entry', True)
         order_renderer.connect("changed", self.change_func, 5)
         order_column = gtk.TreeViewColumn("order", order_renderer, text=5)
         
@@ -97,7 +105,7 @@ class QueryDesigner():
         self.view = gtk.TreeView()
         self.view.append_column(self.select_column)
         self.view.append_column(field_column)
-        self.view.append_column(alias_column)
+        self.view.append_column(logic_column)
         self.view.append_column(where_column)
         self.view.append_column(groupby_column)
         self.view.append_column(order_column)
@@ -179,8 +187,8 @@ class QueryDesigner():
 
         def match(col, clause, color):
             if 'match' in clause.lower():
-                return ("rowid",
-                        "in (select rowid from $this where %s %s)" % (col,
+                return ("lid",
+                        "in (select lid from $this where %s %s)" % (col,
                                                                     clause),
                         color)
             else:
@@ -191,9 +199,8 @@ class QueryDesigner():
             if r[0]:
                 column = r[1].replace("snippet",
                                       "snippet($this)").replace("time",
-                                                            "strftime('%H:%M:%S.%f',date)")
-                select += "%s%s, " % (("%s(%s)" % (r[4], column)) if (r[4] and r[4]!='group') else column,
-                            (" as %s" % r[2]) if r[2] else "")
+                                                            "strftime('%H:%M:%S.%f',date) as time")
+                select += "%s, " % (("%s(%s)" % (r[4], column)) if (r[4] and r[4]!='group') else column)
 
         from_ = "from $this"
 
@@ -207,21 +214,20 @@ class QueryDesigner():
                     match_clauses+="%s:%s " % (r[1],
                                 match_re.search(match_).group(1))
                 else:
-                    nonmatch_clauses.append("%s %s" % (r[2] or r[1],
-                                                 match_))
+                    nonmatch_clauses.append("%s %s %s " % (r[2] or 'AND', r[1], match_))
         match_clauses = "$this MATCH '%s'" % match_clauses[:-1] if match_clauses else ""
-        nonmatch_clauses = " AND ".join(nonmatch_clauses)
+        nonmatch_clauses = "".join(nonmatch_clauses)[3:].strip()
         where_clauses = ((match_clauses+" AND "+nonmatch_clauses) if match_clauses
                          and nonmatch_clauses else (match_clauses or
                          nonmatch_clauses))
             
         where = ("where " + where_clauses) if where_clauses else ""
 
-        groups = ", ".join([(r[2] or r[1]) for r in self.query_model
+        groups = ", ".join([r[1] for r in self.query_model
                             if r[4] == 'group'])
         groupby = ("group by " + groups) if groups else ""
 
-        orders = ", ".join(["%s %s" % (r[2] or r[1], r[5])
+        orders = ", ".join(["%s %s" % (r[1], r[5])
                             for r in self.query_model if r[5]])
         order_by = ("order by "+orders) if orders else ""
 
@@ -229,20 +235,12 @@ class QueryDesigner():
 
         color_fields = [(r[2] or r[1]) for r in self.query_model if r[7]]
         if color_fields:
-            color = "'#fff' as bgcolor"
-            bgcolor_n = 1
-            for r in self.query_model:
-                if r[7] and r[1]:
-
-                    bgcol="(case when %s %s then '%s' end)" % match(r[1],
+            color = ",\n".join(["$color{%s %s as %s}" % match(r[1],
                                                     check_clause(r[7]), r[8])
-                    if groups:
-                        bgcol = "color_agg(%s)" % bgcol
-                    color+=(",\n%s as bgcolor_%d" % (bgcol, bgcolor_n))
-                    bgcolor_n+=1
+                                for r in self.query_model if r[7] and r[1]])
             select += ("\n%s," % color)
         if agg:
-            select+="\ngroup_concat(rowid) as rows_for_log_window"
+            select+="\nrows(rowid) as rows_for_log_window"
         else:
             select+="\nrowid as rows_for_log_window"
         return "\n".join([select,from_,where,groupby,order_by])

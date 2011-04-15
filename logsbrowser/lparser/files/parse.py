@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 import os
 
-_prefix = r"[^ ]*?[ ]?\[?"
+_prefix = r"[^ ,]*?[ ]?\[?"
 _formats = [
     "".join([r"(?P<year1>\d{4})[-.]",
             r"(?P<month1>\d{2})[-.]",
