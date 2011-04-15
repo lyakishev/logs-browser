@@ -30,3 +30,5 @@ SERVER_TIME_FORMAT = _config.get('time', 'server_time_format')
 MULTIPROCESS = _config.getboolean('multiprocessing', 'multiprocess')
 GRID_LINES = _config.getboolean('table', 'grid_default')
 FILL_LOGSTREE_AT_START = _config.getboolean('tree', 'fill_at_start')
+
+EXT_CONFIG_EDITOR = _config.get('config_editor', 'external_config_editor')
