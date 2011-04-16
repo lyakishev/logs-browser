@@ -46,27 +46,6 @@ drag-n-drop
 ####TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
 #загружать при старте дерево - опционально
 #
-2.
-#$color{log match 'alyakishev' as '#f00'}
-#наследуемя от Template перед substitute делаюм предобработку:
-#ищем $color{.+?('|")(.+?)\1
-#меняем найденное на ______ по длине найденного, т.е.:
-#'alyakishev' -> '__________' запоминаем положение
-#в новом тексте запроса
-#находим ($color{)(.+?(?P<quot>.+?)( as )(#[A-Fa-f0-9]+)(})
-#делаем замену $color{ -> color_agg((case when
-#	       quot по положению на запомненные ранее
-#	       as -> then
-#	       цвет -> закавыченный
-#	       последняя скобка на end)) as bgcolor_счетчик
-#
-#color agg в зависимости от group
-#
-#возможность использования цвета только на верхнем уровне запроса, во вложенных - нельзя - сообщение...н.п.:
-#
-#select * from (select log, $color{log match 'alyakishev' as #f00} from $this) - нельзя 
-#т.е. слева должен быть только 1 (?i)select
-#
 3.
 # $logw
 # ввести дополнительную колонку lid - первичный ключ

@@ -411,7 +411,7 @@ class LogWindow:
     def fill(self):
         rows = self.model.get_value(self.iter, self.loglist.rflw)
         select = get_msg(rows, self.loglist.table)
-        self.txt = "".join(select[4])
+        self.txt = "\n\n".join([s.rstrip() for s in select[4]])
         self.files = set(select[3])
         dates = set(select[0])
         if len(dates) > 1:

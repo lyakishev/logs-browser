@@ -15,3 +15,8 @@ select date, log_name, type, rows(rowid) as rows_for_log_window,
 from this
 group by date, bgcolor
 
+
+select distinct source
+from $this
+where log regexp '<([^>]+)>.+?</\1>'
+
