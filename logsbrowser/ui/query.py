@@ -116,6 +116,7 @@ class QueryDesigner():
         self.query_model.append([True, 'date', '','','group','DESC','','','#fff'])
         self.query_model.append([True, 'log_name', '','','group','','','','#fff'])
         self.query_model.append([True, 'type', '','','group','','','','#fff'])
+        self.query_model.append([False, 'log', '','','','','','','#fff'])
         self.query_model.append([False, '', '','','','','','','#fff'])
         self.plain.set_text(self.get_sql(self.loglist.fts))
 
@@ -161,6 +162,8 @@ class QueryDesigner():
         (model, iter_) = selection.get_selected()
         try:
             if not model.iter_next(iter_):
+                c = len(self.query_model)
+                self.query_model[c-1][1] = 'log'
                 self.query_model.append([False, '', '','','','','','','#fff'])
         except TypeError:
             pass
