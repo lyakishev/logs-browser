@@ -111,7 +111,7 @@ class LogsViewer:
         self.progressbar.set_text(text)
         while gtk.events_pending():
             gtk.main_iteration()
-        return self.stop or self.break_
+        return self.signals['stop'] or self.signals['break']
 
     def mpcallback(self, e_stop):
         self.progressbar.pulse()
