@@ -102,8 +102,6 @@ class LogWindow:
         self.syntax.connect("changed", self.combo_hl)
         syntax_item = gtk.ToolItem()
         syntax_item.add(self.syntax)
-        sims_btn = gtk.ToolButton(gtk.STOCK_FIND)
-        sims_btn.connect("clicked", self.find_sims)
 
         toolbar.insert(open_btn, 0)
         toolbar.insert(save_btn, 1)
@@ -117,7 +115,6 @@ class LogWindow:
         toolbar.insert(sep2, 9)
         toolbar.insert(syntax_item, 10)
         toolbar.insert(hl_btn, 11)
-        toolbar.insert(sims_btn, 12)
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
@@ -146,9 +143,6 @@ class LogWindow:
 
         self.popup.show_all()
         self.filter.hide()
-
-    def find_sims(self, *args):
-        self.loglist.find_similar(self.get_text())
 
     def show_body(self, widget, event, *args):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
@@ -394,10 +388,10 @@ class LogWindow:
                              args=("notepad %s" % f,)).start()
 
 
-    def filling(self, date_, log_name_, type_):
+    def filling(self, date_, logname_, type_):
         self.open_label.set_text("\n".join(self.files))
         self.info_label.set_markup('<big><b>%s</b></big>\n%s\n%s\n' % (date_,
-                                                                     log_name_,
+                                                                     logname_,
                                                                      type_))
         self.log_text.get_buffer().set_text(self.txt)
         self.highlight(self.col_str)
@@ -411,6 +405,7 @@ class LogWindow:
     def fill(self):
         rows = self.model.get_value(self.iter, self.loglist.rflw)
         select = get_msg(rows, self.loglist.table)
+        print select
         self.txt = "\n\n".join([s.rstrip() for s in select[4]])
         self.files = set(select[3])
         dates = set(select[0])
@@ -421,8 +416,8 @@ class LogWindow:
         else:
             date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
         type_ = ("ERROR" in select[2]) and '<span foreground="red">ERROR</span>' or ""
-        log_name_ = "\n".join(set(select[1]))
-        self.filling(date_,log_name_,type_)
+        logname_ = "\n".join(set(select[1]))
+        self.filling(date_,logname_,type_)
         
 
     def show_prev(self, *args):
@@ -464,7 +459,7 @@ class SeveralLogsWindow(LogWindow):
         dates = []
         text = []
         types = []
-        log_names = []
+        lognames = []
         self.files = []
         prev_f = ""
         for p in reversed(pathlist):
@@ -472,7 +467,7 @@ class SeveralLogsWindow(LogWindow):
             rows = self.model.get_value(iter_, self.loglist.rflw)
             select = get_msg(rows, self.loglist.table)
             dates.extend(select[0])
-            log_names.extend(select[1])
+            lognames.extend(select[1])
             types.extend(select[2])
             files = select[3]
             txt = select[4]
@@ -486,11 +481,11 @@ class SeveralLogsWindow(LogWindow):
         self.files = set(self.files)
         self.txt = "\n".join(text)
         type_ = ("ERROR" in types) and '<span foreground="red">ERROR</span>' or ""
-        log_name_ = "\n".join(set(log_names))
+        logname_ = "\n".join(set(lognames))
         if len(dates) > 1:
             start = min(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
             end = max(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
             date_ = "%s - %s" % (start, end)
         else:
             date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
-        self.filling(date_,log_name_,type_)
+        self.filling(date_,logname_,type_)
