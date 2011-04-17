@@ -21,9 +21,10 @@ def close_conn():
     _dbconn.close()
 
 def set_callback(callback):
-    _dbconn.set_progress_handler(callback, 1000)
+    _dbconn.set_progress_handler(callback, 10000)
 
 def interrupt():
+    print 'interrupt'
     _dbconn.interrupt()
 
 def insert_many(table, iter_):
@@ -47,22 +48,12 @@ def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
-    #import pdb
-    #pdb.set_trace()
     rows_clause = ranges(rows, 'lid')
     msg_sql = """select date, logname, type, source, pretty(log) 
                  from %s where %s order by date asc, %s
                  desc;""" % (table, rows_clause, 'lid')
     cur = _dbconn.cursor()
-    #try:
     cur.execute(msg_sql)
-    #except DBException, e:
-    #    print e
-    #    rows_clause = "lid in (%s)" % rows
-    #    msg_sql = """select date, logname, type, source, pretty(log) 
-    #                 from %s where %s order by date asc, %s
-    #                 desc;""" % (table, rows_clause, 'lid')
-    #    cur.execute(msg_sql)
     result = cur.fetchall()
     dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
     lognames = [r[1] for r in result]

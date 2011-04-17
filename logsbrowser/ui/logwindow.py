@@ -12,7 +12,8 @@ import threading
 from colorparser import LogColorParser
 import pango
 import traceback
-from db.engine import get_msg
+from dialogs import merror
+from db.engine import get_msg, DBException
 try:
     from plsql_analyzer import *
 except:
@@ -138,7 +139,12 @@ class LogWindow:
         self.read_config()
         self.p_cursor = gtk.gdk.Cursor(gtk.gdk.HAND1)
 
-        self.fill()
+        try:
+            self.fill()
+        except DBException, e:
+            merror(str(e))
+            self.popup.destroy()
+            return
         self.fill_combo()
 
         self.popup.show_all()
@@ -405,7 +411,6 @@ class LogWindow:
     def fill(self):
         rows = self.model.get_value(self.iter, self.loglist.rflw)
         select = get_msg(rows, self.loglist.table)
-        print select
         self.txt = "\n\n".join([s.rstrip() for s in select[4]])
         self.files = set(select[3])
         dates = set(select[0])
@@ -424,6 +429,7 @@ class LogWindow:
         self.selection.set_mode(gtk.SELECTION_SINGLE)
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
+            self.selection.set_mode(gtk.SELECTION_MULTIPLE)
             return None
         prevPath = int(path) + 1
         try:
@@ -432,21 +438,35 @@ class LogWindow:
             return
         self.selection.select_path(prevPath)
         self.view.scroll_to_cell(prevPath)
-        self.fill()
-        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
+        try:
+            self.fill()
+        except DBException, e:
+            merror(str(e))
+            self.selection.select_path(int(path))
+            self.view.scroll_to_cell(int(path))
+            self.iter = self.model.get_iter_from_string(path)
+        finally:
+            self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def show_next(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
         path = self.model.get_string_from_iter(self.iter)
         if path == 0:
+            self.selection.set_mode(gtk.SELECTION_MULTIPLE)
             return None
         prevPath = int(path) - 1
         if prevPath >= 0:
             self.iter = self.model.get_iter_from_string(str(prevPath))
             self.selection.select_path(prevPath)
             self.view.scroll_to_cell(prevPath)
-            self.fill()
-            self.selection.set_mode(gtk.SELECTION_MULTIPLE)
+            try:
+                self.fill()
+            except DBException, e:
+                merror(e)
+                self.selection.select_path(int(path))
+                self.view.scroll_to_cell(int(path))
+                self.iter = self.model.get_iter_from_string(path)
+        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 
 class SeveralLogsWindow(LogWindow):

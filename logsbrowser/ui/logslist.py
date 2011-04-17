@@ -268,7 +268,6 @@ class LogsListWindow(gtk.Frame):
         else:
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
-    @profile
     def show_log_window(self, *args):
         self.break_btn.set_sensitive(True)
         self.ntb.set_sens(False)
