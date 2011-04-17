@@ -1,6 +1,5 @@
 from cleaner import clear
 import os
-from itertools import groupby
 from operator import itemgetter
 
 def file_preparator(folders):
@@ -20,8 +19,9 @@ def lists_to_pathes(lists):
     for i in lists:
         pathes.append([os.sep.join(reversed(i[1:])), i[0]])
     folders = {}
-    for k, g in groupby(pathes, itemgetter(0)):
-        folders[k] = [fl[1] for fl in list(g)]
+    dirs = set([p[0] for p in pathes])
+    for dir_ in dirs:
+        folders[dir_] = [p[1] for p in pathes if p[0]==dir_]
     return folders
 
 def pathes(lst):
