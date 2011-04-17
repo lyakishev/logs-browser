@@ -118,9 +118,10 @@ class ServersModel(object):
             walker(it)
             it = self.treestore.iter_next(it)
 
-    def add_root(self, name):
+    def add_root(self, name, filled=True):
         return self.treestore.append(None, [name,
-                                            gtk.STOCK_NETWORK,
+                                            (gtk.STOCK_CONNECT if filled
+                                            else gtk.STOCK_DISCONNECT),
                                             None, 'n'])
 
     def add_dir(self, name, parent):
@@ -174,7 +175,7 @@ class FileServersModel(ServersModel):
         n = count(1)
         try:
             for server in config_.sections():
-                parent = self.add_root(server)
+                parent = self.add_root(server, fill)
                 for path, null in config_.items(server):
                     self.progress.set_text("%s: %s" % (server, path))
                     if self.signals['stop'] or self.signals['break']:
