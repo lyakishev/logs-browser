@@ -5,6 +5,7 @@ import gobject
 import gio
 import pango
 import re
+import config
 
 
 class QueryDesigner():
@@ -30,7 +31,7 @@ class QueryDesigner():
         for c in ["","group","avg","count","min","max","sum","error","group_concat","rows"]:
             self.group_model.append([c])
 
-        for c in ["time","date","comp","log_name","type",
+        for c in ["time","date","comp","logname","type",
                   "source","log","snippet","rowid", "this"]:
             self.field_model.append([c])
 
@@ -114,7 +115,7 @@ class QueryDesigner():
         self.view.append_column(hidden_color)
 
         self.query_model.append([True, 'date', '','','group','DESC','','','#fff'])
-        self.query_model.append([True, 'log_name', '','','group','','','','#fff'])
+        self.query_model.append([True, 'logname', '','','group','','','','#fff'])
         self.query_model.append([True, 'type', '','','group','','','','#fff'])
         self.query_model.append([False, 'log', '','','','','','','#fff'])
         self.query_model.append([False, '', '','','','','','','#fff'])
@@ -129,17 +130,20 @@ class QueryDesigner():
     def activate_cell(self, view, event):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            if path[1] == self.color_column:
-                colordlg = gtk.ColorSelectionDialog("Select color")
-                colorsel = colordlg.colorsel
-                colorsel.set_has_palette(True)
-                response = colordlg.run()
-                if response == gtk.RESPONSE_OK:
-                    col = colorsel.get_current_color()
-                    view.get_model()[path[0]][8]=col
-                colordlg.destroy()
-            if path[1] != self.select_column:
-                view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            try:
+                if path[1] == self.color_column:
+                    colordlg = gtk.ColorSelectionDialog("Select color")
+                    colorsel = colordlg.colorsel
+                    colorsel.set_has_palette(True)
+                    response = colordlg.run()
+                    if response == gtk.RESPONSE_OK:
+                        col = colorsel.get_current_color()
+                        view.get_model()[path[0]][8]=col
+                    colordlg.destroy()
+                if path[1] != self.select_column:
+                    view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            except TypeError:
+                pass
             
 
     def set_sql(self):
@@ -184,9 +188,12 @@ class QueryDesigner():
                 return clause
             else:
                 if fts:
-                    return "MATCH '%s'" % clause
+                    return ("%s '%s'" %
+                            (config.DEFAULT_WHERE_OPERATOR_FTS.upper(),
+                                        clause))
                 else:
-                    return "REGEXP '%s'" % clause
+                    return "%s '%s'" % (config.DEFAULT_WHERE_OPERATOR.upper(),
+                                        clause)
 
         def match(col, clause, color):
             if 'match' in clause.lower():
@@ -243,9 +250,9 @@ class QueryDesigner():
                                 for r in self.query_model if r[7] and r[1]])
             select += ("\n%s," % color)
         if agg:
-            select+="\nrows(rowid) as rows_for_log_window"
+            select+="\nrows(lid) as rows_for_log_window"
         else:
-            select+="\nrowid as rows_for_log_window"
+            select+="\nlid as rows_for_log_window"
         return "\n".join([select,from_,where,groupby,order_by])
 
 

@@ -67,14 +67,14 @@ class CTemplate(Template):
             return template
 
 if __name__ == '__main__':
-    t=CTemplate("select date, log_name, type, $color{log REGEXP 'SUCCESS' as #f00} from $this")
+    t=CTemplate("select date, logname, type, $color{log REGEXP 'SUCCESS' as #f00} from $this")
     print t.safe_substitute({'this':'_dscasdc32d'})
     print
     print 80*'-'
     print
 
 
-    t=CTemplate("""select date, log_name, type, 
+    t=CTemplate("""select date, logname, type, 
                    $color{log REGEXP 'SUCCESS' as #f00},
                    $color{type='ERROR' as #f00}
                    from $this""")
@@ -83,19 +83,19 @@ if __name__ == '__main__':
     print 80*'-'
     print
 
-    t=CTemplate("select date, log_name, $color{logid in (select lid from $this where log match 'SUCCESS') as #f00} from $this")
+    t=CTemplate("select date, logname, $color{logid in (select lid from $this where log match 'SUCCESS') as #f00} from $this")
     print t.safe_substitute({'this':'_dscasdc32d'})
     print
     print 80*'-'
     print
 
-    t=CTemplate("select date, log_name, type, $color{log REGEXP 'SUCCESS' as #f00} from $this group by date, log_name, type")
+    t=CTemplate("select date, logname, type, $color{log REGEXP 'SUCCESS' as #f00} from $this group by date, logname, type")
     print t.safe_substitute({'this':'_dscasdc32d'})
     print
     print 80*'-'
     print
 
-    t=CTemplate("""select date, log_name, type, 
+    t=CTemplate("""select date, logname, type, 
                    $color{log REGEXP 'SUCCESS' as #f00},
                    $color{type='ERROR' as #f00}
                    from $this group by date""")
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     print 80*'-'
     print
 
-    t=CTemplate("""select date, log_name, type, 
+    t=CTemplate("""select date, logname, type, 
                    $color{log REGEXP 'SUCCESS' as #f00},
                    $color{type='ERROR' as #f00}
                    from $this
