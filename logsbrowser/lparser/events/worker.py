@@ -56,8 +56,7 @@ def log_for_insert(log):
     description = DESCRIPTION_REGEXP.search(msg)
     if description:
         msg = description.group(1)
-    return (None,
-            log['the_time'],
+    return (log['the_time'],
             log['computer'],
             log['logtype'],
             log['evt_type'],
