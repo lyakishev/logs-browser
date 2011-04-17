@@ -14,6 +14,7 @@ import pango
 import traceback
 from dialogs import merror
 from db.engine import get_msg, DBException
+import config
 try:
     from plsql_analyzer import *
 except:
@@ -139,12 +140,16 @@ class LogWindow:
         self.read_config()
         self.p_cursor = gtk.gdk.Cursor(gtk.gdk.HAND1)
 
+
+        self.view.set_sensitive(False)
         try:
             self.fill()
         except DBException, e:
             merror(str(e))
             self.popup.destroy()
             return
+        finally:
+            self.view.set_sensitive(True)
         self.fill_combo()
 
         self.popup.show_all()
@@ -391,7 +396,7 @@ class LogWindow:
     def open_file(self, *args):
         for f in self.files:
             threading.Thread(target=os.system,
-                             args=("notepad %s" % f,)).start()
+                             args=("%s %s" % (config.EXTERNAL_LOG_VIEWER, f),)).start()
 
 
     def filling(self, date_, logname_, type_):
@@ -438,6 +443,7 @@ class LogWindow:
             return
         self.selection.select_path(prevPath)
         self.view.scroll_to_cell(prevPath)
+        self.view.set_sensitive(False)
         try:
             self.fill()
         except DBException, e:
@@ -446,6 +452,7 @@ class LogWindow:
             self.view.scroll_to_cell(int(path))
             self.iter = self.model.get_iter_from_string(path)
         finally:
+            self.view.set_sensitive(True)
             self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def show_next(self, *args):
@@ -459,6 +466,7 @@ class LogWindow:
             self.iter = self.model.get_iter_from_string(str(prevPath))
             self.selection.select_path(prevPath)
             self.view.scroll_to_cell(prevPath)
+            self.view.set_sensitive(False)
             try:
                 self.fill()
             except DBException, e:
@@ -466,6 +474,8 @@ class LogWindow:
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))
                 self.iter = self.model.get_iter_from_string(path)
+            finally:
+                self.view.set_sensitive(True)
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 

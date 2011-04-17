@@ -32,6 +32,7 @@ GRID_LINES = _config.getboolean('table', 'grid_default')
 FILL_LOGSTREE_AT_START = _config.getboolean('tree', 'fill_at_start')
 
 EXT_CONFIG_EDITOR = _config.get('config_editor', 'external_config_editor')
+EXTERNAL_LOG_VIEWER = _config.get('logwindow', 'external_log_viewer')
 
 DEFAULT_WHERE_OPERATOR = _config.get('query', 'default_where_operator_fts')
 DEFAULT_WHERE_OPERATOR_FTS = _config.get('query', 'default_where_operator_fts')
