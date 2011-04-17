@@ -27,18 +27,18 @@ def interrupt():
     _dbconn.interrupt()
 
 def insert_many(table, iter_):
-    _dbconn.executemany("insert into %s values (?,?,?,?,?,?,?,?);" %
+    _dbconn.executemany("insert into %s values (last_insert_rowid()+1,?,?,?,?,?,?,?);" %
                                     table, iter_)
 
 def create_new_table(table, index=True):
     if index:
-        sql = """create virtual table %s using fts4(lid INTEGER PRIMARY KEY
-                 AUTOINCREMENT, date text, computer text,
-                 log_name text,
+        sql = """create virtual table %s using fts4(lid INTEGER PRIMARY KEY,
+                 date text, computer text,
+                 logname text,
                  type text, source text, event integer, log text);""" % table
     else:
-        sql = """create table %s (lid INTEGER PRIMARY KEY
-                 AUTOINCREMENT, date text, computer text, log_name text,
+        sql = """create table %s (lid INTEGER PRIMARY KEY,
+                 date text, computer text, logname text,
                  type text, source text, event integer, log text);""" % table
     _dbconn.execute(sql)
 
@@ -47,27 +47,29 @@ def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
+    #import pdb
+    #pdb.set_trace()
     rows_clause = ranges(rows, 'lid')
-    msg_sql = """select date, log_name, type, source, pretty(log) 
+    msg_sql = """select date, logname, type, source, pretty(log) 
                  from %s where %s order by date asc, %s
                  desc;""" % (table, rows_clause, 'lid')
     cur = _dbconn.cursor()
-    try:
-        cur.execute(msg_sql)
-    except DBException, e:
-        print e
-        rows_clause = "lid in (%s)" % rows
-        msg_sql = """select date, log_name, type, source, pretty(log) 
-                     from %s where %s order by date asc, %s
-                     desc;""" % (table, rows_clause, 'lid')
-        cur.execute(msg_sql)
+    #try:
+    cur.execute(msg_sql)
+    #except DBException, e:
+    #    print e
+    #    rows_clause = "lid in (%s)" % rows
+    #    msg_sql = """select date, logname, type, source, pretty(log) 
+    #                 from %s where %s order by date asc, %s
+    #                 desc;""" % (table, rows_clause, 'lid')
+    #    cur.execute(msg_sql)
     result = cur.fetchall()
     dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
-    log_names = [r[1] for r in result]
+    lognames = [r[1] for r in result]
     types = [r[2] for r in result]
     sources = [r[3] for r in result]
     msg = [r[4] for r in result]
-    return (dates, log_names, types, sources, msg)
+    return (dates, lognames, types, sources, msg)
 
 def execute(sql):
     cur = _dbconn.cursor()

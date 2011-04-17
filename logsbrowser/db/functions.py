@@ -6,6 +6,7 @@ xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 empty_lines = re.compile("^$")
 
+#TODO SPA, ProdUI
 def xml_pretty(m):
         txt = m.group()
         try:
