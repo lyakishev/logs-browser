@@ -62,6 +62,7 @@ def get_msg(rows, table):
     msg = [r[4] for r in result]
     return (dates, lognames, types, sources, msg)
 
+@time_it
 def execute(sql):
     cur = _dbconn.cursor()
     cur.execute(sql)

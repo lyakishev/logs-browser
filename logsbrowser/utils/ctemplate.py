@@ -1,5 +1,6 @@
 from string import Template
 import re
+from sql import parse
 import pdb
 
 
@@ -45,7 +46,8 @@ class CTemplate(Template):
             raise NestedColor('May use $color{...} expression in top level select query only')
         else:
             self.template = new_template
-            return Template.safe_substitute(self, mapping, **kws)
+            #pdb.set_trace()
+            return parse.process(Template.safe_substitute(self, mapping, **kws))
 
     def cut(self, template, re_obj, group):
         groups = []
