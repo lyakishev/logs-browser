@@ -1,19 +1,25 @@
 import sqlite3
 import config
-from functions import *
+import functions
 from datetime import datetime
 from utils.profiler import time_it
 from utils.ranges import ranges
 
+
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
-_dbconn.create_function("strip", 1, strip)
-_dbconn.create_function("regexp", 2, regexp)
-_dbconn.create_function("regex", 3, regex)
-_dbconn.create_function("pretty", 1, pretty_xml)
-_dbconn.create_aggregate("error", 1, AggError)
-_dbconn.create_aggregate("rows", 1, RowIDsList)
-_dbconn.create_aggregate("color_agg", 1, ColorAgg)
+_dbconn.create_function("regexp", 2, functions.regexp)
+_dbconn.create_function("regex", 3, functions.regex)
+_dbconn.create_function("pretty", 1, functions.pretty_xml)
 _dbconn.execute("PRAGMA synchronous=OFF;")
+
+def register_agg(name, nargs, object_):
+    _dbconn.create_aggregate(name, nargs, object_)
+    functions.aggregate_functions.append(name)
+
+register_agg("error", 1, functions.AggError)
+register_agg("rows", 1, functions.RowIDsList)
+register_agg("color_agg", 1, functions.ColorAgg)
+    
 
 DBException = sqlite3.OperationalError
 

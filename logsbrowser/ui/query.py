@@ -241,19 +241,13 @@ class QueryDesigner():
                             for r in self.query_model if r[5]])
         order_by = ("order by "+orders) if orders else ""
 
-        agg = [r[4] for r in self.query_model if r[4]]
-
         color_fields = [(r[2] or r[1]) for r in self.query_model if r[7]]
         if color_fields:
             color = ",\n".join(["$color{%s %s as %s}" % match(r[1],
                                                     check_clause(r[7]), r[8])
                                 for r in self.query_model if r[7] and r[1]])
             select += ("\n%s," % color)
-        if agg:
-            select+="\nrows(lid) as rows_for_log_window"
-        else:
-            select+="\nlid as rows_for_log_window"
-        return "\n".join([select,from_,where,groupby,order_by])
+        return "\n".join([select[:-1],from_,where,groupby,order_by])
 
 
 class Plain(gtk.ScrolledWindow):

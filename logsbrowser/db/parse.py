@@ -1,8 +1,12 @@
 import re
 from itertools import count
 from string import Template
+import functions
+import pdb
 
+from_ = re.compile(r'(?i)from(.+?)(where|group|order|limit|$)')
 select = re.compile(r'(?i)\(\s*select\s')
+select_expr = re.compile(r'(?i)select(.+?)(from|$)')
 where = re.compile('(?i)where(.+?)(group|order|limit|$)')
 and_ = re.compile(r'(?i)\sand\s')
 not_ = re.compile(r'(?i)\snot\s')
@@ -10,22 +14,92 @@ or_ = re.compile(r'(?i)\sor\s')
 expr = re.compile(r'''(?i)\w+\s*(not\s+)?\w+\s*[a-zA-Z0-9_$.]+''')
 logic = re.compile('''(?i)\sand\s|\sor\s|\snot\s''')
 ss = re.compile('\s+')
+query_templ = re.compile('\$[a-z]*query\d+')
+union = re.compile('(?i)(except|intersect|union)')
+
+def is_agg(query):
+    if ' group ' in query.lower():
+        return True
+    else:
+        shows = select_expr.search(query).group(1).split(',')
+        agg_fs = [f+'(' for f in functions.aggregate_functions]
+        for show in shows:
+            for af in agg_fs:
+                if af in show:
+                    return True
+        return False
+
+def process_from(query):
+    from_match = from_.search(query)
+    if from_match:
+        from_source = from_match.group(1)
+        from_pos = from_match.start()
+        from_queries = [q.strip()[1:] for q in from_source.split(',') if query_templ.search(q)]
+        group = is_agg(query)
+        if query_templ.search(from_source):
+            if group:
+                new_query = '%s, %s %s' % (query[:from_pos],
+                                      'rows(rows_for_log_window) as rows_for_log_window',
+                                      query[from_pos:])
+            else:
+                new_query = '%s, %s %s' % (query[:from_pos],
+                                      'rows_for_log_window',
+                                      query[from_pos:])
+
+        else:
+            if group:
+                new_query = '%s, %s %s' % (query[:from_pos],
+                                      'rows(lid) as rows_for_log_window',
+                                      query[from_pos:])
+            else:
+                new_query = '%s, %s %s' % (query[:from_pos],
+                                      'lid as rows_for_log_window',
+                                      query[from_pos:])
+        return (new_query, from_queries)
+    else:
+        return (query, [])
+
+
+def auto_lid(query):
+    lquery, lquery_dict = cut_queries(query, 'l')
+    queries_for_auto_lid = []
+    for lname, lquery_ in lquery_dict.iteritems():
+        lqueries = []
+        for lq_ in union.split(lquery_):
+            qu, qus = process_from(lq_)
+            queries_for_auto_lid.extend(qus)
+            lqueries.append(qu)
+        lquery_dict[lname] = ' '.join(lqueries)
+    for q in lquery_dict:
+        lquery = Template(lquery).safe_substitute(lquery_dict)
+    return (lquery, queries_for_auto_lid)
+
+
 
 def process(sql):
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
-    if ' match ' not in sql_no_quotes.lower():
-        return sql
     query, query_dict = cut_queries(sql_no_quotes)
+    queries_for_auto_lid = []
     for name, query_ in query_dict.iteritems():
-        query_dict[name] = right_select(query_)
+        queries = []
+        for q_ in union.split(query_):
+            if 'select' in q_.lower():
+                rquery =  right_select(q_)
+                if name == 'query0' or name in queries_for_auto_lid:
+                    rquery, qus  = auto_lid(rquery)
+                    queries_for_auto_lid.extend(qus)
+                queries.append(rquery)
+            else:
+                queries.append(q_)
+        query_dict[name] = ' '.join(queries)
     for i in query_dict:
         query = Template(query).safe_substitute(query_dict)
     query = Template(query).safe_substitute(quotes_dict)
     return query
 
 
-def cut_queries(query_):
+def cut_queries(query_, prefix=""):
     query_count = count(1)
     queries_dict = {}
     queries = [m.start() for m in select.finditer(query_)]
@@ -42,7 +116,7 @@ def cut_queries(query_):
                 if inquery:
                     inquery -= 1
                     if inquery == 0:
-                        query_n = '$query%d' % query_count.next()
+                        query_n = '$%squery%d' % (prefix, query_count.next())
                         queries_dict[query_n[1:]] = '('+walk(query[start+1:n],
                                                 [q-start-1 for q in queries
                                                 if start+1<q<n])+')'
@@ -54,7 +128,7 @@ def cut_queries(query_):
         else:
             return query
 
-    query_n = '$query0' 
+    query_n = '$%squery0' % prefix
     queries_dict[query_n[1:]] = walk(query_, queries)
 
     return query_n, queries_dict
@@ -186,12 +260,22 @@ def cut_quotes(query):
 
 
 if __name__ == '__main__':
-    print process("select date, time from this where log MATCH 'test' AND (log=123 OR log NOT LIKE 'abcd') group by date order by date desc")
+    #print process("select date, time from this where log MATCH 'test' AND (log=123 OR log NOT LIKE 'abcd') group by date order by date desc")
+    #print 80*'_'
+    #print process("select date, (select test from this where log MATCH 'test' or log MATCH 'abcd'), time from this group by date order by date desc")
+    #print 80*'_'
+    #print process("select date, time from this where log NOT MATCH 'testb' union select date, time from this where log NOT MATCH 'testa'")
     print 80*'_'
-    print process("select date, (select test from this where log MATCH 'test' or log MATCH 'abcd'), time from this group by date order by date desc")
+    print process("select * from (select date, time from this where log NOT MATCH 'test') group by date)")
     print 80*'_'
-    print process("select date, time from this where log NOT MATCH 'test' AND log REGEXP 'test1' OR log NOT LIKE 'test2' AND log MATCH 'test3' group by date order by date desc")
-    print 80*'_'
-    print process("select date, time from this where log MATCH 'test'")
+    #print process("select date, time from this where log MATCH 'test' group by date")
+    #print 80*'_'
+    #print process("select date, time from this where log MATCH 'test' order by date")
+    #print 80*'_'
+    #print process("select * from this where log NOT MATCH 'test' union select * from this where log NOT MATCH 'testa' order by test")
+
+
+
+
 
 

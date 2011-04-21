@@ -1,6 +1,6 @@
 from string import Template
 import re
-from sql import parse
+from db import parse
 import pdb
 
 

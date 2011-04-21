@@ -2,6 +2,8 @@ import re
 import xml.dom.minidom
 from colorsys import *
 
+aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
+
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
 empty_lines = re.compile("^$")
@@ -27,9 +29,6 @@ def pretty_xml(t):
     text = empty_lines.sub("",xml_new.sub(xml_pretty, text))
     return text.replace("&quot;", '"').replace("&gt;",">").replace("&lt;","<")
 
-
-def strip(t):
-    return t.strip()
 
 def regexp(pattern, field):
     ret = re.compile(pattern).search(field)
@@ -59,10 +58,10 @@ class RowIDsList:
         self.rowids = []
 
     def step(self, value):
-        self.rowids.append(value)
+        self.rowids.append(str(value))
 
     def finalize(self):
-        return str(self.rowids)[1:-1]
+        return ','.join(self.rowids)
 
 class ColorAgg:
     def __init__(self):
