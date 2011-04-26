@@ -72,3 +72,32 @@ class ColorAgg:
 
     def finalize(self):
         return " ".join(self.colors)
+
+
+class GroupLogname:
+    def __init__(self):
+        self.prev_logname = None
+        self.count = 0
+
+    def __call__(self, logname):
+        if not self.prev_logname:
+            self.prev_logname = logname
+            return self.count
+        if logname == self.prev_logname:
+            return self.count
+        else:
+            self.count += 1
+            self.prev_logname = logname
+            return self.count
+
+    def clear(self):
+        self.__init__()
+
+group_logname = GroupLogname()
+
+
+    
+
+
+        
+        

@@ -20,3 +20,11 @@ select distinct source
 from $this
 where log regexp '<([^>]+)>.+?</\1>'
 
+Группировка по интервалам-источникам
+select min(date), max(date), logname, error(type)
+from (select date, logname, type, group_logname(logname) as logname_group
+from $this
+group by date, logname, type
+order by date DESC)
+group by logname_group
+order by logname_group desc

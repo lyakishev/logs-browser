@@ -10,6 +10,7 @@ _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("regexp", 2, functions.regexp)
 _dbconn.create_function("regex", 3, functions.regex)
 _dbconn.create_function("pretty", 1, functions.pretty_xml)
+_dbconn.create_function("group_logname", 1, functions.group_logname)
 _dbconn.execute("PRAGMA synchronous=OFF;")
 
 def register_agg(name, nargs, object_):
@@ -70,6 +71,7 @@ def get_msg(rows, table):
 
 @time_it
 def execute(sql):
+    functions.group_logname.clear()
     cur = _dbconn.cursor()
     cur.execute(sql)
     rows = cur.fetchall()
