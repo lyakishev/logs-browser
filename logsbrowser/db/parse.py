@@ -1,19 +1,10 @@
 import re
 from itertools import count
 from string import Template
-import pdb
-
+import functions
 
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
-
-def trace(f):
-    def wrapper(*args, **kwargs):
-        print f.func_name, args, kwargs
-        r = f(*args, **kwargs)
-        return r
-    return wrapper
-    
 
 class Query(object):
 
@@ -79,17 +70,17 @@ class Select:
     limit_re = re.compile('(?i)limit(.+?)')
     union_re = re.compile('(?i)(except|intersect|union|order|limit)')
 
-    def __init__(self, expr, parent):
+    def __init__(self, expr, parent, colorize=True):
         self.qdict = {}
         self.sql = ""
-        self.colorized = False
-        self.find_queries(expr)
+        self.find_queries(expr, colorize)
         self.parse()
         self.parent = parent
-        self.add_colors()
+        if colorize:
+            self.add_colors()
 
 
-    def find_queries(self, query):
+    def find_queries(self, query, colorize):
         query_count = count(1)
         queries = self.union_re.split(query)
         for q in queries:
@@ -100,19 +91,19 @@ class Select:
             else:
                 self.sql += q
         self.color_columns = []
-        for q in self.qdict.values():
-            self.color_columns.extend(q.color_columns)
-        if self.color_columns:
-            self.colorized = True
-            self.color_columns = set(self.color_columns)
+        if colorize:
             for q in self.qdict.values():
-                q.colorized = True
-                for c in self.color_columns:
-                    if c not in q.color_columns:
-                        q.result_list.append("'#fff' as %s" % c)
-                        q.color_columns.append(c)
-        else:
-            self.color_columns = set()
+                self.color_columns.extend(q.color_columns)
+            if self.color_columns:
+                self.color_columns = set(self.color_columns)
+                for q in self.qdict.values():
+                    q.colorized = True
+                    for c in self.color_columns:
+                        if c not in q.color_columns:
+                            q.result_list.append("'#fff' as %s" % c)
+                            q.color_columns.append(c)
+            else:
+                self.color_columns = set()
 
     def parse(self):
         order = self.order_re.search(self.sql)
@@ -147,9 +138,9 @@ class Select:
         from_queries = {}
         for k,q in self.qdict.items():
             from_queries[k] = []
-            for q_ in q.from_:
+            for q_ in q.from_for_color:
                 try:
-                    from_queries[k].append(self.select_from_parent(q_.strip('()')[1:]))
+                    from_queries[k].append(self.select_from_parent(q_.strip('$()')))
                 except KeyError:
                     pass
         return from_queries
@@ -174,6 +165,10 @@ class Select:
             for k,q in self.qdict.items():
                 q.result_list.append("'#fff' as bgcolor")
 
+    @property
+    def colorized(self):
+        return bool(self.color_columns)
+
 class SelectCore:
 
     select_expr = re.compile(r'(?i)select(.+?)(from|$)')
@@ -193,18 +188,22 @@ class SelectCore:
         self.right_query()
         
     def parse(self):
+        results = self.select_expr.search(self.sql).group(1)
+        self.result_list = [c.strip() for c in results.split(',')]
         group = self.group_re.search(self.sql)
         if group:
             self.group = [g.strip() for g in group.group(1).split(',')]
         else:
             self.group = []
-        results = self.select_expr.search(self.sql).group(1)
-        self.result_list = [self.parse_color(c.strip()) for c in results.split(',')]
+        self.result_list = [self.parse_color(c) for c in self.result_list]
         from_ = self.from_re.search(self.sql)
         if from_:
             self.from_ = [f.strip() for f in from_.group(1).split(',')]
         else:
             self.from_ = []
+        self.from_for_color = self.from_
+        self.queries_for_autolid = [q.strip('$()') for q in self.from_ if
+                                    self.query_templ.match(q.strip('()'))]
         where = self.where_re.search(self.sql)
         if where:
             self.where =  where.group(1)
@@ -215,25 +214,25 @@ class SelectCore:
         if self.group:
             return True
         else:
-            #agg_fs = [f+'(' for f in functions.aggregate_functions]
-            #for result in results_list:
-            #    for af in agg_fs:
-            #        if af in result:
-            #            return True
+            agg_fs = [f+'(' for f in functions.aggregate_functions]
+            for result in self.result_list:
+                for af in agg_fs:
+                    if af in result:
+                        return True
             return False
 
     def add_rows_for_log_window(self):
         if self.from_:
             if len(self.from_) == 1:
                 group = self.is_agg()
-                if self.query_templ.search(self.from_[0]):
+                if self.queries_for_autolid:
                     if group:
                         self.result_list.insert(0,
                             'rows(rows_for_log_window) as rows_for_log_window')
                     else:
                         self.result_list.insert(0,
                                               'rows_for_log_window')
-                    return self.from_[0].strip('()')[1:]
+                    return self.queries_for_autolid[0]
 
                 else:
                     if group:
@@ -299,6 +298,9 @@ class SelectCore:
 
    # def __repr__(self):
    #     return self.sql
+
+def reset_select_core_counter():
+    SelectCore.color_count = count(1)
             
 def cut_quotes(query):
     qoutes_count = count(1)
@@ -316,6 +318,8 @@ def cut_quotes(query):
     new_query+=query[lend:]
     return new_query, quotes_dict
 
+ss = re.compile('\s+')
+
 def process(sql):
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
@@ -328,7 +332,6 @@ and_ = re.compile(r'(?i)\sand\s')
 not_ = re.compile(r'(?i)\snot\s')
 or_ = re.compile(r'(?i)\sor\s')
 expr = re.compile(r'''(?i)\w+\s*(not\s+)?\w+\s*[a-zA-Z0-9_$.]+''')
-ss = re.compile('\s+')
 
 def cut_clauses(clauses_):
     clause_count = count(1)
@@ -417,9 +420,8 @@ if __name__ == '__main__':
     #print process("select date, {log REGEXP 'test' as #ff0} from this where log NOT MATCH 'test' union select * from this where log NOT MATCH 'testa' order by test")
     #print q
     #print process("select date, logname, type from s where exists (select * from asdasd,asada where log not match 'test') order by date desc")
-    print process('select date, logname, type from this group by date, logname, type order by date desc')
-    #import pdb
-    #pdb.set_trace()
+    #print process('select date from (select date, {log regexp "testc" as #ff0} from this) where log match "test" and log match "test" group by date')
+
     print process("""select min(date), max(date), logname, error(type)
 from (select date, logname, type, group_logname(logname) as logname_group, {log REGEXP 'test2' as #f00}
 from (select *, {log REGEXP 'test' as #ff0}, {log match 'test2' as #00f} from

@@ -4,6 +4,7 @@ import functions
 from datetime import datetime
 from utils.profiler import time_it
 from utils.ranges import ranges
+from parse import Select
 
 
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
@@ -55,10 +56,15 @@ def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
+    query = Select("select date, logname, type, source, pretty(log), %s \
+from %s order by date asc, %s \
+desc;" % ('lid', table, 'lid'), None, False)
+    order = query.order
+    core = str(query.qdict['mquery1'])
     rows_clause = ranges(rows, 'lid')
-    msg_sql = """select date, logname, type, source, pretty(log) 
-                 from %s where %s order by date asc, %s
-                 desc;""" % (table, rows_clause, 'lid')
+    new_query = ('%s where %s' % (core, cl) for cl in rows_clause)
+    msg_sql = ' union '.join(new_query)
+    msg_sql += ' %s' % 'order by %s' % ', '.join(order)
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()

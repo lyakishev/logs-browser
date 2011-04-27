@@ -7,6 +7,7 @@ class CTemplate(Template):
         Template.__init__(self, template)
 
     def safe_substitute(self, mapping, **kws):
+        parse.reset_select_core_counter()
         return parse.process(Template.safe_substitute(self, mapping, **kws))
 
 if __name__ == '__main__':

@@ -19,3 +19,13 @@ def time_it(function):
         print function.__name__, datetime.datetime.now() - dt
         return res
     return wrapper
+
+def trace(f):
+    def wrapper(*args, **kwargs):
+        print f.func_name, args, kwargs
+        r = f(*args, **kwargs)
+        return r
+    return wrapper
+    
+
+
