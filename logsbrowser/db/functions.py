@@ -1,33 +1,42 @@
 import re
 import xml.dom.minidom
 from colorsys import *
+import sys
 
 aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
 
-xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
-xml_bad = re.compile(r"((?<!>)<(\w+).*?>.*?</\2>(?!<))", re.DOTALL)
-empty_lines = re.compile("^$")
+xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))")
+xml_bad = re.compile(r"<.+?><.+?>")
+xml_new_bad = re.compile(r"<(\w+).*?>.*?</\1>")
 
 #TODO SPA, ProdUI
-def xml_pretty(m):
-        txt = m.group()
+def xml_pretty(txt):
         try:
             xparse = xml.dom.minidom.parseString
             pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
         except xml.parsers.expat.ExpatError:
-            #print traceback.format_exc()
             pretty_xml = txt.replace("><", ">\n<")
-        return "\n" + pretty_xml
+        return pretty_xml
 
-def xml_bad_pretty(m):
-    txt = xml_pretty(m)
-    new_txt = txt.splitlines()[2:]
-    return "\n".join(new_txt)
+def parse_bad_xml(m):
+    xml = m.group()
+    if xml_bad.search(xml):
+        ret_xml = xml_pretty('<?xml version="1.0" encoding="utf-16"?>'+m.group())
+        return '\n'.join(ret_xml.splitlines()[1:])
+    else:
+        return xml
+
+def parse_good_xml(m):
+    return '\n'+xml_pretty(m.group())
+    
+
 
 def pretty_xml(t):
-    text = xml_bad.sub(xml_bad_pretty, t)
-    text = empty_lines.sub("",xml_new.sub(xml_pretty, text))
+    text = xml_new.sub(parse_good_xml, t)
+    if xml_bad.search(text):
+        text = xml_new_bad.sub(parse_bad_xml, text)
     return text.replace("&quot;", '"').replace("&gt;",">").replace("&lt;","<")
+
 
 
 def regexp(pattern, field):
@@ -116,8 +125,8 @@ class GroupLogname:
 group_logname = GroupLogname()
 
 
-    
-
-
-        
-        
+if __name__ == '__main__':
+    s1 = '''2010-12-05 14:36:05,153 [1] DEBUG OrderManagement.Utils.Logging.LoggerFactory
+=======================================
+<CreateRequestParameters xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><TariffPlanIdNew>11</TariffPlanIdNew><Msisdn>79167677425</Msisdn><TerminalDeviceId>5980</TerminalDeviceId><IsFreePrice>false</IsFreePrice><IsMakeInvoice>false</IsMakeInvoice><IpAddress>172.20.64.254</IpAddress><SalePointCode /><Comment>test</Comment><IsSplitPersonalAccount>true</IsSplitPersonalAccount><PaymentAmount>0</PaymentAmount><MoveAmount>352.56984</MoveAmount><CustomerProcessId xsi:nil="true" /></CreateRequestParameters>''' 
+    print pretty_xml(s1)

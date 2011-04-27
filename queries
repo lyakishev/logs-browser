@@ -16,9 +16,9 @@ from this
 group by date, bgcolor
 
 
-select distinct source
-from $this
-where log regexp '<([^>]+)>.+?</\1>'
+SELECT DISTINCT logname
+FROM $this
+WHERE log REGEXP '<([^>]+)>.+?</\1>'
 
 Группировка по интервалам-источникам
 select min(date), max(date), logname, error(type)

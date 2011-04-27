@@ -14,13 +14,20 @@ def clause(iter_, prefix):
             cl.append(curr)
             prev = curr
         else:
-            yield form_clause(cl,prefix,1)
+            yield form_clause(cl,prefix,2)
             cl = [curr]
             prev = curr
-    yield form_clause(cl,prefix,3)
+    yield form_clause(cl,prefix,2)
 
 def ranges(values, prefix):
     ints = sorted(map(int, values.split(',')))
-    for cl in chain.from_iterable(clause(ints, prefix)):
-        yield cl
+    clauses = list(chain.from_iterable(clause(ints, prefix)))
+    n = len(clauses)
+    if n > 999:
+        for i in range(n/500):
+            yield ' OR '.join(clauses[i*500:(i+1)*500])
+        yield ' OR '.join(clauses[(i+1)*500:])
+    else:
+        yield ' OR '.join(clauses)
+
 
