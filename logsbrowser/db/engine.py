@@ -9,9 +9,12 @@ from parse import Select
 
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("regexp", 2, functions.regexp)
+_dbconn.create_function("iregexp", 2, functions.iregexp)
 _dbconn.create_function("regex", 3, functions.regex)
+_dbconn.create_function("rmatch", 2, functions.rmatch)
 _dbconn.create_function("pretty", 1, functions.pretty_xml)
 _dbconn.create_function("group_logname", 1, functions.group_logname)
+_dbconn.create_function("intersct", 2, functions.intersct)
 _dbconn.execute("PRAGMA synchronous=OFF;")
 
 def register_agg(name, nargs, object_):

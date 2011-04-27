@@ -58,10 +58,12 @@ class Query(object):
     #def __repr__(self):
     #    return self.sql
 
-    def add_lid(self):
-        from_queries = self.query.add_lid()
+    def add_lid(self, group=False):
+        from_queries = self.query.add_lid(group)
         for q in from_queries:
-            self.qdict[q].add_lid()
+            query = self.qdict.get(q)
+            if query:
+                query.add_lid(group)
 
 
 class Select:
@@ -126,10 +128,10 @@ class Select:
     #def __repr__(self):
     #    return self.sql
 
-    def add_lid(self):
+    def add_lid(self, group):
         from_queries = []
         for q in self.qdict:
-            from_query = self.qdict[q].add_rows_for_log_window()
+            from_query = self.qdict[q].add_rows_for_log_window(group)
             if from_query:
                 from_queries.append(from_query)
         return from_queries
@@ -188,14 +190,13 @@ class SelectCore:
         self.right_query()
         
     def parse(self):
-        results = self.select_expr.search(self.sql).group(1)
+        results = self.select_expr.search(self.sql).group(1).strip()
         self.result_list = [c.strip() for c in results.split(',')]
         group = self.group_re.search(self.sql)
         if group:
             self.group = [g.strip() for g in group.group(1).split(',')]
         else:
             self.group = []
-        self.result_list = [self.parse_color(c) for c in self.result_list]
         from_ = self.from_re.search(self.sql)
         if from_:
             self.from_ = [f.strip() for f in from_.group(1).split(',')]
@@ -204,6 +205,8 @@ class SelectCore:
         self.from_for_color = self.from_
         self.queries_for_autolid = [q.strip('$()') for q in self.from_ if
                                     self.query_templ.match(q.strip('()'))]
+        self.result_list = [self.parse_color(c) for c in self.result_list]
+
         where = self.where_re.search(self.sql)
         if where:
             self.where =  where.group(1)
@@ -217,14 +220,14 @@ class SelectCore:
             agg_fs = [f+'(' for f in functions.aggregate_functions]
             for result in self.result_list:
                 for af in agg_fs:
-                    if af in result:
+                    if result.startswith(af):
                         return True
             return False
 
-    def add_rows_for_log_window(self):
+    def add_rows_for_log_window(self, def_group):
         if self.from_:
             if len(self.from_) == 1:
-                group = self.is_agg()
+                group = self.is_agg() or def_group
                 if self.queries_for_autolid:
                     if group:
                         self.result_list.insert(0,
@@ -249,13 +252,22 @@ class SelectCore:
     def parse_color(self, column):
         color = self.color.match(column)
         if color:
+            clause = color.group('clause')
+            if ' match ' in clause.lower():
+                new_query = Query('select from %s where %s' %
+                                  (', '.join(self.from_), clause))
+                new_query.add_lid(True)
+                clause = 'intersct(%s, (%s))' % (
+                            'rows_for_log_window' if self.queries_for_autolid
+                            else 'lid',
+                            str(new_query))
             self.colorized = True
             group = self.is_agg()
             bgcolor = 'bgcolor%d' % next(self.color_count)
             self.color_columns.append(bgcolor)
             return (('color_agg(' if group else '') +
                     "(case when %s then '%s' else '#fff' end)" %
-                    (color.group('clause'), color.group('color')) +
+                    (clause, color.group('color')) +
                     (')' if group else '') +
                     ' as %s' % bgcolor)
         else:
@@ -274,7 +286,7 @@ class SelectCore:
 
     def __str__(self):
         colors = [c for c in self.result_list if 'bgcolor' in c]
-        columns = [c for c in self.result_list if c not in colors]
+        columns = [c for c in self.result_list if c and c not in colors]
         colors.sort(key = lambda c: c[-1])
         op_fields = lambda s, seq: ('%s %s' % (s, ', '.join(seq)) if seq else '')
         select = op_fields('select', columns+colors)
@@ -422,18 +434,17 @@ if __name__ == '__main__':
     #print process("select date, logname, type from s where exists (select * from asdasd,asada where log not match 'test') order by date desc")
     #print process('select date from (select date, {log regexp "testc" as #ff0} from this) where log match "test" and log match "test" group by date')
 
-    print process("""select min(date), max(date), logname, error(type)
-from (select date, logname, type, group_logname(logname) as logname_group, {log REGEXP 'test2' as #f00}
-from (select *, {log REGEXP 'test' as #ff0}, {log match 'test2' as #00f} from
-this where log not match 'test')
-group by date, logname, type
-order by date DESC)
-group by logname_group
-order by logname_group desc""")
+    #print process("""select min(date), max(date), logname, error(type)
+#from (select date, logname, type, group_logname(logname) as logname_group, {log REGEXP 'test2' as #f00}
+#from (select *, {log REGEXP 'test' as #ff0}, {log match 'test2' as #00f} from
+#this where log not match 'test')
+#group by date, logname, type
+#order by date DESC)
+#group by logname_group
+#order by logname_group desc""")
     #print process('''select date from (select a,$color{log match 'test' as #ff0} from this union select a, $color{log match 'xaxaxa' as #fff} from
-    #this) group by a''')
-    #Query('select date, log, type from this where log match $quote1 AND log NOT match $quote2')
 
+    print process("select date, logname, type, {log MATCH 'SUCCESS' as #ff0} from _asacsaca")
 
 
 

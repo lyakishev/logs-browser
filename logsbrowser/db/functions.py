@@ -34,21 +34,41 @@ def regexp(pattern, field):
     ret = re.compile(pattern).search(field)
     return True if ret else False
 
+def iregexp(field, pattern):
+    ret = re.compile(pattern, re.I).search(field)
+    return True if ret else False
+
 def regex(t, pattern, gr):
-    try:
-        ret = re.compile(pattern).search(t).group(gr)
-    except:
-        pass
-    else:
-        return ret
+    ret = re.compile(pattern).search(t).group(gr)
+    return ret
+
+def rmatch(field, pattern):
+    ret = re.compile('(\W|^)'+pattern+'(\W|$)', re.I).search(field)
+    return True if ret else False
+
+def intersct(lids1, lids2):
+    s1 = str(lids1).split(',')
+    s2 = str(lids2).split(',')
+    return True if set(s1) & set(s2) else False
 
 class AggError:
+    
+    error = 'ERROR'
+    warning = 'WARNING'
+    info = 'INFORMATION'
+
     def __init__(self):
         self.type_ = '?'
 
     def step(self, value):
-        if value == 'ERROR':
-            self.type_ = 'ERROR'
+        if value == self.error:
+            self.type_ = value
+        elif value == self.warning:
+            if self.type_ != self.error:
+                self.type_ = value
+        elif value == self.info:
+            if self.type_ != self.error and self.type_ != self.warning:
+                self.type_ = value
 
     def finalize(self):
         return self.type_
