@@ -485,8 +485,8 @@ class LogWindow:
 
 
 class SeveralLogsWindow(LogWindow):
-    def __init__(self, loglist, iter, sel):
-        LogWindow.__init__(self, loglist, iter, sel)
+    def __init__(self, loglist, iter, sel, sens_func):
+        LogWindow.__init__(self, loglist, iter, sel, sens_func)
         self.info_box.remove(self.updown_btns)
 
     def fill(self):

@@ -6,14 +6,16 @@ import gtk
 import gobject
 import gio
 from logwindow import LogWindow
-from query import Query
+from query import Plain, QueryLoader
 from logwindow import SeveralLogsWindow
 from datetime import datetime
 import pango
 import os
 from operator import mul, itemgetter, setitem
 import db.engine as db
+from db.parse import process
 from utils.hash import hash_value, sql_to_hash
+from utils.xmlqueries import QueriesManager
 from dialogs import merror
 import glib
 from itertools import cycle
@@ -21,7 +23,6 @@ import config
 from cellrenderercolors import CellRendererColors
 from string import Template
 from utils.profiler import time_it, profile
-import utils.ctemplate as ct
 import pdb
 
 def callback():
@@ -56,10 +57,10 @@ class LogList(object):
             self.name = name
             self.sql_context[self.name] = self.table
 
-    def execute(self, sql_templ):
+    def execute(self, sql_templ, auto_lid):
         try:
-            sql = ct.CTemplate(sql_templ).safe_substitute(self.get_context())
-        except ct.NestedColor, e:
+            sql = process(sql_templ,self.get_context(), auto_lid)
+        except Exception, e:
             merror(str(e))
             return
         print sql
@@ -167,6 +168,10 @@ class LogList(object):
         self.fts = index
 
 
+class QMan:
+    pass
+
+
 class LogsListWindow(gtk.Frame):
     def __init__(self, ntb):
         super(LogsListWindow, self).__init__()
@@ -217,7 +222,9 @@ class LogsListWindow(gtk.Frame):
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
 
-        self.filter_logs = Query(self.log_list)
+        self.qm = QueriesManager(config.QUERIES_FILE)
+        self.filter_logs = Plain()
+        self.loader = QueryLoader(self.filter_logs, self.qm)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 
@@ -241,7 +248,8 @@ class LogsListWindow(gtk.Frame):
     def fill(self, *args):
         if self.log_list.table:
             self.exec_sens(True)
-            self.log_list.execute(self.filter_logs.get_sql())
+            self.log_list.execute(self.filter_logs.get_sql(),
+                                  self.loader.get_auto_lid())
             self.exec_sens(False)
 
     def cancel(self, *args):
@@ -251,12 +259,12 @@ class LogsListWindow(gtk.Frame):
         if button.get_active():
             self.box.remove(self.logs_window)
             self.paned.pack1(self.logs_window, True, False)
-            self.paned.pack2(self.filter_logs, False, False)
+            self.paned.pack2(self.loader, False, False)
             self.paned.set_position(575)
             self.box.pack_end(self.paned)
         else:
             self.paned.remove(self.logs_window)
-            self.paned.remove(self.filter_logs)
+            self.paned.remove(self.loader)
             self.box.remove(self.paned)
             self.box.pack_end(self.logs_window)
         self.show_all()
@@ -273,16 +281,19 @@ class LogsListWindow(gtk.Frame):
             view = self.log_list.view
             selection = view.get_selection()
             (model, pathlist) = selection.get_selected_rows()
-            if pathlist:
-                if len(pathlist) > 1:
-                    SeveralLogsWindow(self.log_list,
-                                      self.log_list.model.get_iter(pathlist[0]),
-                                      selection)
-                else:
-                    selection.set_mode(gtk.SELECTION_SINGLE)
-                    LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                                selection, self.exec_sens)
-                    selection.set_mode(gtk.SELECTION_MULTIPLE)
+            try:
+                if pathlist:
+                    if len(pathlist) > 1:
+                        SeveralLogsWindow(self.log_list,
+                                          self.log_list.model.get_iter(pathlist[0]),
+                                          selection, self.exec_sens)
+                    else:
+                        selection.set_mode(gtk.SELECTION_SINGLE)
+                        LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
+                                    selection, self.exec_sens)
+                        selection.set_mode(gtk.SELECTION_MULTIPLE)
+            except ValueError:
+                selection.set_mode(gtk.SELECTION_MULTIPLE)
             self.exec_sens(False)
 
     def exec_sens(self, start):
@@ -290,7 +301,7 @@ class LogsListWindow(gtk.Frame):
         self.ntb.set_sens((not start))
 
     def text_grab_focus(self, *args):
-        self.filter_logs.text.grab_focus()
+        self.filter_logs.txt.grab_focus()
 
     @property
     def get_view(self):

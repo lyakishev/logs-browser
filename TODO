@@ -37,11 +37,15 @@ drag-n-drop
 #- мигание или радуга
 #- кэшировать запросы или нет
 #
-#union, distinct... продумать интерфейс запроса
 #
-#pygments?
+#pygments - подсветка синтаксиса
 
-####TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
-#загружать при старте дерево - опционально
+####TODO: Горячие клавиши: expand all collapse all, collapse non-active, collapse non-active
 #
 #Конструктор запросов
+#1. если нет where то and-or относится к цвету:
+#	если одинаковый цвет и стоит and или or
+#2. Combobox:from из Notebook
+#3. при потере фокуса в ячейке - сохранять значение
+#4. union, distinct... продумать интерфейс запроса
+#5. NOT

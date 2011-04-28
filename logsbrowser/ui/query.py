@@ -257,15 +257,23 @@ class Plain(gtk.ScrolledWindow):
         self.txt = gtk.TextView()
         self.buf = self.txt.get_buffer()
         self.add(self.txt)
+        self.sens_list = [self.txt]
+        self.show_all()
 
     def set_text(self, txt):
         self.buf.set_text(txt)
+
+    def set_sql(self, txt):
+        self.set_text(txt)
 
     def get_text(self):
         start = self.buf.get_start_iter()
         end = self.buf.get_end_iter()
         txt = self.buf.get_text(start, end)
         return txt
+
+    def get_sql(self):
+        return self.get_text()
 
 
 class Query(gtk.Notebook):
@@ -295,6 +303,39 @@ class Query(gtk.Notebook):
 
     def get_sql(self):
         return self.plain.get_text()
+
+
+class QueryLoader(gtk.VBox):
+    def __init__(self, query_constructor, qmanager):
+        gtk.VBox.__init__(self)
+        self.query_constructor = query_constructor
+        self.tools = gtk.HBox()
+        self.add_lid = gtk.CheckButton('auto__lid')
+        self.add_lid.set_active(True)
+        self.queries_combo = gtk.HBox()
+        self.queries_label = gtk.Label('Load query')
+        self.queries = gtk.combo_box_new_text()
+        self.queries.connect("changed", self.set_query)
+        self.query_manager = qmanager
+        for n,q in enumerate(self.query_manager.queries):
+            self.queries.append_text(q)
+            if q == self.query_manager.default:
+                self.queries.set_active(n)
+        self.queries_combo.pack_start(self.queries_label, False, False, 5)
+        self.queries_combo.pack_start(self.queries, True, True)
+        self.tools.pack_start(self.queries_combo)
+        self.tools.pack_start(self.add_lid, False,False, 10)
+        self.pack_start(self.tools, False, False)
+        self.pack_start(self.query_constructor)
+        self.show_all()
+
+    def set_query(self, *args):
+        query = self.queries.get_active_text().decode('utf8')
+        self.query_constructor.set_sql(self.query_manager.queries[query].strip())
+        
+    def get_auto_lid(self):
+        return self.add_lid.get_active()
+
         
 
 

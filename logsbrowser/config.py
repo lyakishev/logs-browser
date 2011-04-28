@@ -36,3 +36,5 @@ EXTERNAL_LOG_VIEWER = _config.get('logwindow', 'external_log_viewer')
 
 DEFAULT_WHERE_OPERATOR = _config.get('query', 'default_where_operator_fts')
 DEFAULT_WHERE_OPERATOR_FTS = _config.get('query', 'default_where_operator_fts')
+
+QUERIES_FILE = get_path(_config.get("config_files", 'queries'))

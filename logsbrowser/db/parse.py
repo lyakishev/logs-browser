@@ -2,6 +2,7 @@ import re
 from itertools import count
 from string import Template
 import functions
+from string import Template
 
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
@@ -332,11 +333,14 @@ def cut_quotes(query):
 
 ss = re.compile('\s+')
 
-def process(sql):
+def process(sql_t, context, autolid):
+    reset_select_core_counter()
+    sql = Template(sql_t).safe_substitute(context)
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
     query = Query(sql_no_quotes)
-    query.add_lid()
+    if autolid:
+        query.add_lid()
     query = Template(str(query)).safe_substitute(quotes_dict)
     return query
 
