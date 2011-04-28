@@ -239,11 +239,10 @@ class LogsListWindow(gtk.Frame):
         self.log_list.change_name(name)
 
     def fill(self, *args):
-        self.break_btn.set_sensitive(True)
-        self.ntb.set_sens(False)
-        self.log_list.execute(self.filter_logs.get_sql())
-        self.ntb.set_sens(True)
-        self.break_btn.set_sensitive(False)
+        if self.log_list.table:
+            self.exec_sens(True)
+            self.log_list.execute(self.filter_logs.get_sql())
+            self.exec_sens(False)
 
     def cancel(self, *args):
         db.interrupt()
@@ -269,23 +268,26 @@ class LogsListWindow(gtk.Frame):
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
     def show_log_window(self, *args):
-        self.break_btn.set_sensitive(True)
-        self.ntb.set_sens(False)
-        view = self.log_list.view
-        selection = view.get_selection()
-        (model, pathlist) = selection.get_selected_rows()
-        if len(pathlist) > 1:
-            SeveralLogsWindow(self.log_list,
-                              self.log_list.model.get_iter(pathlist[0]),
-                              selection)
-        else:
-            selection.set_mode(gtk.SELECTION_SINGLE)
-            LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                        selection)
-            selection.set_mode(gtk.SELECTION_MULTIPLE)
-        self.ntb.set_sens(True)
-        self.break_btn.set_sensitive(False)
-            
+        if self.log_list.model:
+            self.exec_sens(True)
+            view = self.log_list.view
+            selection = view.get_selection()
+            (model, pathlist) = selection.get_selected_rows()
+            if pathlist:
+                if len(pathlist) > 1:
+                    SeveralLogsWindow(self.log_list,
+                                      self.log_list.model.get_iter(pathlist[0]),
+                                      selection)
+                else:
+                    selection.set_mode(gtk.SELECTION_SINGLE)
+                    LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
+                                selection, self.exec_sens)
+                    selection.set_mode(gtk.SELECTION_MULTIPLE)
+            self.exec_sens(False)
+
+    def exec_sens(self, start):
+        self.break_btn.set_sensitive(start)
+        self.ntb.set_sens((not start))
 
     def text_grab_focus(self, *args):
         self.filter_logs.text.grab_focus()

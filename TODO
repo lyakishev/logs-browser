@@ -22,7 +22,7 @@ src/widgets/logs_notebook.py:        #TODO# move to loglist
 В Query:
 drag-n-drop
 
-быстрый поиск в тулбаре сделать цвет... строку и поиск
+#быстрый поиск в тулбаре сделать цвет... строку и поиск
 
 ####Ctrl-Z
 ####BUG: удаление пустых путей опять отвалилось
@@ -41,13 +41,7 @@ drag-n-drop
 #
 #pygments?
 
-Проработано, готово к исполнению
-1.
 ####TODO: Кнопки обновления дерева на деревом источников, load all load new edit config expand all collapse all, collapse non-active, collapse non-active
 #загружать при старте дерево - опционально
 #
-3.
-# $logw
-# ввести дополнительную колонку lid - первичный ключ
-# rows_for_log_window -> logs_for_log_window, rows(lid) -> logs(lid)
-#
+#Конструктор запросов

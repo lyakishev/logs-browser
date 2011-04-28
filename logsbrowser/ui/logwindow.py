@@ -28,11 +28,12 @@ plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
 
 
 class LogWindow:
-    def __init__(self, loglist, iter, sel):
+    def __init__(self, loglist, iter, sel, sens_func):
         self.model = loglist.model
         self.view = loglist.view
         self.loglist = loglist
         self.selection = sel
+        self.sens_func = sens_func
         self.iter = iter
         self.popup = gtk.Window()
         self.popup.set_title("Log")
@@ -443,7 +444,8 @@ class LogWindow:
             return
         self.selection.select_path(prevPath)
         self.view.scroll_to_cell(prevPath)
-        self.view.set_sensitive(False)
+        self.popup.set_sensitive(False)
+        self.sens_func(True)
         try:
             self.fill()
         except DBException, e:
@@ -452,7 +454,8 @@ class LogWindow:
             self.view.scroll_to_cell(int(path))
             self.iter = self.model.get_iter_from_string(path)
         finally:
-            self.view.set_sensitive(True)
+            self.popup.set_sensitive(True)
+            self.sens_func(False)
             self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def show_next(self, *args):
@@ -466,16 +469,18 @@ class LogWindow:
             self.iter = self.model.get_iter_from_string(str(prevPath))
             self.selection.select_path(prevPath)
             self.view.scroll_to_cell(prevPath)
-            self.view.set_sensitive(False)
+            self.popup.set_sensitive(False)
+            self.sens_func(True)
             try:
                 self.fill()
             except DBException, e:
-                merror(e)
+                merror(str(e))
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))
                 self.iter = self.model.get_iter_from_string(path)
             finally:
-                self.view.set_sensitive(True)
+                self.popup.set_sensitive(True)
+                self.sens_func(False)
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 
