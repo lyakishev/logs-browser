@@ -8,6 +8,7 @@ import win32evtlogutil
 import winerror
 import pywintypes
 import time
+from lparser.utils import to_unicode
 
 
 EVT_DICT = {win32con.EVENTLOG_AUDIT_FAILURE: 'AUDIT_FAILURE',
@@ -46,7 +47,7 @@ def get_event_log(ev_obj, server, logtype):
         log['evt_type'] = "unknown"
     else:
         log['evt_type'] = str(EVT_DICT[ev_obj.EventType])
-    log['the_time'] = dtdate
+    log['the_time'] = dtdate.isoformat(' ')
     return log
 
 def log_for_insert(log):
@@ -62,13 +63,16 @@ def log_for_insert(log):
             log['evt_type'],
             log['source'],
             1,
-            msg)
+            to_unicode(msg))
 
 def evlogworker(dates, server, logtype):
+    try:
+        hand = win32evtlog.OpenEventLog(server, logtype)
+    except pywintypes.error:
+        raise StopIteration
     while 1:
         for attempt in xrange(6):
             try:
-                hand = win32evtlog.OpenEventLog(server, logtype)
                 events = win32evtlog.ReadEventLog(hand, _flags, 0)
             except pywintypes.error:
                 #hand.Detach()  # need?

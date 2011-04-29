@@ -21,7 +21,7 @@ class CellRendererColors(gtk.CellRendererText):
 
     def do_get_size(self, widget, cell_area):
         x,y,w,h = gtk.CellRendererText.do_get_size(self, widget, cell_area)
-        return (x,y,w*pango.SCALE_LARGE if config.BOLD_SELECTED else w,h)
+        return (x,y,int(w*pango.SCALE_LARGE) if config.BOLD_SELECTED else w,h)
 
     def do_set_property(self, pspec, value):
         if pspec.name == 'backgrounds':

@@ -137,7 +137,7 @@ class ServersModel(object):
 class EventServersModel(ServersModel):
     def __init__(self):
         self.file = config.ELOGS_CFG
-        super(ServersModel, self).__init__()
+        super(EventServersModel, self).__init__()
 
     def read_config(self):
         self.treestore.clear()

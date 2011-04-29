@@ -168,10 +168,6 @@ class LogList(object):
         self.fts = index
 
 
-class QMan:
-    pass
-
-
 class LogsListWindow(gtk.Frame):
     def __init__(self, ntb):
         super(LogsListWindow, self).__init__()
@@ -246,11 +242,10 @@ class LogsListWindow(gtk.Frame):
         self.log_list.change_name(name)
 
     def fill(self, *args):
-        if self.log_list.table:
-            self.exec_sens(True)
-            self.log_list.execute(self.filter_logs.get_sql(),
-                                  self.loader.get_auto_lid())
-            self.exec_sens(False)
+        self.exec_sens(True)
+        self.log_list.execute(self.filter_logs.get_sql(),
+                              self.loader.get_auto_lid())
+        self.exec_sens(False)
 
     def cancel(self, *args):
         db.interrupt()

@@ -67,7 +67,10 @@ def get_msg(rows, table):
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()
-    dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
+    try:
+        dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
+    except ValueError:
+        dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S") for r in result]
     lognames = [r[1] for r in result]
     types = [r[2] for r in result]
     sources = [r[3] for r in result]
