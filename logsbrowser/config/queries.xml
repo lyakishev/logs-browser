@@ -40,4 +40,9 @@ from $this
 group by logname
 order by c desc
 	</query>
+
+	<query name="Количество сообщений" add_lid="1" default="0">
+select count(*)
+from $this
+	</query>
 </queries>

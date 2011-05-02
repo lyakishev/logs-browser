@@ -10,7 +10,6 @@ from threading import Thread
 import time
 
 
-@time_it
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):
@@ -49,6 +48,7 @@ def _mp_process(table, sources, dates):
     pool.close()
 
 
+@time_it
 def mp_process(table, sources, dates, callback):
     t=Thread(target=_mp_process, args=(table, sources, dates))
     t.start()

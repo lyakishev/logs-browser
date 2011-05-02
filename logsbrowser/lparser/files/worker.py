@@ -2,10 +2,10 @@
 
 from parse import define_format
 import os
-import datetime as dt
+import time
 from readers import mmap_block_read
 from operator import itemgetter
-from lparser.utils import to_unicode
+from lparser.utils import to_unicode, isoformat
 
 _formats = {}
 
@@ -25,13 +25,11 @@ def memoize_format(function):
 def date_format(path, log):
     try:
         with open(path, 'r') as file_:
-            pfunc = True
             for line in file_:
                 pformat, pfunc = define_format(line)
                 if pformat:
                     return (pformat, pfunc)
-            if not pfunc:
-                print "Not found format for file %s" % path
+            print "Not found format for file %s" % path
             raise StopIteration
     except IOError:
         raise StopIteration
@@ -39,11 +37,15 @@ def date_format(path, log):
 
 def filelogworker(dates, path, log):
         try:
-            cdate = dt.datetime.fromtimestamp(os.path.getctime(path))
+            file_stat = os.stat(path)
         except WindowsError:
             print "WindowsError: %s" % path
             raise StopIteration
-        if cdate.isoformat(' ') > dates[1]:
+        else:
+            if not file_stat.st_size:
+                raise StopIteration
+            cdate = time.localtime(file_stat.st_ctime)
+        if isoformat(cdate) > dates[1]:
             raise StopIteration
         pformat, pfunc = date_format(path, log)
         comp = [p for p in path.split(os.sep) if p][0]

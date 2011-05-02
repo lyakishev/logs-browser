@@ -59,8 +59,8 @@ def _only_time_parser(line, cdate, re_obj):
     if parsed_line:
         groups = parsed_line.group
         millisecs = groups("ms") or '000'
-        return "%s-%02d-%02d %02d:%s:%s.%s" % (cdate.year, cdate.month,
-                                               cdate.day,
+        return "%s-%02d-%02d %02d:%s:%s.%s" % (cdate.tm_year, cdate.tm_mon,
+                                               cdate.tm_mday,
                                                int(groups('hour')),
                                                groups('min'),
                                                groups('sec'),
@@ -82,7 +82,7 @@ def _normal_parser(line, cdate, re_obj):
     return None
 
 def define_parser(pdict):
-    if pdict.get("short_year"):
+    if pdict.get("short_year3"):
         return _short_year_parser
     else:
         return _normal_parser
