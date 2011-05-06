@@ -52,3 +52,16 @@ drag-n-drop
 
 
 PLSQLAnalyzer
+цвета X11
+конструктор цвета
+сохранение запроса
+select strftime('%H:%M:%S.%f',date), logname, type from $Page_1
+where logname like 'Order%BL'
+group by date, logname, type
+order by date desc
+---> log window ---> 
+select date, logname, type, source, pretty(log), lid
+                 from  where lid=25641 order by date asc, lid desc
+from - пусто - окно не выводится
+
+diff вкладок

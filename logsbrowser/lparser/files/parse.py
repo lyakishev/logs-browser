@@ -105,9 +105,9 @@ def define_format(line):
                                   clear_format(_formats[format_number-1],
                                                format_number) +
                                   _suffix),
-                        define_parser(parsed_line_dict))
-        return (re.compile(_prefix+_suffix), _only_time_parser)
+                        define_parser(parsed_line_dict), False)
+        return (re.compile(_prefix+_suffix), _only_time_parser, True)
     parsed_line = _log4j.search(line)
     if parsed_line:
-        return (_log4j, _log4j_parser)
-    return (None, None)
+        return (_log4j, _log4j_parser, False)
+    return (None, None, False)

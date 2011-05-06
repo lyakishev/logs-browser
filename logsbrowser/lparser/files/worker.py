@@ -25,46 +25,45 @@ def memoize_format(function):
 def date_format(path, log):
     try:
         with open(path, 'r') as file_:
+            pfunc = True
             for line in file_:
-                pformat, pfunc = define_format(line)
+                pformat, pfunc, need_date = define_format(line)
                 if pformat:
-                    return (pformat, pfunc)
-            print "Not found format for file %s" % path
+                    return (pformat, pfunc, need_date)
+            if not pfunc:
+                print "Not found format for file %s" % path
             raise StopIteration
     except IOError:
         raise StopIteration
     
 
 def filelogworker(dates, path, log):
+    pformat, pfunc, need_date = date_format(path, log)
+    if need_date:
         try:
-            file_stat = os.stat(path)
+            cdate = time.localtime(os.path.getctime(path))
         except WindowsError:
             print "WindowsError: %s" % path
             raise StopIteration
+    else:
+        cdate = None
+    comp = [p for p in path.split(os.sep) if p][0]
+    msg = ""
+    for string in mmap_block_read(path, 16*1024):
+        parsed_date = pfunc(string, cdate, pformat)
+        if not parsed_date:
+            msg = string + msg
         else:
-            if not file_stat.st_size:
+            if parsed_date < dates[0]:
                 raise StopIteration
-            cdate = time.localtime(file_stat.st_ctime)
-        if isoformat(cdate) > dates[1]:
-            raise StopIteration
-        pformat, pfunc = date_format(path, log)
-        comp = [p for p in path.split(os.sep) if p][0]
-        msg = ""
-        for string in mmap_block_read(path, 16*1024):
-            parsed_date = pfunc(string, cdate, pformat)
-            if not parsed_date:
-                msg = string + msg
-            else:
-                if parsed_date < dates[0]:
-                    raise StopIteration
-                if parsed_date <= dates[1]:
-                    msg = to_unicode(string + msg)
-                    yield (parsed_date,
-                           comp,
-                           log,
-                           ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                   else "?"),
-                           path,
-                           0,
-                           msg)
-                msg = ""
+            if parsed_date <= dates[1]:
+                msg = to_unicode(string + msg)
+                yield (parsed_date,
+                       comp,
+                       log,
+                       ("ERROR" if ("Exception" in msg and "  at " in msg)
+                               else "?"),
+                       path,
+                       0,
+                       msg)
+            msg = ""

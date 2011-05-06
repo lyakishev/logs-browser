@@ -45,4 +45,11 @@ order by c desc
 select count(*)
 from $this
 	</query>
+
+<query name="Ошибки" add_lid="1" default="1">
+select strftime('%H:%M:%S.%f',date), logname, type from $this
+where type = 'ERROR'
+order by date desc
+</query>
+
 </queries>

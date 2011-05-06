@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import mmap
 from contextlib import closing
+import os
 
 
 def mmap_read(path):
@@ -19,19 +20,27 @@ def mmap_read(path):
 
 
 def mmap_block_read(path, block_size=8192):
-    with open(path, 'rb') as mapped_file:
-        with closing(mmap.mmap(mapped_file.fileno(), 0,
-                     access=mmap.ACCESS_READ)) as data:
-            mf_size = end_pos = len(data)
-            for i in xrange(mf_size-1-block_size, -1, -block_size):
-                text_block = data[i:end_pos+1]
-                ret_pos = text_block.find("\n")
-                if ret_pos >= 0:
-                    for line in text_block.splitlines(True)[-1:0:-1]:
-                        yield line
-                else:
-                    ret_pos = 0
-                end_pos = i + ret_pos
-            text_block = data[0:end_pos+1]
-            for line in text_block.splitlines(True)[::-1]:
-                yield line
+    try:
+        with open(path, 'rb') as mapped_file:
+            with closing(mmap.mmap(mapped_file.fileno(), 0,
+                         access=mmap.ACCESS_READ)) as data:
+                mf_size = end_pos = len(data)
+                for i in xrange(mf_size-1-block_size, -1, -block_size):
+                    text_block = data[i:end_pos+1]
+                    ret_pos = text_block.find("\n")
+                    if ret_pos >= 0:
+                        for line in text_block.splitlines(True)[-1:0:-1]:
+                            yield line
+                    else:
+                        ret_pos = 0
+                    end_pos = i + ret_pos
+                text_block = data[0:end_pos+1]
+                for line in text_block.splitlines(True)[::-1]:
+                    yield line
+    except WindowsError:
+        if os.path.getsize(path):
+            print 'WindowsError: %s' % path
+        raise StopIteration
+    except IOError:
+        print 'IOError: %s' % path
+        raise StopIteration
