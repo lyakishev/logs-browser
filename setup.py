@@ -7,11 +7,17 @@ if sys.platform == "win32":
 
 version = '1.7.1'
 
+includefiles = [('logsbrowser/config', 'config'),
+                ('gtk_for_build/etc', 'etc'),
+                ('gtk_for_build/lib', 'lib'),
+                ('gtk_for_build/share', 'share')]
+
 buildOptions = dict(
             compressed = True,
             optimize = 2,
             packages = ['logsbrowser'],
-            path = sys.path+['logsbrowser/']
+            path = sys.path+['logsbrowser/'],
+            include_files = includefiles
             )
 
 setup(name='logsbrowser',
