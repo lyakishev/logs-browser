@@ -16,10 +16,26 @@ import utils.profiler as profiler
 from process import process, mp_process
 from db.engine import close_conn
 from operator import setitem
+import os
+
+
 
 
 class LogsViewer:
     """ The GUI class is the controller for application """
+
+    ui = """<ui>
+          <menubar name="MenuBar">
+            <menu action="File">
+              <menuitem action="Quit"/>
+            </menu>
+            <menu action="?">
+              <menuitem action="Help"/>
+            </menu>
+          </menubar>
+          </ui>
+        """
+
     def __init__(self):
         # setup the main window
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
@@ -74,9 +90,32 @@ class LogsViewer:
         control_box.pack_start(self.progressbar, False, False)
         main_box.pack1(control_box, False, False)
         main_box.pack2(self.browser, True, False)
-        self.root.add(main_box)
+        uimanager = gtk.UIManager()
+        accelgroup = uimanager.get_accel_group()
+        self.root.add_accel_group(accelgroup)
+        actiongroup = gtk.ActionGroup('LogsBrowser')
+        self.actiongroup = actiongroup
+        actiongroup.add_actions([('Quit', gtk.STOCK_QUIT, '_Quit', None,
+                                  'Quit the Program', self.destroy_cb),
+                                 ('File', None, '_File'),
+                                 ('?', None, '_?'),
+                                ('Help', gtk.STOCK_HELP, '_Help', None,
+                                  'Manual', self.show_help)])
+
+        uimanager.insert_action_group(actiongroup, 0)
+        merge_id = uimanager.add_ui_from_string(self.ui)
+        menubar = uimanager.get_widget('/MenuBar')
+
+        menu_box = gtk.VBox()
+        menu_box.pack_start(menubar, False, False)
+        menu_box.pack_start(main_box)
+        
+        self.root.add(menu_box)
         self.root.show_all()
         self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
+
+    def show_help(self, *args):
+        os.system('start %s' % config.HELP_INDEX)
 
     def fill_tree_sens(self, function):
         def wrapper(*args,**kw):

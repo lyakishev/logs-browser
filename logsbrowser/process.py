@@ -9,7 +9,6 @@ from itertools import chain
 from threading import Thread
 import time
 
-
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):
