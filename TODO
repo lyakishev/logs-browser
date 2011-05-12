@@ -49,11 +49,10 @@ drag-n-drop
 #3. при потере фокуса в ячейке - сохранять значение
 #4. union, distinct... продумать интерфейс запроса
 #5. NOT
+#в конфиге графический, не графический запрос, если графический - конструктор
 
 
 PLSQLAnalyzer
-цвета X11
-конструктор цвета
 сохранение запроса
 select strftime('%H:%M:%S.%f',date), logname, type from $Page_1
 where logname like 'Order%BL'
