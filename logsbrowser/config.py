@@ -39,4 +39,4 @@ DEFAULT_WHERE_OPERATOR_FTS = _config.get('query', 'default_where_operator_fts')
 
 QUERIES_FILE = get_path(_config.get("config_files", 'queries'))
 
-HELP_INDEX = os.path.abspath(_config.get("docs", 'doc_index_file'))
+HELP_INDEX = _config.get("docs", 'doc_index_file')
