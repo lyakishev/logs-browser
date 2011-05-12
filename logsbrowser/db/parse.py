@@ -3,6 +3,7 @@ from itertools import count
 from string import Template
 import functions
 from string import Template
+from utils.colors import check_color, ColorError
 
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
@@ -179,7 +180,7 @@ class SelectCore:
     where_re = re.compile('(?i)where(.+?)(group\s+by|order\s+by|limit|$)')
     group_re = re.compile('(?i)group\s+by(.+?)(order\s+by|limit|$)')
     query_templ = re.compile('\$query\d+')
-    color = re.compile(r'{(?P<clause>.+?)\s+as\s+(?P<color>#[A-Fa-f0-9]+)}')
+    color = re.compile(r'{(?P<clause>.+?)\s+as\s+(?P<color>([a-zA-z]+|#[A-Fa-f0-9]+))}')
     color_count = count(1)
     logic = re.compile('''(?i)\sand\s|\sor\s|\snot\s''')
 
@@ -266,11 +267,15 @@ class SelectCore:
             group = self.is_agg()
             bgcolor = 'bgcolor%d' % next(self.color_count)
             self.color_columns.append(bgcolor)
-            return (('color_agg(' if group else '') +
-                    "(case when %s then '%s' else '#fff' end)" %
-                    (clause, color.group('color')) +
-                    (')' if group else '') +
-                    ' as %s' % bgcolor)
+            color_value = color.group('color')
+            if check_color(color_value):
+                return (('color_agg(' if group else '') +
+                        "(case when %s then '%s' else '#fff' end)" %
+                        (clause, color_value) +
+                        (')' if group else '') +
+                        ' as %s' % bgcolor)
+            else:
+                raise ColorError
         else:
             return column
 
