@@ -12,21 +12,21 @@ from ui.dialogs import mwarning
 _time_delta = 0
 _time_error_flag = 0
 
-_format_to_re =dict([('%d', 'd{1,2}'),
-                   ('%m', 'd{1,2}'),
-                   ('%Y', 'd{4}'),
-                   ('%y', 'd{2}'),
-                   ('%H', 'd{1,2}'),
-                   ('%I', 'd{1,2}'),
-                   ('%M', 'd{2}'),
-                   ('%S', 'd{2}'),
-                   ('%w', 'd{1}'),
+_format_to_re =dict([('%d', r'\d{1,2}'),
+                   ('%m', r'\d{1,2}'),
+                   ('%Y', r'\d{4}'),
+                   ('%y', r'\d{2}'),
+                   ('%H', r'\d{1,2}'),
+                   ('%I', r'\d{1,2}'),
+                   ('%M', r'\d{2}'),
+                   ('%S', r'\d{2}'),
+                   ('%w', r'\d{1}'),
                    ('%p', '(AM|PM)'),
                    ('%B', '[A-Za-z]+'),
                    ('%b', '[A-Za-z]+'),
                    ('%a', '[A-Za-z]+'),
                    ('%A', '[A-Za-z]+'),
-                   ('%f', 'd+')])
+                   ('%f', r'\d+')])
 
 def time_re(time_format):
     for f, re_ in _format_to_re.iteritems():
