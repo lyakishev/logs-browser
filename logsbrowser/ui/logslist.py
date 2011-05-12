@@ -23,6 +23,7 @@ import config
 from cellrenderercolors import CellRendererColors
 from string import Template
 from utils.profiler import time_it, profile
+from utils.colors import ColorError
 import pdb
 
 def callback():

@@ -139,6 +139,7 @@ class LogsViewer:
             if not config.MULTIPROCESS:
                 process(loglist.table, sources, dates, self.callback)
             else:
+                self.frac = 0.01 if self.frac < 0.01 else self.frac
                 self.progressbar.set_pulse_step(self.frac)
                 self.progressbar.set_text("Working...")
                 mp_process(loglist.table, sources, dates, self.mpcallback)
