@@ -65,6 +65,7 @@ def log_for_insert(log):
             1,
             to_unicode(msg))
 
+
 def evlogworker(dates, server, logtype):
     try:
         hand = win32evtlog.OpenEventLog(server, logtype)
@@ -78,7 +79,10 @@ def evlogworker(dates, server, logtype):
                 #hand.Detach()  # need?
                 time.sleep(1)
             else:
-                break
+                if events:
+                    break
+                else:
+                    raise StopIteration
         else:
             print "Can't read eventlogs: %s %s " % (serve,logtype)
             try:
