@@ -5,9 +5,10 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '1.7.1'
+version = '1.8'
 
 includefiles = [('logsbrowser/config', 'config'),
+                ('docs', 'docs'),
                 ('gtk_for_build/etc', 'etc'),
                 ('gtk_for_build/lib', 'lib'),
                 ('gtk_for_build/share', 'share')]

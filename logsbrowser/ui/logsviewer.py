@@ -31,6 +31,7 @@ class LogsViewer:
             </menu>
             <menu action="?">
               <menuitem action="Help"/>
+              <menuitem action="About"/>
             </menu>
           </menubar>
           </ui>
@@ -100,7 +101,9 @@ class LogsViewer:
                                  ('File', None, '_File'),
                                  ('?', None, '_?'),
                                 ('Help', gtk.STOCK_HELP, '_Help', None,
-                                  'Manual', self.show_help)])
+                                  'Manual', self.show_help),
+                                  ('About', gtk.STOCK_ABOUT, '_About', None,
+                                  'About', self.show_about)])
 
         uimanager.insert_action_group(actiongroup, 0)
         merge_id = uimanager.add_ui_from_string(self.ui)
@@ -116,6 +119,14 @@ class LogsViewer:
 
     def show_help(self, *args):
         os.system('start %s' % config.HELP_INDEX)
+
+    def show_about(self, *args):
+        about = gtk.AboutDialog()
+        about.set_property('authors', ['Lyakishev Andrey <alyakishev@sitronics.com>'])
+        about.set_property('version', '1.8')
+        about.set_name('LogsBrowser')
+        about.run()
+        about.destroy()
 
     def fill_tree_sens(self, function):
         def wrapper(*args,**kw):
