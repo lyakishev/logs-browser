@@ -15,7 +15,6 @@ class StatusIcon:
     def __init__(self, date_filter, window):
         self.statusicon = gtk.StatusIcon()
         self.statusicon.set_from_stock(gtk.STOCK_YES)
-        self.statusicon.connect("popup-menu", self.right_click_event)
         self.statusicon.connect("activate", self.change_mode)
         self.statusicon.set_tooltip("Log Viewer")
         self.record = 0
@@ -47,21 +46,3 @@ class StatusIcon:
 
     def show_main_window(self, *args):
         self.window.show()
-
-    def change_time_mode(self, check):
-        if not check.active:
-            self.active = False
-        else:
-            self.active = True
-
-    def right_click_event(self, icon, button, time):
-        #TODO hide after release mouse
-        menu = gtk.Menu()
-        time_mode = gtk.CheckMenuItem("First-click mode")
-        time_mode.set_active(self.active)
-        time_mode.connect('toggled', self.change_time_mode)
-        menu.append(time_mode)
-        menu.show_all()
-        menu.show_all()
-        menu.popup(None, None, None,
-                   button, time, self.statusicon)

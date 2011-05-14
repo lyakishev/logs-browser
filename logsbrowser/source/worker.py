@@ -45,7 +45,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if name not in files:
                         log_callback(name, parent, ext_parent)
                         files.add(name)
-                else:
+                elif ext != 'mdb':
                     if os.path.isdir(fullf):
                         node = dir_callback(f, parent, ext_parent)
                         dir_walker(fullf, dir_callback, log_callback, node, prefix)

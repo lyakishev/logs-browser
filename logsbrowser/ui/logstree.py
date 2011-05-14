@@ -273,32 +273,12 @@ class DisplayServersModel:
         self.column2.set_visible(False)
         self.view.append_column(self.column0)
         self.view.append_column(self.column2)
-        self.view.connect("button-press-event", self.show_menu)
-        self.popup = gtk.Menu()
-        self.reload = gtk.MenuItem("Reload All")
-        self.load = gtk.MenuItem("Load New")
-        self.reload.connect("activate", self.reload_all)
-        self.load.connect("activate", self.reload_all)
-        self.edit = gtk.MenuItem("Edit config")
-        self.edit.connect("activate", self.show_config_editor)
-        self.popup.append(self.reload)
-        self.popup.append(self.load)
-        self.popup.append(self.edit)
-        self.popup.show_all()
 
     def show_config_editor(self, *args):
         if not config.EXT_CONFIG_EDITOR:
             ConfigEditor(self.srvrs.file)
         else:
             os.system('%s %s' % (config.EXT_CONFIG_EDITOR, self.srvrs.file))
-
-    def reload_all(self, *args):
-        self.srvrs.read_config()
-
-    def show_menu(self, treeview, event):
-        if event.button == 3:
-            time = event.time
-            self.popup.popup(None, None, None, event.button, time)
 
     def col1_toggled_cb(self, cell, path, model):
         """
