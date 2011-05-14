@@ -5,7 +5,22 @@ from datetime import datetime
 import re
 import os
 
-_prefix = r"[^ ,]*?[ ]?\[?"
+prefixes = {'prefix1': ('[^ ,]*?', '[^ ,]*?') ,
+            'prefix2': ('[ ]?', '[ ]'),
+            'prefix3': ('\[?', '\[')}
+
+_prefix = ""
+for p in sorted(prefixes.keys(), key=lambda x:x[-1]):
+    _prefix += "(?P<%s>%s)" % (p, prefixes[p][0])
+
+def prefixes_for_formats(dict_):
+    prefix = ""
+    for p in sorted(prefixes.keys(), key=lambda x: x[-1]):
+        if dict_[p]:
+            prefix += prefixes[p][1]
+    return prefix
+
+
 _formats = [
     "".join([r"(?P<year1>\d{4})[-.]",
             r"(?P<month1>\d{2})[-.]",
@@ -101,12 +116,12 @@ def define_format(line):
         parsed_line_dict = parsed_line.groupdict()
         for format_number in range(1, len(_formats) + 1):
             if parsed_line_dict["day%d" % format_number]:
-                return (re.compile(_prefix +
+                return (re.compile(prefixes_for_formats(parsed_line_dict) +
                                   clear_format(_formats[format_number-1],
                                                format_number) +
                                   _suffix),
                         define_parser(parsed_line_dict), False)
-        return (re.compile(_prefix+_suffix), _only_time_parser, True)
+        return (re.compile(prefixes_for_formats(parsed_line_dict)+_suffix), _only_time_parser, True)
     parsed_line = _log4j.search(line)
     if parsed_line:
         return (_log4j, _log4j_parser, False)
