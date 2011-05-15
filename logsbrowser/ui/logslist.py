@@ -6,7 +6,7 @@ import gtk
 import gobject
 import gio
 from logwindow import LogWindow
-from query import Plain, QueryLoader
+from query import Query, QueryLoader
 from logwindow import SeveralLogsWindow
 from datetime import datetime
 import pango
@@ -32,6 +32,9 @@ def callback():
 
 db.set_callback(callback)
 
+
+class FTemplate(Template):
+    delimiter = '#'
 
 class LogList(object):
     
@@ -59,8 +62,15 @@ class LogList(object):
             self.sql_context[self.name] = self.table
 
     def execute(self, sql_templ, auto_lid):
+        query = sql_templ[0]
+        filter_ = sql_templ[1]
+        context = self.get_context()
+        fcontext = {}
+        for k in context:
+            fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
+        fquery = FTemplate(query).safe_substitute(fcontext)
         try:
-            sql = process(sql_templ,self.get_context(), auto_lid)
+            sql = process(fquery, context, auto_lid)
         except Exception, e:
             merror(str(e))
             return
@@ -220,7 +230,7 @@ class LogsListWindow(gtk.Frame):
 
 
         self.qm = QueriesManager(config.QUERIES_FILE)
-        self.filter_logs = Plain()
+        self.filter_logs = Query(self.log_list)
         self.loader = QueryLoader(self.filter_logs, self.qm)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
@@ -256,7 +266,7 @@ class LogsListWindow(gtk.Frame):
             self.box.remove(self.logs_window)
             self.paned.pack1(self.logs_window, True, False)
             self.paned.pack2(self.loader, False, False)
-            self.paned.set_position(575)
+            self.paned.set_position(500)
             self.box.pack_end(self.paned)
         else:
             self.paned.remove(self.logs_window)

@@ -8,158 +8,100 @@ import re
 import config
 
 
-class QueryDesigner():
+class Filter():
     def __init__(self, plain, loglist):
         self.loglist = loglist
         self.plain = plain
-        self.query_model = gtk.ListStore(bool,                #show
-                                   str,#column
-                                   str,#alias
-                                   str,#where criteria
-                                   str,                #group by                        
-                                   str,#gobject.TYPE_OBJECT, #order by
-                                   str,                 #color
-                                   str,#color_clause
-                                   str
-                                   )                 #value        
+        self.query_model = gtk.ListStore(str,  #column
+                                         str,  #color
+                                         str,  #color
+                                         str)  #value        
 
         self.field_model = gtk.ListStore(str)
-        self.order_model = gtk.ListStore(str)
-        self.group_model = gtk.ListStore(str)
-        self.logical_model = gtk.ListStore(str)
 
-        for c in ["","group","avg","count","min","max","sum","error","group_concat","rows"]:
-            self.group_model.append([c])
-
-        for c in ["time","date","comp","logname","type",
-                  "source","log","snippet","rowid", "this"]:
+        for c in ["log", "logname", "type", "computer", "source", "event",
+                  "date", "time", "lid"]:
             self.field_model.append([c])
-
-        for c in ["","DESC","ASC"]:
-            self.order_model.append([c])
-
-        for c in ["","AND","OR", 'AND (', 'OR (', 'AND )', 'OR )']:
-            self.logical_model.append([c])
-
-        select_renderer = gtk.CellRendererToggle()
-        select_renderer.set_property('activatable', True)
-        select_renderer.connect('toggled', self.col_toggled_cb,
-                                self.query_model, 0)
-        self.select_column = gtk.TreeViewColumn("show", select_renderer )
-        self.select_column.add_attribute(select_renderer, "active", 0)
 
         field_renderer = gtk.CellRendererCombo()
         field_renderer.set_property("model", self.field_model)
         field_renderer.set_property('text-column', 0)
         field_renderer.set_property('editable', True)
         field_renderer.set_property('has-entry', True)
-        field_renderer.connect("changed", self.change_func, 1)
-        field_column = gtk.TreeViewColumn("column", field_renderer, text=1)
-        
-        where_renderer = gtk.CellRendererText()
-        where_renderer.set_property('editable',True)
-        where_renderer.connect("edited", self.change_value, 3)
-        where_column = gtk.TreeViewColumn("where", where_renderer,
-                                                text=3)
-        logic_renderer = gtk.CellRendererCombo()
-        logic_renderer.set_property("model", self.logical_model)
-        logic_renderer.set_property('text-column', 0)
-        logic_renderer.set_property('editable', True)
-        logic_renderer.set_property('has-entry', True)
-        logic_renderer.connect("changed", self.change_func, 2)
-        logic_column = gtk.TreeViewColumn("and-or", logic_renderer, text=2)
+        field_renderer.connect("changed", self.change_func, 0)
+        field_column = gtk.TreeViewColumn("column", field_renderer, text=0)
 
-        groupby_renderer = gtk.CellRendererCombo()
-        groupby_renderer.set_property("model", self.group_model)
-        groupby_renderer.set_property('text-column', 0)
-        groupby_renderer.set_property('editable', True)
-        groupby_renderer.set_property('has-entry', True)
-        groupby_renderer.connect("changed", self.change_func, 4)
-        groupby_column = gtk.TreeViewColumn("group by", groupby_renderer, text=4)
-
-        order_renderer = gtk.CellRendererCombo()
-        order_renderer.set_property("model", self.order_model)
-        order_renderer.set_property('text-column', 0)
-        order_renderer.set_property('editable', True)
-        order_renderer.set_property('has-entry', True)
-        order_renderer.connect("changed", self.change_func, 5)
-        order_column = gtk.TreeViewColumn("order", order_renderer, text=5)
-        
-        
         color_renderer = gtk.CellRendererText()
         color_renderer.set_property("editable", False)
         self.color_column = gtk.TreeViewColumn("color", color_renderer,
-                                                text=6, cell_background=8)
-
-        color_case_renderer = gtk.CellRendererText()
-        color_case_renderer.set_property('editable',True)
-        color_case_renderer.connect("edited", self.change_value, 7)
-        color_case_column = gtk.TreeViewColumn("clause", color_case_renderer,
-                                                text=7)
-
+                                                text=1, cell_background=3)
+        
+        where_renderer = gtk.CellRendererText()
+        where_renderer.set_property('editable',True)
+        where_renderer.connect("edited", self.change_value, 2)
+        where_renderer.connect("editing-started", self.set_cell_entry_signal)
+        self.where_column = gtk.TreeViewColumn("where", where_renderer,
+                                                text=2)
+        
         hidden_colorr = gtk.CellRendererText()
         hidden_colorr.set_property('editable',True)
         hidden_color = gtk.TreeViewColumn("value", hidden_colorr,
-                                                text=8)
+                                                text=3)
         hidden_color.set_visible(False)
 
         self.view = gtk.TreeView()
-        self.view.append_column(self.select_column)
         self.view.append_column(field_column)
-        self.view.append_column(logic_column)
-        self.view.append_column(where_column)
-        self.view.append_column(groupby_column)
-        self.view.append_column(order_column)
         self.view.append_column(self.color_column)
-        self.view.append_column(color_case_column)
+        self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
-
-        self.query_model.append([True, 'date', '','','group','DESC','','','#fff'])
-        self.query_model.append([True, 'logname', '','','group','','','','#fff'])
-        self.query_model.append([True, 'type', '','','group','','','','#fff'])
-        self.query_model.append([False, 'log', '','','','','','','#fff'])
-        self.query_model.append([False, '', '','','','','','','#fff'])
-        self.plain.set_text(self.get_sql(self.loglist.fts))
 
         #self.view.set_property("enable-grid-lines", True)
         self.view.set_model(self.query_model)
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
         self.view.connect("button-press-event", self.activate_cell)
+        self.entry_path = None
+
+    def focus_out(self, *args):
+        if self.entry_path:
+            self.query_model[self.entry_path][2] = self.cell_entry_text
+
+    def set_cell_entry_signal(self, cell, entry, num):
+        self.cell_entry_text = entry.get_text()
+        entry.connect("changed", self.save_cell_text)
+        entry.connect("focus-out-event", self.focus_out)
+
+    def save_cell_text(self, entry):
+        self.cell_entry_text = entry.get_text()
 
     def activate_cell(self, view, event):
+        old_path, old_col = view.get_cursor()
+        if old_path:
+            try:
+                self.query_model[old_path][2] = self.cell_entry_text
+            except AttributeError:
+                pass
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            try:
-                if path[1] == self.color_column:
-                    colordlg = gtk.ColorSelectionDialog("Select color")
-                    colorsel = colordlg.colorsel
-                    colorsel.set_has_palette(True)
-                    response = colordlg.run()
-                    if response == gtk.RESPONSE_OK:
-                        col = colorsel.get_current_color()
-                        view.get_model()[path[0]][8]=col
-                    colordlg.destroy()
-                if path[1] != self.select_column:
-                    view.set_cursor(path[0], focus_column = path[1], start_editing=True)
-            except TypeError:
-                pass
+            if path[1] == self.color_column:
+                colordlg = gtk.ColorSelectionDialog("Select color")
+                colorsel = colordlg.colorsel
+                colorsel.set_has_palette(True)
+                response = colordlg.run()
+                if response == gtk.RESPONSE_OK:
+                    col = colorsel.get_current_color()
+                    view.get_model()[path[0]][3]=col
+                colordlg.destroy()
+            view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            if path[1] == self.where_column:
+                self.entry_path = path[0]
             
-
-    def set_sql(self):
-        self.plain.set_text(self.get_sql(self.loglist.fts))
-
-    def col_toggled_cb(self, cell, path, model, col):
-        model[path][col] = not model[path][col]
-        self.set_sql()
 
     def change_func(self, combo, path, iter_, col):
         self.query_model[path][col] = combo.get_property("model").get_value(iter_,0)
-        self.set_sql()
 
     def change_value(self, cell, path, new_text, col):
         self.query_model[path][col] = new_text
-        self.set_sql()
 
     def add_row(self, view):
         selection = view.get_selection()
@@ -167,8 +109,8 @@ class QueryDesigner():
         try:
             if not model.iter_next(iter_):
                 c = len(self.query_model)
-                self.query_model[c-1][1] = 'log'
-                self.query_model.append([False, '', '','','','','','','#fff'])
+                self.query_model[c-1][0] = 'log'
+                self.query_model.append(['', '', '','#fff'])
         except TypeError:
             pass
 
@@ -178,9 +120,16 @@ class QueryDesigner():
             (model, iter_) = selection.get_selected()
             if iter_ is not None and model.iter_next(iter_):
                 model.remove(iter_)
-        self.set_sql()
 
-    def get_sql(self, fts):
+    def set_filter(self, rows):
+        self.query_model.clear()
+        for row in rows:
+            self.query_model.append([row[0],'', row[2], row[1]])
+        self.query_model.append(['','', '', '#fff'])
+
+    def get_filter(self):
+        
+        fts = False
 
         def check_clause(clause):
             words = len(clause.split())
@@ -194,61 +143,23 @@ class QueryDesigner():
                 else:
                     return "%s '%s'" % (config.DEFAULT_WHERE_OPERATOR.upper(),
                                         clause)
-
-        def match(col, clause, color):
-            if 'match' in clause.lower():
-                return ("lid",
-                        "in (select lid from $this where %s %s)" % (col,
-                                                                    clause),
-                        color)
-            else:
-                return (col, clause, color)
-
-        select = "select "
+        fields = []
+        clauses = []
         for r in self.query_model:
-            if r[0]:
-                column = r[1].replace("snippet",
-                                      "snippet($this)").replace("time",
-                                                            "strftime('%H:%M:%S.%f',date) as time")
-                select += "%s, " % (("%s(%s)" % (r[4], column)) if (r[4] and r[4]!='group') else column)
-
-        from_ = "from $this"
-
-        match_re = re.compile("(?i)match '(.+?)'")
-        match_clauses = ""
-        nonmatch_clauses = []
-        for r in self.query_model:
-            if r[3] and r[1]:
-                match_ = check_clause(r[3])
-                if 'match' in match_.lower():
-                    match_clauses+="%s:%s " % (r[1],
-                                match_re.search(match_).group(1))
+            if r[0] and r[2]:
+                if r[3] == '#fff':
+                    clauses.append('%s %s' % (r[0], check_clause(r[2])))
                 else:
-                    nonmatch_clauses.append("%s %s %s " % (r[2] or 'AND', r[1], match_))
-        match_clauses = "$this MATCH '%s'" % match_clauses[:-1] if match_clauses else ""
-        nonmatch_clauses = "".join(nonmatch_clauses)[3:].strip()
-        where_clauses = ((match_clauses+" AND "+nonmatch_clauses) if match_clauses
-                         and nonmatch_clauses else (match_clauses or
-                         nonmatch_clauses))
-            
-        where = ("where " + where_clauses) if where_clauses else ""
+                    fields.append('{%s %s as %s}' % (r[0], check_clause(r[2]),
+                                                     r[3]))
 
-        groups = ", ".join([r[1] for r in self.query_model
-                            if r[4] == 'group'])
-        groupby = ("group by " + groups) if groups else ""
-
-        orders = ", ".join(["%s %s" % (r[1], r[5])
-                            for r in self.query_model if r[5]])
-        order_by = ("order by "+orders) if orders else ""
-
-        color_fields = [(r[2] or r[1]) for r in self.query_model if r[7]]
-        if color_fields:
-            color = ",\n".join(["$color{%s %s as %s}" % match(r[1],
-                                                    check_clause(r[7]), r[8])
-                                for r in self.query_model if r[7] and r[1]])
-            select += ("\n%s," % color)
-        return "\n".join([select[:-1],from_,where,groupby,order_by])
-
+        if clauses or fields:
+            fields.append('*')
+            sql = "(select %s from $table %s)" % (','.join(fields),
+                        ('where %s' % ' AND '.join(clauses)) if clauses else '')
+        else:
+            sql = '$table'
+        return sql
 
 class Plain(gtk.ScrolledWindow):
     def __init__(self):
@@ -281,14 +192,14 @@ class Query(gtk.Notebook):
         super(Query, self).__init__()
         scroll_query = gtk.ScrolledWindow()
         scroll_query.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-        
-        self.plain = Plain()
-        plain_query_label = gtk.Label("Plain Query")
 
-        self.query = QueryDesigner(self.plain, loglist)
+        self.plain = Plain()
+        plain_query_label = gtk.Label("Query")
+
+        self.query = Filter(self.plain, loglist)
         scroll_query.add(self.query.view)
         
-        query_label = gtk.Label("Query")
+        query_label = gtk.Label("Filter")
 
         self.append_page(scroll_query, query_label)
         self.append_page(self.plain, plain_query_label)
@@ -297,12 +208,22 @@ class Query(gtk.Notebook):
 
         self.show_all()
 
+        self.set_current_page(0)
 
-    def set_sql(self):
-        self.query.set_sql()
+    def set_query(self, txt):
+        self.plain.set_sql(txt)
+
+    def set_filter(self, rows):
+        self.query.set_filter(rows)
+
+    def get_query(self):
+        return self.plain.get_text()
+
+    def get_filter(self):
+        return self.query.get_filter()
 
     def get_sql(self):
-        return self.plain.get_text()
+        return (self.get_query(), self.get_filter())
 
 
 class QueryLoader(gtk.VBox):
@@ -313,14 +234,23 @@ class QueryLoader(gtk.VBox):
         self.add_lid = gtk.CheckButton('auto__lid')
         self.add_lid.set_active(True)
         self.queries_combo = gtk.HBox()
-        self.queries_label = gtk.Label('Load query')
+        self.filters_label = gtk.Label('Filter')
+        self.filters = gtk.combo_box_new_text()
+        self.filters.connect("changed", self.set_filter)
+        self.queries_label = gtk.Label('Query')
         self.queries = gtk.combo_box_new_text()
         self.queries.connect("changed", self.set_query)
         self.query_manager = qmanager
         for n,q in enumerate(self.query_manager.queries):
             self.queries.append_text(q)
-            if q == self.query_manager.default:
+            if q == self.query_manager.default_query:
                 self.queries.set_active(n)
+        for n,q in enumerate(self.query_manager.filters):
+            self.filters.append_text(q)
+            if q == self.query_manager.default_filter:
+                self.filters.set_active(n)
+        self.queries_combo.pack_start(self.filters_label, False, False, 5)
+        self.queries_combo.pack_start(self.filters, True, True)
         self.queries_combo.pack_start(self.queries_label, False, False, 5)
         self.queries_combo.pack_start(self.queries, True, True)
         self.tools.pack_start(self.queries_combo)
@@ -331,7 +261,11 @@ class QueryLoader(gtk.VBox):
 
     def set_query(self, *args):
         query = self.queries.get_active_text().decode('utf8')
-        self.query_constructor.set_sql(self.query_manager.queries[query].strip())
+        self.query_constructor.set_query(self.query_manager.queries[query].strip())
+
+    def set_filter(self, *args):
+        query = self.filters.get_active_text().decode('utf8')
+        self.query_constructor.set_filter(self.query_manager.filters[query])
         
     def get_auto_lid(self):
         return self.add_lid.get_active()
