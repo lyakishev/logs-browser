@@ -8,6 +8,7 @@ from utils.ranges import ranges
 
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("regexp", 2, functions.regexp)
+_dbconn.create_function("match", 2, functions.rmatch)
 _dbconn.create_function("regex", 3, functions.regex)
 _dbconn.create_function("pretty", 1, functions.pretty_xml)
 _dbconn.create_function("group_logname", 1, functions.group_logname)

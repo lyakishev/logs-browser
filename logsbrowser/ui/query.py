@@ -129,7 +129,7 @@ class Filter():
 
     def get_filter(self):
         
-        fts = False
+        fts = self.loglist.fts
 
         def check_clause(clause):
             words = len(clause.split())
