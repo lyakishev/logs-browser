@@ -12,14 +12,14 @@ class Query(object):
 
     select_re = re.compile(r'(?i)\(\s*select\s')
 
-    def __init__(self, sql, is_child=False):
+    def __init__(self, sql, fts, is_child=False):
         self.qdict = {}
         self.sql = ""
-        self.find_queries(sql)
+        self.find_queries(sql, fts)
         if not is_child:
             self.query.add_main_color_column()
 
-    def find_queries(self, query):
+    def find_queries(self, query, fts):
         queries = [m.start() for m in self.select_re.finditer(query)]
         inquery = 0
         lend = 0
@@ -36,7 +36,7 @@ class Query(object):
                     inquery -= 1
                     if inquery == 0:
                         query_n = '$query%d' % (next(query_count))
-                        self.qdict[query_n[1:]] = Query(query[start+1:n], True)
+                        self.qdict[query_n[1:]] = Query(query[start+1:n], fts, True)
                         self.sql += query[lend:start] + '(' + query_n + ')'
                         lend = n+1
         if self.sql:
@@ -44,7 +44,7 @@ class Query(object):
         else:
             self.sql = query
         query_n = 'query0'
-        self.qdict[query_n] = Select(self.sql, self)
+        self.qdict[query_n] = Select(self.sql, self, fts)
         self.sql = '$'+query_n
 
     @property
@@ -74,23 +74,23 @@ class Select:
     limit_re = re.compile('(?i)limit(.+?)')
     union_re = re.compile('(?i)(except|intersect|union|order|limit)')
 
-    def __init__(self, expr, parent, colorize=True):
+    def __init__(self, expr, parent, fts, colorize=True):
         self.qdict = {}
         self.sql = ""
-        self.find_queries(expr, colorize)
+        self.find_queries(expr, colorize, fts)
         self.parse()
         self.parent = parent
         if colorize:
             self.add_colors()
 
 
-    def find_queries(self, query, colorize):
+    def find_queries(self, query, colorize, fts):
         query_count = count(1)
         queries = self.union_re.split(query)
         for q in queries:
             if 'select' in q.lower():
                 query_n = '$mquery%d' % (next(query_count))
-                self.qdict[query_n[1:]] = SelectCore(q)
+                self.qdict[query_n[1:]] = SelectCore(q, fts)
                 self.sql += ' %s ' % query_n
             else:
                 self.sql += q
@@ -184,7 +184,8 @@ class SelectCore:
     color_count = count(1)
     logic = re.compile('''(?i)\sand\s|\sor\s|\snot\s''')
 
-    def __init__(self, expr):
+    def __init__(self, expr, fts):
+        self.fts = fts
         self.sql = expr
         self.colorized = False
         self.color_columns = []
@@ -255,7 +256,7 @@ class SelectCore:
         color = self.color.match(column)
         if color:
             clause = color.group('clause')
-            if ' match ' in clause.lower():
+            if ' match ' in clause.lower() and self.fts:
                 new_query = Query('select from %s where %s' %
                                   (', '.join(self.from_), clause))
                 new_query.add_lid(True)
@@ -302,10 +303,11 @@ class SelectCore:
         return ' '.join([select, from_ or '', where or '', group or ''])
 
     def right_query(self):
-        if ' match ' in self.where.lower() and self.logic.search(self.where):
+        if (self.fts and ' match ' in self.where.lower() and
+                        self.logic.search(self.where)):
             clauses, clauses_dict = cut_clauses(self.where)
             for name, clause in clauses_dict.iteritems():
-                clauses_dict[name] = logic_to_sets(clause, '', 'select * from %s' % ','.join(self.from_))
+                clauses_dict[name] = logic_to_sets(clause, '', 'select * from %s' % ','.join(self.from_), self.fts)
             for name, clause in clauses_dict.iteritems():
                 if name != 'clause0':
                     clauses_dict[name] = 'select * from (%s)' % clauses_dict[name]
@@ -338,12 +340,12 @@ def cut_quotes(query):
 
 ss = re.compile('\s+')
 
-def process(sql_t, context, autolid):
+def process(sql_t, context, autolid, fts):
     reset_select_core_counter()
     sql = Template(sql_t).safe_substitute(context)
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
-    query = Query(sql_no_quotes)
+    query = Query(sql_no_quotes, fts)
     if autolid:
         query.add_lid()
     query = Template(str(query)).safe_substitute(quotes_dict)
@@ -383,7 +385,7 @@ def cut_clauses(clauses_):
     clauses_dict[clause_n[1:]] = walk(clauses_)
     return clause_n, clauses_dict
 
-def logic_to_sets(simple_clause, before_from, before_where):
+def logic_to_sets(simple_clause, before_from, before_where, fts):
     simple_clause = simple_clause.lower()
     if ' match ' not in simple_clause:
         return ' '.join([before_where, 'where', simple_clause])

@@ -70,7 +70,7 @@ class LogList(object):
             fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
-            sql = process(fquery, context, auto_lid)
+            sql = process(fquery, context, auto_lid, self.fts)
         except Exception, e:
             merror(str(e))
             return
@@ -254,6 +254,7 @@ class LogsListWindow(gtk.Frame):
 
     def fill(self, *args):
         self.exec_sens(True)
+        self.filter_logs.unselect()
         self.log_list.execute(self.filter_logs.get_sql(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
