@@ -62,9 +62,15 @@ class Filter():
         self.view.connect("button-press-event", self.activate_cell)
         self.entry_path = None
 
+    def unselect(self):
+        path, focus_column = self.view.get_cursor()
+        if path:
+            self.view.get_selection().unselect_path(path)
+
     def focus_out(self, *args):
         if self.entry_path:
             self.query_model[self.entry_path][2] = self.cell_entry_text
+            self.cell_entry_text = ""
 
     def set_cell_entry_signal(self, cell, entry, num):
         self.cell_entry_text = entry.get_text()
@@ -78,7 +84,8 @@ class Filter():
         old_path, old_col = view.get_cursor()
         if old_path:
             try:
-                self.query_model[old_path][2] = self.cell_entry_text
+                if self.cell_entry_text:
+                    self.query_model[old_path][2] = self.cell_entry_text
             except AttributeError:
                 pass
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
@@ -93,6 +100,12 @@ class Filter():
                     view.get_model()[path[0]][3]=col
                 colordlg.destroy()
             view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            if path[1] == self.where_column:
+                self.entry_path = path[0]
+        elif event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
+            path = view.get_path_at_pos(int(event.x), int(event.y))
+            if path[1] == self.color_column:
+                view.get_model()[path[0]][3] = '#fff'
             if path[1] == self.where_column:
                 self.entry_path = path[0]
             
@@ -209,6 +222,9 @@ class Query(gtk.Notebook):
         self.show_all()
 
         self.set_current_page(0)
+
+    def unselect(self):
+        self.query.unselect()
 
     def set_query(self, txt):
         self.plain.set_sql(txt)
