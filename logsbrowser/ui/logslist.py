@@ -51,7 +51,20 @@ class LogList(object):
         self.name = ""
         self.table = ""
         self.cached_queries = []
+        self.view.connect("button-press-event", self.copy_cell)
 
+    def copy_cell(self, view, event):
+        if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
+            path = view.get_path_at_pos(int(event.x), int(event.y))
+            if path:
+                row = self.model.get_iter(path[0])
+                col = [n for n,c in enumerate(self.columns) if c == path[1]][0]
+                if col:
+                    value = self.model.get_value(row, col)
+                    clipboard = gtk.clipboard_get("CLIPBOARD")
+                    clipboard.set_text(value)
+
+        
     def change_name(self, name):
         try:
             self.sql_context.pop(self.name)
