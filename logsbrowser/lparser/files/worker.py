@@ -6,14 +6,18 @@ import time
 from readers import mmap_block_read
 from operator import itemgetter
 from lparser.utils import to_unicode, isoformat
+import config
 
 
 def date_format(file_, path):
     pfunc = True
-    for line in file_:
-        pformat, pfunc, need_date = define_format(line)
-        if pformat:
-            return (pformat, pfunc, need_date, line)
+    for n, line in enumerate(file_):
+        if n < config.MAX_LINES_FOR_DETECT_FORMAT:
+            pformat, pfunc, need_date = define_format(line)
+            if pformat:
+                return (pformat, pfunc, need_date, line)
+        else:
+            break
     if not pfunc:
         print "Not found format for file %s" % path
     raise StopIteration
