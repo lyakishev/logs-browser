@@ -19,7 +19,7 @@ class Filter():
 
         self.field_model = gtk.ListStore(str)
 
-        for c in ["log", "logname", "type", "computer", "source", "event",
+        for c in ["---", "log", "logname", "type", "computer", "source", "event",
                   "date", "time", "lid"]:
             self.field_model.append([c])
 
@@ -160,11 +160,14 @@ class Filter():
         clauses = []
         for r in self.query_model:
             if r[0] and r[2]:
-                if r[3] == '#fff':
-                    clauses.append('%s %s' % (r[0], check_clause(r[2])))
+                if r[0] == '---':
+                    form = '%s' % r[2]
                 else:
-                    fields.append('{%s %s as %s}' % (r[0], check_clause(r[2]),
-                                                     r[3]))
+                    form = '%s %s' % (r[0], check_clause(r[2]))
+                if r[3] == '#fff':
+                    clauses.append(form)
+                else:
+                    fields.append('{%s as %s}' % (form, r[3]))
 
         if clauses or fields:
             fields.append('*')
