@@ -113,8 +113,7 @@ class LogList(object):
                 for row in iter(rows):
                     self.model.append(row)
                 if 'bgcolor' in self.headers:
-                    bgcolor = self.headers.index('bgcolor')
-                    print bgcolor
+                    self.bgcolor = bgcolor = self.headers.index('bgcolor')
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
                                              if c.startswith('bgcolor')]
@@ -190,6 +189,33 @@ class LogList(object):
         self.sql_context[self.name] = self.table
         db.create_new_table(self.table, index)
         self.fts = index
+
+    def up_color(self, *args):
+        if self.bgcolor:
+            selection = self.view.get_selection()
+            (model, iter_) = selection.get_selected()
+            if iter_:
+                path = model.get_string_from_iter(iter)
+                path = int(path) - 1
+            else:
+                path = model.iter_n_children(None)
+            while model[path][self.bgcolor] == '#fff':
+                path -= 1
+            selection.select_path(path)
+            self.view.scroll_to_cell(path)
+
+    def down_color(self, *args):
+        if self.bgcolor:
+            selection = self.view.get_selection()
+            (model, iter_) = selection.get_selected()
+            if iter_:
+                iter_ = model.iter_next(iter_)
+            else:
+                iter_ = model.get_iter_first()
+            while model.get_value(iter_, self.bgcolor) == '#fff':
+                iter_ = model.iter_next(iter_)
+            selection.select_iter(iter_)
+            self.view.scroll_to_cell(int(model.get_string_from_iter(iter_)))
 
 
 class LogsListWindow(gtk.Frame):
