@@ -5,6 +5,18 @@ import functions
 from string import Template
 from utils.colors import check_color, ColorError
 
+sub_dict = {'LIKE': ['%',(('_', '.'), ('%', '.*'))],
+            'GLOB': ['*',(('?', '.'), ('*', '.*'))],
+            'MATCH': ['',(('*', '\w*'),)]}
+
+def operator_to_regexp(op, val):
+    trim, maps = sub_dict[op.upper()]
+    val = val.strip(trim)
+    escaped_val = re.escape(val)
+    for ch, new_ch in maps:
+        escaped_val = escaped_val.replace(r'\%s' % ch, new_ch)
+    return escaped_val
+
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
 
@@ -67,6 +79,11 @@ class Query(object):
             if query:
                 query.add_lid(group)
 
+    def get_colors(self):
+        colors = []
+        for k,v in self.qdict.iteritems():
+            colors.extend(v.get_colors())
+        return colors
 
 class Select:
 
@@ -169,6 +186,12 @@ class Select:
             for k,q in self.qdict.items():
                 q.result_list.append("'#fff' as bgcolor")
 
+    def get_colors(self):
+        colors = []
+        for k, v in self.qdict.iteritems():
+            colors.extend(v.colors)
+        return colors
+
     @property
     def colorized(self):
         return bool(self.color_columns)
@@ -188,6 +211,7 @@ class SelectCore:
         self.fts = fts
         self.sql = expr
         self.colorized = False
+        self.colors = []
         self.color_columns = []
         self.parse()
         self.right_query()
@@ -255,6 +279,7 @@ class SelectCore:
     def parse_color(self, column):
         color = self.color.match(column)
         if color:
+            self.colors.append(color.group())
             clause = color.group('clause')
             if ' match ' in clause.lower() and self.fts:
                 new_query = Query('select from %s where %s' %
@@ -346,6 +371,7 @@ def process(sql_t, context, autolid, fts):
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
     query = Query(sql_no_quotes, fts)
+    print query.get_colors()
     if autolid:
         query.add_lid()
     query = Template(str(query)).safe_substitute(quotes_dict)
