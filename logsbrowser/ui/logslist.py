@@ -113,7 +113,7 @@ class LogList(object):
                 for row in iter(rows):
                     self.model.append(row)
                 if 'bgcolor' in self.headers:
-                    self.bgcolor = bgcolor = self.headers.index('bgcolor')
+                    bgcolor = self.headers.index('bgcolor')
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
                                              if c.startswith('bgcolor')]
@@ -191,31 +191,52 @@ class LogList(object):
         self.fts = index
 
     def up_color(self, *args):
-        if self.bgcolor:
+        try:
+            bgcolor = self.headers.index('bgcolor')
+        except ValueError:
+            return
+        else:
             selection = self.view.get_selection()
+            selection.set_mode(gtk.SELECTION_SINGLE)
             (model, iter_) = selection.get_selected()
             if iter_:
-                path = model.get_string_from_iter(iter)
+                path = model.get_string_from_iter(iter_)
                 path = int(path) - 1
             else:
-                path = model.iter_n_children(None)
-            while model[path][self.bgcolor] == '#fff':
-                path -= 1
-            selection.select_path(path)
-            self.view.scroll_to_cell(path)
+                path = model.iter_n_children(None) - 1
+            if path:
+                while model[path][bgcolor] == '#fff':
+                    path -= 1
+                    if path < 0:
+                        break
+                else:
+                    selection.select_path(path)
+                    self.view.scroll_to_cell(path, use_align=True, row_align=0.5)
+            selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def down_color(self, *args):
-        if self.bgcolor:
+        try:
+            bgcolor = self.headers.index('bgcolor')
+        except ValueError:
+            return
+        else:
             selection = self.view.get_selection()
+            selection.set_mode(gtk.SELECTION_SINGLE)
             (model, iter_) = selection.get_selected()
             if iter_:
                 iter_ = model.iter_next(iter_)
             else:
                 iter_ = model.get_iter_first()
-            while model.get_value(iter_, self.bgcolor) == '#fff':
-                iter_ = model.iter_next(iter_)
-            selection.select_iter(iter_)
-            self.view.scroll_to_cell(int(model.get_string_from_iter(iter_)))
+            if iter_:
+                while model.get_value(iter_, bgcolor) == '#fff':
+                    iter_ = model.iter_next(iter_)
+                    if not iter_:
+                        break
+                else:
+                    selection.select_iter(iter_)
+                    self.view.scroll_to_cell(int(model.get_string_from_iter(iter_)),
+                                             use_align=True, row_align=0.5)
+            selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 
 class LogsListWindow(gtk.Frame):
@@ -255,6 +276,17 @@ class LogsListWindow(gtk.Frame):
         grid_btn.connect("clicked", self.show_gridlines)
         grid_btn.set_is_important(True)
         grid_btn.set_label("Grid Lines")
+
+        lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
+        lwin_btn.connect("clicked", self.show_log_window)
+
+        sep4 = gtk.SeparatorToolItem()
+
+        up_btn = gtk.ToolButton(gtk.STOCK_GO_UP)
+        up_btn.connect("clicked", self.log_list.up_color)
+
+        down_btn = gtk.ToolButton(gtk.STOCK_GO_DOWN)
+        down_btn.connect("clicked", self.log_list.down_color)
         
         toolbar.insert(exec_btn, 0)
         toolbar.insert(self.break_btn, 1)
@@ -264,6 +296,9 @@ class LogsListWindow(gtk.Frame):
         toolbar.insert(lwin_btn, 5)
         toolbar.insert(sep3, 6)
         toolbar.insert(grid_btn, 7)
+        toolbar.insert(sep4, 8)
+        toolbar.insert(up_btn, 9)
+        toolbar.insert(down_btn, 10)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 

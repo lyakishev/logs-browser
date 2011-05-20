@@ -3,7 +3,6 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
-from logwindow import SeveralLogsWindow  #TODO remove after move tol LoglList
 from logslist import LogsListWindow
 
 
