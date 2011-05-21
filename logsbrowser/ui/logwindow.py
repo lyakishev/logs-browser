@@ -28,7 +28,8 @@ plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
 
 
 class LogWindow:
-    def __init__(self, loglist, iter, sel, sens_func):
+    def __init__(self, loglist, iter, sel, sens_func, from_table_hl):
+        self.from_table_hl = from_table_hl
         self.model = loglist.model
         self.view = loglist.view
         self.loglist = loglist
@@ -198,10 +199,12 @@ class LogWindow:
         finally:
             config = f.read()
             self.config = eval(config)
+            self.config.update({"from table": self.from_table_hl})
             f.close()
 
     def fill_combo(self):
         syntax = self.config.keys()
+        self.syntax.append_text("from table")
         self.syntax.append_text("-------")
         for item in syntax:
             self.syntax.append_text(item)
@@ -485,8 +488,8 @@ class LogWindow:
 
 
 class SeveralLogsWindow(LogWindow):
-    def __init__(self, loglist, iter, sel, sens_func):
-        LogWindow.__init__(self, loglist, iter, sel, sens_func)
+    def __init__(self, loglist, iter, sel, sens_func, from_table_hl):
+        LogWindow.__init__(self, loglist, iter, sel, sens_func, from_table_hl)
         self.info_box.remove(self.updown_btns)
 
     def fill(self):

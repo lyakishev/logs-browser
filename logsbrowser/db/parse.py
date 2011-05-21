@@ -3,10 +3,39 @@ from itertools import count
 from string import Template
 import functions
 from string import Template
-from utils.colors import check_color, ColorError
+from utils.colors import check_color, ColorError, c_to_string
 
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
+
+clause = re.compile('(?i)(?P<field>log)\s+(?P<op>(like|regexp|match|glob))\s+(?P<val>\$quote\d+)\s+as\s+(?P<color>.+)')
+
+
+def log_color_clauses(clauses):
+    clauses = [c.strip('{}') for c in clauses]
+    for cl in clauses:
+        c = clause.match(cl)
+        if c:
+            yield (c.group('op'), c.group('val'), c.group('color'))
+
+op_to_re = {'LIKE': lambda v: re.escape(v.strip('%')).replace('\%s' % '%',
+                                '.*').replace('\%s' % '_', '.'),
+            'GLOB': lambda v: re.escape(v.strip('*')).replace('\%s' % '*',
+                                '.*').replace('\%s' % '?', '.'),
+            'REGEXP': lambda v: v,
+            'MATCH': lambda v: '(?i)'+re.escape(v).replace('\%s' % '*', '\w*')
+            }
+        
+
+def lw_hl_expr(lw_hl_clauses, quotes_dict):
+    hls = []
+    for op, val, color in lw_hl_clauses:
+        val = Template(val).substitute(quotes_dict).strip("'")
+        cval = op_to_re[op.upper()](val)
+        fcolor = c_to_string(color)
+        hls.append('f%s,s#14b: %s' % (fcolor, cval))
+    return '\n'.join(hls)
+
 
 class Query(object):
 
@@ -59,6 +88,13 @@ class Query(object):
 
     #def __repr__(self):
     #    return self.sql
+
+    def get_colors(self):
+        colors = []
+        for k,v in self.qdict.iteritems():
+            colors.extend(v.get_colors())
+        return colors
+        
 
     def add_lid(self, group=False):
         from_queries = self.query.add_lid(group)
@@ -169,6 +205,12 @@ class Select:
             for k,q in self.qdict.items():
                 q.result_list.append("'#fff' as bgcolor")
 
+    def get_colors(self):
+        colors = []
+        for k,v in self.qdict.iteritems():
+            colors.extend(v.colors)
+        return colors
+
     @property
     def colorized(self):
         return bool(self.color_columns)
@@ -187,6 +229,7 @@ class SelectCore:
     def __init__(self, expr, fts):
         self.fts = fts
         self.sql = expr
+        self.colors = []
         self.colorized = False
         self.color_columns = []
         self.parse()
@@ -255,6 +298,7 @@ class SelectCore:
     def parse_color(self, column):
         color = self.color.match(column)
         if color:
+            self.colors.append(color.group())
             clause = color.group('clause')
             if ' match ' in clause.lower() and self.fts:
                 new_query = Query('select from %s where %s' %
@@ -346,10 +390,12 @@ def process(sql_t, context, autolid, fts):
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
     query = Query(sql_no_quotes, fts)
+    lw_hl_clauses = log_color_clauses(query.get_colors())
     if autolid:
         query.add_lid()
     query = Template(str(query)).safe_substitute(quotes_dict)
-    return query
+    words_hl = lw_hl_expr(lw_hl_clauses, quotes_dict)
+    return (query, words_hl)
 
 and_ = re.compile(r'(?i)\sand\s')
 not_ = re.compile(r'(?i)\snot\s')

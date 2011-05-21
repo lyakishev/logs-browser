@@ -55,9 +55,11 @@ order by date desc
 </queries>
 <filters>
     <filter name="Новый" default="1">
-        <row column="log" color="lightblue" clause="" />
-        <row column="log" color="lightgreen" clause="" />
-        <row column="log" color="yellow" clause="" />
+        <row column="log" color="steelblue" clause="" />
+        <row column="log" color="seagreen" clause="" />
+        <row column="log" color="darkorange" clause="" />
+        <row column="log" color="firebrick" clause="" />
+        <row column="log" color="purple" clause="" />
         <row column="log" color="#fff" clause="" />
         <row column="log" color="#fff" clause="" />
         <row column="log" color="#fff" clause="" />

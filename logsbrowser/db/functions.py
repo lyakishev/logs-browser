@@ -53,6 +53,7 @@ def regex(t, pattern, gr):
     return ret
 
 def rmatch(pattern, field):
+    pattern = re.escape(pattern).replace('\*', '\w*')
     ret = re.compile('(\W|^)'+pattern+'(\W|$)', re.I).search(field)
     return True if ret else False
 

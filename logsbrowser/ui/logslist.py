@@ -5,9 +5,8 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
-from logwindow import LogWindow
+from logwindow import LogWindow, SeveralLogsWindow
 from query import Query, QueryLoader
-from logwindow import SeveralLogsWindow
 from datetime import datetime
 import pango
 import os
@@ -48,6 +47,7 @@ class LogList(object):
         self.columns = []
         self.headers = []
         self.fts = True
+        self.words_hl = ""
         self.name = ""
         self.table = ""
         self.cached_queries = []
@@ -83,7 +83,7 @@ class LogList(object):
             fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
-            sql = process(fquery, context, auto_lid, self.fts)
+            sql, words_hl= process(fquery, context, auto_lid, self.fts)
         except Exception, e:
             merror(str(e))
             return
@@ -95,6 +95,7 @@ class LogList(object):
         if model:
             self.model = model[0]
             self.headers = model[1]
+            self.words_hl = model[2]
             self.build_view(self.headers)
             self.view.set_model(self.model)
             self.view.thaw_child_notify()
@@ -105,6 +106,8 @@ class LogList(object):
             except db.DBException, e:
                 merror(str(e))
                 rows = None
+            else:
+                self.words_hl = words_hl
             if rows:
                 self.headers = map(itemgetter(0), desc)
                 cols = [gobject.TYPE_STRING for i in self.headers]
@@ -132,7 +135,7 @@ class LogList(object):
                         else:
                             self.model.set_value(row.iter, bgcolor, "#fff")
                             
-                self._cache[sql_hash] = (self.model, self.headers)
+                self._cache[sql_hash] = (self.model, self.headers, words_hl)
                 self.cached_queries.append(sql_hash)
                 self.view.set_model(self.model)
             self.view.thaw_child_notify()
@@ -332,11 +335,12 @@ class LogsListWindow(gtk.Frame):
                     if len(pathlist) > 1:
                         SeveralLogsWindow(self.log_list,
                                           self.log_list.model.get_iter(pathlist[0]),
-                                          selection, self.exec_sens)
+                                          selection, self.exec_sens,
+                                          self.log_list.words_hl)
                     else:
                         selection.set_mode(gtk.SELECTION_SINGLE)
                         LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                                    selection, self.exec_sens)
+                                    selection, self.exec_sens, self.log_list.words_hl)
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
             except ValueError:
                 selection.set_mode(gtk.SELECTION_MULTIPLE)

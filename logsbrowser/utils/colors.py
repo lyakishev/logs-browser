@@ -10,3 +10,8 @@ def check_color(color_value):
     else:
         return True
 
+def c_to_string(color_value):
+    color = gtk.gdk.color_parse(color_value)
+    return color.to_string()
+    
+
