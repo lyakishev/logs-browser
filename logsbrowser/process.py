@@ -8,6 +8,7 @@ from multiprocessing import Pool, Event
 from itertools import chain
 from threading import Thread
 import time
+import multiprocessing as mp
 
 @time_it
 def process(table, sources, dates, callback):
@@ -25,6 +26,7 @@ def process(table, sources, dates, callback):
         _process(eworker, elogs)
 
 _e_stop = Event()
+
 
 def _worker(args):
     if _e_stop.is_set():

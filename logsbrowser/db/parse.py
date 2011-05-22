@@ -292,7 +292,7 @@ class SelectCore:
                                               'lid as rows_for_log_window')
                     return None
             else:
-                raise AutoLid
+                raise AutoLid("Cannot use auto_lid with several sources")
 
 
     def parse_color(self, column):
@@ -320,7 +320,7 @@ class SelectCore:
                         (')' if group else '') +
                         ' as %s' % bgcolor)
             else:
-                raise ColorError
+                raise ColorError("Unknown color: %s" % color_value)
         else:
             return column
 
