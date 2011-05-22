@@ -17,7 +17,7 @@ from db.engine import get_msg, DBException
 import config
 try:
     from plsql_analyzer import *
-except:
+except ImportError:
     pass
 
 #xml_re = re.compile("<\?xml(.+)>")
@@ -146,7 +146,7 @@ class LogWindow:
         self.view.set_sensitive(False)
         try:
             self.fill()
-        except DBException, e:
+        except DBException as e:
             merror(str(e))
             self.popup.destroy()
             return
@@ -451,7 +451,7 @@ class LogWindow:
         self.sens_func(True)
         try:
             self.fill()
-        except DBException, e:
+        except DBException as e:
             merror(str(e))
             self.selection.select_path(int(path))
             self.view.scroll_to_cell(int(path))
@@ -476,7 +476,7 @@ class LogWindow:
             self.sens_func(True)
             try:
                 self.fill()
-            except DBException, e:
+            except DBException as e:
                 merror(str(e))
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))

@@ -84,7 +84,7 @@ class LogList(object):
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
             sql, words_hl= process(fquery, context, auto_lid, self.fts)
-        except Exception, e:
+        except Exception as e:
             merror(str(e))
             return
         print sql
@@ -103,7 +103,7 @@ class LogList(object):
         else:
             try:
                 desc, rows = db.execute(sql)
-            except db.DBException, e:
+            except db.DBException as e:
                 merror(str(e))
                 rows = None
             else:

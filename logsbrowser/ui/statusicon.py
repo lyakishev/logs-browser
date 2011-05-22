@@ -5,7 +5,7 @@ import gobject
 import gio
 try:
     from utils.mouse_click import DetectClick
-except:
+except ImportError:
     pass
 from multiprocessing import Value
 from utils.net_time import get_true_time
