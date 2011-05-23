@@ -67,6 +67,33 @@ order by date desc
     <filter name="Ошибки - красным" default="0">
         <row column="type" color="red" clause="ERROR" />
     </filter>
+<filter name="Обещанный платеж" default="1">
+        <row column="log" color="#fff" clause="" />
+        <row column="log" color="lightblue" clause="TerminalDeviceExtValue" />
+        <row column="log" color="lightblue" clause="ExternalSubtypeCode" />
+        <row column="log" color="lightgreen" clause="PACustomerName" />
+        <row column="log" color="yellow" clause="GetCustomerNameByPAs" />
+        <row column="log" color="orange" clause="CreationMethod" />
+        <row column="log" color="orange" clause="StornoReason" />
+        <row column="log" color="orange" clause="PromisedPaymentStatus" />
+        <row column="log" color="orange" clause="PromisedPaymentHistory" />
+        <row column="log" color="orange" clause="PromisedPaymentStornoReason" />
+        <row column="log" color="orange" clause="PromisedPaymentLink" />
+        <row column="log" color="green" clause="StornoPromisedPayment" />
+        <row column="log" color="green" clause="GetPromisedPaymentHistory" />
+        <row column="log" color="green" clause="GetPromisedPaymentLink" />
+        <row column="log" color="green" clause="Get_Promised_Payment_Statistic" />
+        <row column="log" color="coral" clause="PromisedPaymentStornoEvent" />
+        <row column="log" color="coral" clause="PromisedPaymentStornoEvent" />
+        <row column="log" color="khaki" clause="DB_PayAcceptance" />
+        <row column="log" color="khaki" clause="DB_PayVerification" />
+        <row column="log" color="khaki" clause="DB_PromisedPaymentRetriev\w?" />
+        <row column="log" color="tomato" clause="IsEdit_MaxPromisedPayment" />
+        <row column="log" color="tomato" clause="IsMultiPromisedPaymentPossible" />
+        <row column="log" color="tomato" clause="EntityExternalValue" />
+        <row column="log" color="tomato" clause="PPLifeCycle" />
+        <row column="log" color="tomato" clause="SummMoreMaxPromisedPayment" />
+    </filter>
 </filters>
 
 </root>

@@ -5,6 +5,18 @@ import functions
 from string import Template
 from utils.colors import check_color, ColorError, c_to_string
 
+sub_dict = {'LIKE': ['%',(('_', '.'), ('%', '.*'))],
+            'GLOB': ['*',(('?', '.'), ('*', '.*'))],
+            'MATCH': ['',(('*', '\w*'),)]}
+
+def operator_to_regexp(op, val):
+    trim, maps = sub_dict[op.upper()]
+    val = val.strip(trim)
+    escaped_val = re.escape(val)
+    for ch, new_ch in maps:
+        escaped_val = escaped_val.replace(r'\%s' % ch, new_ch)
+    return escaped_val
+
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
 
@@ -103,6 +115,11 @@ class Query(object):
             if query:
                 query.add_lid(group)
 
+    def get_colors(self):
+        colors = []
+        for k,v in self.qdict.iteritems():
+            colors.extend(v.get_colors())
+        return colors
 
 class Select:
 
@@ -207,7 +224,7 @@ class Select:
 
     def get_colors(self):
         colors = []
-        for k,v in self.qdict.iteritems():
+        for k, v in self.qdict.iteritems():
             colors.extend(v.colors)
         return colors
 
@@ -229,8 +246,8 @@ class SelectCore:
     def __init__(self, expr, fts):
         self.fts = fts
         self.sql = expr
-        self.colors = []
         self.colorized = False
+        self.colors = []
         self.color_columns = []
         self.parse()
         self.right_query()

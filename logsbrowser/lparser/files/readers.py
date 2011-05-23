@@ -37,6 +37,6 @@ def mmap_block_read(fileno, block_size=8192):
             for line in text_block.splitlines(True)[::-1]:
                 yield line
     except WindowsError:
-        if os.path.getsize(path):
-            print 'WindowsError: %s' % path
+        #if os.path.getsize(path):
+        #    print 'WindowsError: %s' % path
         raise StopIteration
