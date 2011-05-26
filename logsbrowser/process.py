@@ -8,7 +8,6 @@ from multiprocessing import Pool, Event
 from itertools import chain
 from threading import Thread
 import time
-import multiprocessing as mp
 
 @time_it
 def process(table, sources, dates, callback):
@@ -25,12 +24,7 @@ def process(table, sources, dates, callback):
     if elogs:
         _process(eworker, elogs)
 
-_e_stop = Event()
-
-
 def _worker(args):
-    if _e_stop.is_set():
-        raise StopIteration
     return list(args[3](args[0],args[1],args[2]))
 
 def _mix_sources(sources, dates):
@@ -40,23 +34,18 @@ def _mix_sources(sources, dates):
     for p, l in sources[1]:
         sources_for_worker.append((dates, p, l, eworker))
     return sources_for_worker
+
+def callback_generator(iterable, callback):
+    for item in iterable:
+        if callback():
+            raise StopIteration
+        yield item
     
-
-def _mp_process(table, sources, dates):
-    pool = Pool()
-    sources_for_worker = _mix_sources(sources, dates)
-    work = chain.from_iterable(pool.imap(_worker, sources_for_worker))
-    insert_many(table, work)
-    pool.close()
-
-
 @time_it
 def mp_process(table, sources, dates, callback):
-    t=Thread(target=_mp_process, args=(table, sources, dates))
-    t.start()
-    while t.is_alive():
-        callback(_e_stop)
-        time.sleep(0.2)
-    _e_stop.clear()
-    
-
+    pool = Pool()
+    sources_for_worker = _mix_sources(sources, dates)
+    pool_result = pool.imap_unordered(_worker, sources_for_worker)
+    work = callback_generator(pool_result, callback)
+    insert_many(table, chain.from_iterable(work))
+    pool.close()

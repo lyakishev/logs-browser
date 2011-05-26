@@ -123,6 +123,8 @@ class LogsViewer:
     def show_about(self, *args):
         about = gtk.AboutDialog()
         about.set_property('authors', ['Lyakishev Andrey <alyakishev@sitronics.com>'])
+        about.set_property('artists', ['Chizhikov Vladimir <vchizhikov@sitronics.com>',
+                                       'Marchenko Andrey <A.Marchenko@sitronics.com'])
         about.set_property('version', '1.8')
         about.set_name('LogsBrowser')
         about.run()
@@ -163,14 +165,6 @@ class LogsViewer:
             gtk.main_iteration()
         return self.signals['stop'] or self.signals['break']
 
-    def mpcallback(self, e_stop):
-        self.progressbar.pulse()
-        if self.signals['stop'] or self.signals['break']:
-            e_stop.set()
-        while gtk.events_pending():
-            gtk.main_iteration()
-        
-
     @profiler.time_it
     def show_logs(self, *args):
         self.break_btn.set_sensitive(True)
@@ -189,10 +183,7 @@ class LogsViewer:
             if not config.MULTIPROCESS:
                 process(loglist.table, sources, dates, self.callback)
             else:
-                self.frac = 0.01 if self.frac < 0.01 else self.frac
-                self.progressbar.set_pulse_step(self.frac)
-                self.progressbar.set_text("Working...")
-                mp_process(loglist.table, sources, dates, self.mpcallback)
+                mp_process(loglist.table, sources, dates, self.callback)
             if self.signals['break']:
                 loglist.clear()
                 self.progressbar.set_fraction(0.0)

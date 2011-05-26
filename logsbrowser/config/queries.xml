@@ -23,7 +23,7 @@ group by date, logname, type
 order by date desc
 	</query>
 
-	<query name="Группировка по идущим подряд именам логa" add_lid="1" default="1">
+	<query name="Группировка по идущим подряд именам логa" add_lid="1" default="0">
 select strftime('%H:%M:%S.%f',min(date)) as ftime, 
 strftime('%H:%M:%S.%f',max(date)) as totime,
 logname, error(type)
@@ -35,7 +35,7 @@ group by logname_group
 order by logname_group desc
 	</query>
 
-	<query name="Количество сообщений по именам лога" add_lid="1" default="0">
+	<query name="Количество сообщений по именам лога" add_lid="1" default="1">
 select logname, count(log) as c
 from #this
 group by logname
