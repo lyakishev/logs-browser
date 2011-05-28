@@ -1,6 +1,13 @@
 from cleaner import clear
 import os
 from operator import itemgetter
+import config
+from parse import define_format
+
+source_formats = {}
+
+def clear_source_formats():
+    source_formats.clear()
 
 def file_preparator(folders):
     flf = []
@@ -11,7 +18,7 @@ def file_preparator(folders):
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn])
+                flf.append([fullf, pfn, source_formats[key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
 def lists_to_pathes(lists):
@@ -30,6 +37,23 @@ def pathes(lst):
 def join_path(prefix, path):
     return "%s%s" % (prefix, "|"+path if path else "")
 
+def date_format(path):
+    try:
+        with open(path) as file_:
+            pfunc = True
+            for n, line in enumerate(file_):
+                if n < config.MAX_LINES_FOR_DETECT_FORMAT:
+                    pformat, pfunc, need_date = define_format(line)
+                    if pformat:
+                        return (pformat, pfunc, need_date)
+                else:
+                    break
+            if not pfunc:
+                print "Not found format for file %s" % path
+                return None
+    except IOError:
+        return None
+
 def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
     files = set()
     try:
@@ -43,8 +67,12 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if not name:
                         name = "undefined"
                     if name not in files:
-                        log_callback(name, parent, ext_parent)
-                        files.add(name)
+                        format_ = date_format(fullf)
+                        if format_:
+                            if not source_formats.get((path, name)):
+                                source_formats[(path, name)] = format_
+                            log_callback(name, parent, ext_parent)
+                            files.add(name)
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
                         node = dir_callback(f, parent, ext_parent)

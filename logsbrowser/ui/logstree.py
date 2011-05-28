@@ -8,7 +8,7 @@ import os
 import ConfigParser
 from configeditor import ConfigEditor
 import sys
-from source.worker import dir_walker, join_path, pathes
+from source.worker import dir_walker, join_path, pathes, clear_source_formats
 import cStringIO
 import config
 import time #DEBUG
@@ -438,6 +438,7 @@ class LogsTrees(gtk.Notebook):
         self.state_ = {}
 
     def fill(self, walk):
+        clear_source_formats()
         self.file_servers_tree.model.read_config(walk)
         if self.evlogs_servers_tree:
             self.evlogs_servers_tree.model.read_config()
@@ -445,7 +446,7 @@ class LogsTrees(gtk.Notebook):
     def get_log_sources(self):
         flogs = pathes(self.file_servers_tree.model.get_active_servers())
         if self.evlogs_servers_tree:
-            evlogs = ([(s[1], s[0]) for s in
+            evlogs = ([(s[1], s[0], None) for s in
                       self.evlogs_servers_tree.model.get_active_servers()])
         else:
             evlogs = []

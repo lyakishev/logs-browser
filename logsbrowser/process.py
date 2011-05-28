@@ -14,11 +14,11 @@ import multiprocessing as mp
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):
-        for path, log in logs:
+        for path, log, funcs in logs:
             stop_ = callback(log)
             if stop_:
                 break
-            insert_many(table, worker(dates, path, log))
+            insert_many(table, worker(dates, path, log, funcs))
         
     flogs, elogs = sources
     _process(fworker, flogs)
@@ -31,14 +31,14 @@ _e_stop = Event()
 def _worker(args):
     if _e_stop.is_set():
         raise StopIteration
-    return list(args[3](args[0],args[1],args[2]))
+    return list(args[0](args[1],args[2],args[3], args[4]))
 
 def _mix_sources(sources, dates):
     sources_for_worker = []
-    for p, l in sources[0]:
-        sources_for_worker.append((dates, p, l, fworker))
+    for p, l, funcs in sources[0]:
+        sources_for_worker.append((fworker ,dates, p, l, funcs))
     for p, l in sources[1]:
-        sources_for_worker.append((dates, p, l, eworker))
+        sources_for_worker.append((eworker, dates, p, l, funcs))
     return sources_for_worker
     
 

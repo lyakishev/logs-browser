@@ -9,33 +9,26 @@ from lparser.utils import to_unicode, isoformat
 import config
 
 
-def date_format(file_, path):
-    pfunc = True
-    for n, line in enumerate(file_):
-        if n < config.MAX_LINES_FOR_DETECT_FORMAT:
-            pformat, pfunc, need_date = define_format(line)
-            if pformat:
-                return (pformat, pfunc, need_date, line)
-        else:
-            break
-    if not pfunc:
-        print "Not found format for file %s" % path
-    raise StopIteration
-    
+def get_start_date(file_, pformat, cdate, pfunc):
+    for line in file_:
+        start_date = pfunc(line, cdate, pformat)
+        if start_date:
+            return start_date
 
-def filelogworker(dates, path, log):
+
+def filelogworker(dates, path, log, funcs):
+    pformat, pfunc, need_date = funcs
+    if need_date:
+        try:
+            cdate = time.localtime(os.path.getctime(path))
+        except WindowsError:
+            print "WindowsError: %s" % path
+            raise StopIteration
+    else:
+        cdate = None
     try:
         with open(path, 'r') as file_:
-            pformat, pfunc, need_date, startl = date_format(file_, path)
-            if need_date:
-                try:
-                    cdate = time.localtime(os.path.getctime(path))
-                except WindowsError:
-                    print "WindowsError: %s" % path
-                    raise StopIteration
-            else:
-                cdate = None
-            start_date = pfunc(startl, cdate, pformat)
+            start_date = get_start_date(file_, pformat, cdate, pfunc)
             if start_date > dates[1]:
                 raise StopIteration
             comp = [p for p in path.split(os.sep) if p][0]
