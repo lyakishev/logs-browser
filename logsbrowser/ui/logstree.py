@@ -5,14 +5,12 @@ import gobject
 import gio
 import pango
 import os
-import ConfigParser
 from configeditor import ConfigEditor
 import sys
 from source.worker import dir_walker, join_path, pathes, clear_source_formats
-import cStringIO
 import config
-import time #DEBUG
 from itertools import count
+from utils.xmlmanagers import SourceManager
 
 
 class ServersModel(object):
@@ -31,6 +29,38 @@ class ServersModel(object):
             return self.model_filter
         else:
             return None
+
+    def set_from_copy(self, copy_treestore):
+        self._copy(copy_treestore, self)
+
+    def copy(self):
+        copy_treestore = ServersModel()
+        self._copy(self.treestore, copy_treestore)
+        return copy_treestore.treestore
+        
+
+    def _copy(self, treestore, copytreestore):
+        getv = treestore.get_value
+        copy_treestore = copytreestore
+
+        def treewalk(iter_, parent):
+            val = getv(iter_, 3)
+            name = getv(iter_, 0)
+            if val == 'n':
+                filled = True if getv(iter_, 1) == gtk.STOCK_CONNECT else False
+                parent_copy = copy_treestore.add_root(name, filled)
+            elif val == 'd':
+                parent_copy = copy_treestore.add_dir(name, parent)
+            elif val == 'f':
+                parent_copy = copy_treestore.add_file(name, parent)
+            it = treestore.iter_children(iter_)
+            while it:
+                treewalk(it, parent_copy)
+                it = treestore.iter_next(it)
+        root = treestore.iter_children(None)
+        while root:
+            treewalk(root, None)
+            root = treestore.iter_next(root)
 
     def get_active_servers(self):
         log_for_process = []
@@ -136,66 +166,68 @@ class ServersModel(object):
 
 class EventServersModel(ServersModel):
     def __init__(self):
-        self.file = config.ELOGS_CFG
         super(EventServersModel, self).__init__()
 
-    def read_config(self):
+    def fill(self, sources):
         self.treestore.clear()
-        config_ = ConfigParser.RawConfigParser()
-        self.file = config.FLOGS_CFG
-        config_.read(config.ELOGS_CFG)
-        for section in config_.sections():
-            parent = self.add_root(section)
-            for dir_, files_ in config_.items(section):
-                child = self.add_dir(dir_, parent)
-                for value in files_.split(","):
-                    self.add_file(value, child)
+        for k, v in sources:
+            child = self.add_dir(k, None)
+            for l in v:
+                self.add_file(l, child)
 
 
 class FileServersModel(ServersModel):
     def __init__(self, progress, sens_func, signals):
         self.progress = progress
         self.signals = signals
-        self.read_config = sens_func(self._read_config)
-        self.file = config.FLOGS_CFG
+        self.fill = sens_func(self.fill)
+        self.dirs = None
+        self.stand = None
+        self.cache = {}
         super(FileServersModel, self).__init__()
 
-    def _read_config(self, fill):
+    def fill(self, fill, dirs = None, stand = None):
         self.treestore.clear()
-        self.parents = {}
-        fake_config = cStringIO.StringIO()
-        self.file = config.FLOGS_CFG
-        with open(config.FLOGS_CFG, 'r') as f:
-            fake_config.writelines((line.strip() + " = \n" for line in f))
-        fake_config.seek(0)
-        config_ = ConfigParser.RawConfigParser()
-        config_.optionxform = str
-        config_.readfp(fake_config)
-        frac = 1./len([i for s in config_.sections() for i in config_.items(s)])
-        n = count(1)
+        if fill:
+            clear_source_formats()
+            self._fill(dirs, stand)
+            self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
+        else:
+            cached_model = self.get_model_from_cache(stand)
+            if cached_model:
+                self.set_from_copy(cached_model[0])
+                self.dirs = cached_model[1]
+                self.stand = cached_model[2]
+            else:
+                self._fill(dirs, stand)
+                self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
+            
+    def _fill(self, dirs, stand):
+        self.parents={}
+        fill = True
+        if dirs:
+            self.dirs = dirs
+            fill = False
+        if stand:
+            self.stand = stand
+        frac = 1./len(self.dirs)
         try:
-            for server in config_.sections():
-                parent = self.add_root(server, fill)
-                for path, null in config_.items(server):
-                    self.progress.set_text("%s: %s" % (server, path))
-                    if self.signals['stop'] or self.signals['break']:
-                        raise StopIteration
-                    self.add_parents(path, parent, server)
-                    if fill:
-                        self.add_logdir(path, parent, server)
-                    self.progress.set_fraction(next(n)*frac)
+            for path in self.dirs:
+                self.progress.set_text("%s" % path)
+                if self.signals['stop'] or self.signals['break']:
+                    raise StopIteration
+                self.add_parents(path, None, self.stand)
+                if fill:
+                    self.add_logdir(path, None, self.stand)
         except StopIteration:
             pass
         finally:
-            self.close_conf(fake_config)
             self.signals['stop'] = False
             self.signals['break'] = False
 
-    def close_conf(self, conf):
-        conf.close()
-        self.progress.set_text("")
-        self.progress.set_fraction(0)
-        
+    def get_model_from_cache(self, stand):
+        return self.cache.get(stand)
+
     def add_parents(self, path, parent, server):
         parts = [p for p in path.split(os.sep) if p]
         if path.startswith(r"\\"):
@@ -327,7 +359,7 @@ class ServersTree(gtk.Frame):
 
         toolbar = gtk.Toolbar()
         reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
-        reload_btn.connect("clicked", lambda args: self.model.read_config(True))
+        reload_btn.connect("clicked", lambda args: self.model.fill(True))
         editconf_btn = gtk.ToolButton(gtk.STOCK_EDIT)
         editconf_btn.connect("clicked", lambda args: self.view.show_config_editor())
         search_entry = gtk.ToolItem()
@@ -435,32 +467,55 @@ class LogsTrees(gtk.Notebook):
             self.evlogs_servers_tree.show()
             self.append_page(self.evlogs_servers_tree, evt_label)
 
+    def fill_tree(self, filelogs, evlogs, stand):
+        if self.evlogs_servers_tree:
+            self.file_servers_tree.model.fill(evlogs)
+        self.file_servers_tree.model.fill(False, filelogs, stand)
+
+
+class SourceManagerUI(gtk.VBox):
+    def __init__(self, progress, sens_func, signals):
+        gtk.VBox.__init__(self)
         self.state_ = {}
 
-    def fill(self, walk):
-        clear_source_formats()
-        self.file_servers_tree.model.read_config(walk)
-        if self.evlogs_servers_tree:
-            self.evlogs_servers_tree.model.read_config()
+        stand_manager = gtk.HBox()
+        self.tree = LogsTrees(progress, sens_func, signals)
+        self.source_manager = SourceManager(config.SOURCES_XML)
+
+        stand_label = gtk.Label('Stand:')
+        self.stand_choice = gtk.combo_box_new_text()
+        self.fill_combo()
+        self.stand_choice.connect('changed', self.change_stand)
+
+
+        stand_manager.pack_start(stand_label, False, False, 5)
+        stand_manager.pack_start(self.stand_choice, True, True)
+
+        self.pack_start(stand_manager, False, False, 5)
+        self.pack_start(self.tree, True, True)
+
+        self.show_all()
 
     def get_log_sources(self):
-        flogs = pathes(self.file_servers_tree.model.get_active_servers())
-        if self.evlogs_servers_tree:
+        flogs = pathes(self.tree.file_servers_tree.model.get_active_servers())
+        if self.tree.evlogs_servers_tree:
             evlogs = ([(s[1], s[0], None) for s in
-                      self.evlogs_servers_tree.model.get_active_servers()])
+                      self.tree.evlogs_servers_tree.model.get_active_servers()])
         else:
             evlogs = []
         return (flogs, evlogs)
 
     def load_state(self, page):
-        ftree = self.file_servers_tree
-        etree = self.evlogs_servers_tree
+        ftree = self.tree.file_servers_tree
+        etree = self.tree.evlogs_servers_tree
         state = self.state_.get(page)
         if state:
-            fpathslist, fentry, epathslist, eentry = state
+            fpathslist, fentry, epathslist, eentry, stand = state
         else:
-            fpathslist, fentry, epathslist, eentry = ([],("",False),
-                                                      [],("",False))
+            fpathslist, fentry, epathslist, eentry, stand = ([],("",False),
+                                                          [],("",False),
+                                                          -1)
+        self.stand_choice.set_active(stand)
         ftree.model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
         if etree:
@@ -469,20 +524,31 @@ class LogsTrees(gtk.Notebook):
         
 
     def save_state(self, page):
-        ftree = self.file_servers_tree
+        ftree = self.tree.file_servers_tree
         fpathslist = ftree.model.get_active_check_paths()
         fentry = ftree.filter_text, ftree.ft
-        etree = self.evlogs_servers_tree
+        etree = self.tree.evlogs_servers_tree
+        stand = self.stand_choice.get_active()
         if etree:
             epathslist = etree.model.get_active_check_paths()
             eentry = etree.filter_text, ftree.ft
         else:
             epathslist = []
             eentry = ()
-        self.state_[page] = (fpathslist, fentry, epathslist, eentry)
+        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
 
     def free_state(self, page):
         del self.state_[page]
+
+    def change_stand(self, *args):
+        stand = self.stand_choice.get_active_text()
+        self.tree.fill_tree(self.source_manager.get_filelog_sources(stand),
+                            self.source_manager.get_evlog_sources(stand),
+                            stand)
+
+    def fill_combo(self):
+        for stand in self.source_manager.stands:
+            self.stand_choice.append_text(stand)
 
 
         

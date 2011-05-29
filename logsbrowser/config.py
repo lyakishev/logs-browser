@@ -20,6 +20,7 @@ BOLD_SELECTED = _config.getboolean("colors", 'bold_selected')
 FLOGS_CFG = get_path(_config.get("config_files", 'file_logs'))
 ELOGS_CFG = get_path(_config.get("config_files", 'event_logs'))
 SYNTAX_CFG = get_path(_config.get("config_files", 'syntax'))
+SOURCES_XML = get_path(_config.get("config_files", 'sources_xml'))
 
 FTSINDEX = _config.getboolean('ui', 'default_ftsindex')
 

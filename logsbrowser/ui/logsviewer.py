@@ -7,7 +7,7 @@ import gobject
 import gio
 from datetime import datetime
 from datetimef import DateFilter
-from logstree import LogsTrees
+from logstree import SourceManagerUI
 from logsnotebook import LogsNotebook
 import sys
 from statusicon import StatusIcon
@@ -75,7 +75,7 @@ class LogsViewer:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
 
-        self.source_tree = LogsTrees(self.progressbar, self.fill_tree_sens,
+        self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
@@ -115,7 +115,7 @@ class LogsViewer:
         
         self.root.add(menu_box)
         self.root.show_all()
-        self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
+        #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
 
     def show_help(self, *args):
         os.system('start %s' % config.HELP_INDEX)

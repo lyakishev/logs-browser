@@ -7,7 +7,7 @@ order by date desc
 	</query>
 
 	<query name="Время сообщения, имя лога, тип" add_lid="1" default="0">
-select strftime('%H:%M:%S.%f',date), logname, type from #this
+select strftime('%H:%M:%f',date), logname, type from #this
 order by date desc
 	</query>
 
@@ -18,14 +18,14 @@ order by date desc
 	</query>
 
 	<query name="Время сообщения, имя лога, тип; группировка по дате, логу, типу" add_lid="1" default="0">
-select strftime('%H:%M:%S.%f',date), logname, type from #this
+select strftime('%H:%M:%f',date), logname, type from #this
 group by date, logname, type
 order by date desc
 	</query>
 
 	<query name="Группировка по идущим подряд именам логa" add_lid="1" default="1">
-select strftime('%H:%M:%S.%f',min(date)) as ftime, 
-strftime('%H:%M:%S.%f',max(date)) as totime,
+select strftime('%H:%M:%f',min(date)) as ftime, 
+strftime('%H:%M:%f',max(date)) as totime,
 logname, error(type)
 from (select date, logname, type, group_logname(logname) as logname_group
       from #this
@@ -48,7 +48,7 @@ from #this
 	</query>
 
 <query name="Ошибки" add_lid="1" default="1">
-select strftime('%H:%M:%S.%f',date), logname, type from #this
+select strftime('%H:%M:%f',date), logname, type from #this
 where type = 'ERROR'
 order by date desc
 </query>

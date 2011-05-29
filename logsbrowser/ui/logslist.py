@@ -14,7 +14,7 @@ from operator import mul, itemgetter, setitem
 import db.engine as db
 from db.parse import process
 from utils.hash import hash_value, sql_to_hash
-from utils.xmlqueries import QueriesManager
+from utils.xmlmanagers import QueriesManager
 from dialogs import merror
 import glib
 from itertools import cycle
