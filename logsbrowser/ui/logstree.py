@@ -170,7 +170,7 @@ class EventServersModel(ServersModel):
 
     def fill(self, sources):
         self.treestore.clear()
-        for k, v in sources:
+        for k, v in sources.iteritems():
             child = self.add_dir(k, None)
             for l in v:
                 self.add_file(l, child)
@@ -469,7 +469,7 @@ class LogsTrees(gtk.Notebook):
 
     def fill_tree(self, filelogs, evlogs, stand):
         if self.evlogs_servers_tree:
-            self.file_servers_tree.model.fill(evlogs)
+            self.evlogs_servers_tree.model.fill(evlogs)
         self.file_servers_tree.model.fill(False, filelogs, stand)
 
 
