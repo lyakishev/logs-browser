@@ -15,6 +15,7 @@ import traceback
 from dialogs import merror
 from db.engine import get_msg, DBException
 import config
+from utils.text import convert_line_ends
 try:
     from plsql_analyzer import *
 except ImportError:
@@ -345,11 +346,12 @@ class LogWindow:
 
     def copy_log(self, *args):
         clipboard = gtk.clipboard_get("CLIPBOARD")
-        self.txt_buff.select_range(self.txt_buff.get_start_iter(),
-                                   self.txt_buff.get_end_iter())
-        self.txt_buff.copy_clipboard(clipboard)
-        self.txt_buff.select_range(self.txt_buff.get_end_iter(),
-                                   self.txt_buff.get_end_iter())
+        #self.txt_buff.select_range(self.txt_buff.get_start_iter(),
+        #                           self.txt_buff.get_end_iter())
+        clipboard.set_text(convert_line_ends(self.get_text()))
+        #self.txt_buff.copy_clipboard(clipboard)
+        #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+        #                           self.txt_buff.get_end_iter())
 
     def save_to_file(self, *args):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
