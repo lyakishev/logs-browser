@@ -87,7 +87,7 @@ class LogList(object):
         except Exception as e:
             merror(str(e))
             return
-        print sql
+        #print sql
         self.view.freeze_child_notify()
         self.view.set_model(None)
         sql_hash = sql_to_hash(sql)
@@ -120,7 +120,6 @@ class LogList(object):
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
                                              if c.startswith('bgcolor')]
-                    print colorcols
                     for row in self.model:
                         colors = set()
                         for cols in [r for r in [row[c] for c in colorcols] if r]:

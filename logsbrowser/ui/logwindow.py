@@ -376,7 +376,6 @@ class LogWindow:
         for pattern in col_str[1]:
             fre = re.compile(pattern)
             for m in fre.finditer(txt):
-                print m.end() - m.start()
                 start_iter = self.txt_buff.get_iter_at_offset(m.start())
                 end_iter = self.txt_buff.get_iter_at_offset(m.end())
                 self.txt_buff.remove_all_tags(start_iter, end_iter)

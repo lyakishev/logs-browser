@@ -16,6 +16,8 @@ def xml_pretty(txt):
             pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
         except xml.parsers.expat.ExpatError:
             pretty_xml = txt.replace("><", ">\n<")
+        except Exception:
+            pretty_xml = txt
         return pretty_xml
 
 def parse_bad_xml(m):

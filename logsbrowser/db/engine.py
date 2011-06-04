@@ -36,7 +36,6 @@ def set_callback(callback):
     _dbconn.set_progress_handler(callback, 10000)
 
 def interrupt():
-    print 'interrupt'
     _dbconn.interrupt()
 
 def insert_many(table, iter_):
@@ -64,7 +63,7 @@ def get_msg(rows, table):
                  from %s where %s"""
     msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
     msg_sql += ' order by date asc, %s desc' % 'lid'
-    print msg_sql
+    #print msg_sql
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()
