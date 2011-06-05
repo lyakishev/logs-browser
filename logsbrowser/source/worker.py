@@ -7,7 +7,7 @@ from parse import define_format
 source_formats = {}
 
 def clear_source_formats():
-    source_formats.clear()
+    source_formats[stand].clear()
 
 def file_preparator(folders):
     flf = []
@@ -18,7 +18,7 @@ def file_preparator(folders):
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn, source_formats[key, pfn]])
+                flf.append([fullf, pfn, source_formats[key, pfn])
     return sorted(flf, key=itemgetter(1))
 
 def lists_to_pathes(lists):
@@ -69,7 +69,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:
-                            if not source_formats.get((path, name)):
+                            if (path, name) not in source_formats:
                                 source_formats[(path, name)] = format_
                             log_callback(name, parent, ext_parent)
                             files.add(name)

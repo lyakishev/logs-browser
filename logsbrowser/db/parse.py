@@ -319,7 +319,7 @@ class SelectCore:
             clause = color.group('clause')
             if ' match ' in clause.lower() and self.fts:
                 new_query = Query('select from %s where %s' %
-                                  (', '.join(self.from_), clause))
+                                  (', '.join(self.from_), clause), self.fts)
                 new_query.add_lid(True)
                 clause = 'intersct(%s, (%s))' % (
                             'rows_for_log_window' if self.queries_for_autolid

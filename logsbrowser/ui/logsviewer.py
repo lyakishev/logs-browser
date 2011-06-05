@@ -163,8 +163,8 @@ class LogsViewer:
             gtk.main_iteration()
         return self.signals['stop'] or self.signals['break']
 
-    def mpcallback(self, e_stop):
-        self.progressbar.pulse()
+    def mpcallback(self, e_stop, val):
+        self.progressbar.set_fraction(self.frac*val)
         if self.signals['stop'] or self.signals['break']:
             e_stop.set()
         while gtk.events_pending():
@@ -189,8 +189,6 @@ class LogsViewer:
             if not config.MULTIPROCESS:
                 process(loglist.table, sources, dates, self.callback)
             else:
-                self.frac = 0.01 if self.frac < 0.01 else self.frac
-                self.progressbar.set_pulse_step(self.frac)
                 self.progressbar.set_text("Working...")
                 mp_process(loglist.table, sources, dates, self.mpcallback)
             if self.signals['break']:

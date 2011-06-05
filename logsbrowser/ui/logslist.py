@@ -14,7 +14,7 @@ from operator import mul, itemgetter, setitem
 import db.engine as db
 from db.parse import process
 from utils.hash import hash_value, sql_to_hash
-from utils.xmlqueries import QueriesManager
+from utils.xmlmanagers import QueriesManager
 from dialogs import merror
 import glib
 from itertools import cycle
@@ -120,7 +120,6 @@ class LogList(object):
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
                                              if c.startswith('bgcolor')]
-                    print colorcols
                     for row in self.model:
                         colors = set()
                         for cols in [r for r in [row[c] for c in colorcols] if r]:
@@ -272,16 +271,13 @@ class LogsListWindow(gtk.Frame):
         lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
         lwin_btn.connect("clicked", self.show_log_window)
         lwin_btn.set_is_important(True)
-        lwin_btn.set_label("Show Log")
+        lwin_btn.set_label("Show Log(s)")
 
         sep3 = gtk.SeparatorToolItem()
         grid_btn = gtk.ToggleToolButton(gtk.STOCK_UNDERLINE)
         grid_btn.connect("clicked", self.show_gridlines)
         grid_btn.set_is_important(True)
         grid_btn.set_label("Grid Lines")
-
-        lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
-        lwin_btn.connect("clicked", self.show_log_window)
 
         sep4 = gtk.SeparatorToolItem()
 
@@ -332,7 +328,7 @@ class LogsListWindow(gtk.Frame):
     def fill(self, *args):
         self.exec_sens(True)
         self.filter_logs.unselect()
-        self.log_list.execute(self.filter_logs.get_sql(),
+        self.log_list.execute(self.loader.get_query(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
 
