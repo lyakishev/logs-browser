@@ -7,7 +7,7 @@ from parse import define_format
 source_formats = {}
 
 def clear_source_formats():
-    source_formats[stand].clear()
+    source_formats.clear()
 
 def file_preparator(folders):
     flf = []
@@ -18,7 +18,7 @@ def file_preparator(folders):
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn, source_formats[key, pfn])
+                flf.append([fullf, pfn, source_formats[key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
 def lists_to_pathes(lists):
