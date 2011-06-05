@@ -6,10 +6,11 @@ from parse import define_format
 
 source_formats = {}
 
-def clear_source_formats():
-    source_formats.clear()
+def clear_source_formats(stand):
+    if stand:
+        source_formats[stand].clear()
 
-def file_preparator(folders):
+def file_preparator(folders, stand):
     flf = []
     for key, value in folders.iteritems():
         for file_ in os.listdir(key):
@@ -18,7 +19,7 @@ def file_preparator(folders):
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn, source_formats[key, pfn]])
+                flf.append([fullf, pfn, source_formats[stand][key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
 def lists_to_pathes(lists):
@@ -31,8 +32,8 @@ def lists_to_pathes(lists):
         folders[dir_] = [p[1] for p in pathes if p[0]==dir_]
     return folders
 
-def pathes(lst):
-    return file_preparator(lists_to_pathes(lst))
+def pathes(lst, stand):
+    return file_preparator(lists_to_pathes(lst), stand)
 
 def join_path(prefix, path):
     return "%s%s" % (prefix, "|"+path if path else "")
@@ -55,6 +56,7 @@ def date_format(path):
         return None
 
 def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
+    source_formats.setdefault(prefix, {})
     files = set()
     try:
         for f in os.listdir(path):
@@ -69,8 +71,8 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:
-                            if (path, name) not in source_formats:
-                                source_formats[(path, name)] = format_
+                            if (path, name) not in source_formats[prefix]:
+                                source_formats[prefix][(path, name)] = format_
                             log_callback(name, parent, ext_parent)
                             files.add(name)
                 elif ext != 'mdb':

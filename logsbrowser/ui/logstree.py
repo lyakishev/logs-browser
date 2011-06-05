@@ -189,7 +189,7 @@ class FileServersModel(ServersModel):
     def fill(self, fill, dirs = None, stand = None):
         self.treestore.clear()
         if fill:
-            clear_source_formats()
+            clear_source_formats(stand)
             self._fill(dirs, stand)
             self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
         else:
@@ -497,7 +497,8 @@ class SourceManagerUI(gtk.VBox):
         self.show_all()
 
     def get_log_sources(self):
-        flogs = pathes(self.tree.file_servers_tree.model.get_active_servers())
+        flogs = pathes(self.tree.file_servers_tree.model.get_active_servers(),
+                        self.tree.file_servers_tree.model.stand)
         if self.tree.evlogs_servers_tree:
             evlogs = ([(s[1], s[0], None) for s in
                       self.tree.evlogs_servers_tree.model.get_active_servers()])
