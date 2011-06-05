@@ -271,16 +271,13 @@ class LogsListWindow(gtk.Frame):
         lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
         lwin_btn.connect("clicked", self.show_log_window)
         lwin_btn.set_is_important(True)
-        lwin_btn.set_label("Show Log")
+        lwin_btn.set_label("Show Log(s)")
 
         sep3 = gtk.SeparatorToolItem()
         grid_btn = gtk.ToggleToolButton(gtk.STOCK_UNDERLINE)
         grid_btn.connect("clicked", self.show_gridlines)
         grid_btn.set_is_important(True)
         grid_btn.set_label("Grid Lines")
-
-        lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
-        lwin_btn.connect("clicked", self.show_log_window)
 
         sep4 = gtk.SeparatorToolItem()
 

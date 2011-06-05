@@ -26,19 +26,19 @@ order by date desc
 	<query name="Группировка по идущим подряд именам логa" add_lid="1" default="1">
 select strftime('%H:%M:%f',min(date)) as ftime, 
 strftime('%H:%M:%f',max(date)) as totime,
-logname, error(type)
-from (select date, logname, type, group_logname(logname) as logname_group
+logname, computer, error(type)
+from (select date, logname, computer, type, group_logname(logname) as logname_group
       from #this
-      group by date, logname, type
+      group by date, logname, computer, type
       order by date DESC)
 group by logname_group
 order by logname_group desc
 	</query>
 
 	<query name="Количество сообщений по именам лога" add_lid="1" default="0">
-select logname, count(log) as c
+select logname, computer, count(log) as c, error(type)
 from #this
-group by logname
+group by logname, computer
 order by c desc
 	</query>
 
