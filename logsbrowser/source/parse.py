@@ -97,7 +97,7 @@ def _normal_parser(line, cdate, re_obj):
     return None
 
 def define_parser(pdict):
-    if pdict.get("short_year3"):
+    if pdict.get('short_year3'):
         return _short_year_parser
     else:
         return _normal_parser

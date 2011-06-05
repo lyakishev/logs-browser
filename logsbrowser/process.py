@@ -10,6 +10,8 @@ from threading import Thread
 import time
 from Queue import Empty as qEmpty
 
+PROCESSES = 2
+
 @time_it
 def process(table, sources, dates, callback):
 
@@ -43,8 +45,7 @@ class Processor(Process):
             except qEmpty:
                 break
             else:
-                buffer_ = []
-                clines = 0
+                buffer_, clines = [], 0
                 for value in worker(dates, path, log, parser):
                     if stop():
                         put(None)
@@ -53,8 +54,7 @@ class Processor(Process):
                     buffer_.append(value[0])
                     if clines > 300:
                         put(buffer_)
-                        buffer_ = []
-                        clines = 0
+                        buffer_, clines = [], 0
                 put(buffer_)
                 self.in_queue.task_done()
                 self.value.value += 1
@@ -74,7 +74,7 @@ def generator_from_queue(queue, e_stop):
     stop = e_stop.is_set
     c = 0
     while 1:
-        if c == 2:
+        if c == PROCESSES:
             break
         if stop():
             raise StopIteration
@@ -88,7 +88,7 @@ def _mp_process(table, sources, dates, stop, val):
     sources_for_worker = _mix_sources(sources, dates)
     insert_queue = Queue()
     processors = []
-    for i in xrange(2):
+    for i in xrange(PROCESSES):
         p = Processor(sources_for_worker, insert_queue, stop, val)
         p.daemon = True
         p.start()

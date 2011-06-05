@@ -32,8 +32,7 @@ def filelogworker(dates, path, log, funcs):
             if start_date > dates[1]:
                 raise StopIteration
             comp = [p for p in path.split(os.sep) if p][0]
-            msg = ""
-            clines = 0
+            msg, clines = "", 0
             for string in mmap_block_read(file_.fileno(), 8*1024):
                 parsed_date = pfunc(string, cdate, pformat)
                 if not parsed_date:
@@ -53,8 +52,7 @@ def filelogworker(dates, path, log, funcs):
                                path,
                                0,
                                msg), clines
-                    msg = ""
-                    clines = 0
+                    msg, clines = "", 0
     except IOError:
         raise StopIteration
         

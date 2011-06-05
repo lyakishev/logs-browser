@@ -69,7 +69,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:
-                            if not source_formats.get((path, name)):
+                            if (path, name) not in source_formats:
                                 source_formats[(path, name)] = format_
                             log_callback(name, parent, ext_parent)
                             files.add(name)
