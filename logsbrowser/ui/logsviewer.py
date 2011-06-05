@@ -75,10 +75,12 @@ class LogsViewer:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
 
+
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
+        self.source_tree.fill_combo()
 
 
         button_box.pack_start(self.show_button)

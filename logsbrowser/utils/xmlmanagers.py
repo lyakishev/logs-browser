@@ -63,6 +63,17 @@ class SourceManager(object):
             evlogs[f.attrib['server']] = [t.strip() for t in f.text.split(',')]
         return evlogs
 
+    @property
+    def default_stand(self):
+        xml = ET.parse(self.xml)
+        for i in xml.getroot():
+            try:
+                if int(i.attrib['default']) == 1:
+                    return i.attrib['name']
+            except KeyError:
+                continue
+        return i.attrib['name']
+
         
 
 #    @property
