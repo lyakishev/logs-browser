@@ -212,18 +212,21 @@ class FileServersModel(ServersModel):
             self.stand = stand
         frac = 1./len(self.dirs)
         try:
-            for path in self.dirs:
+            for n, path in enumerate(self.dirs):
                 self.progress.set_text("%s" % path)
                 if self.signals['stop'] or self.signals['break']:
                     raise StopIteration
                 self.add_parents(path, None, self.stand)
                 if fill:
                     self.add_logdir(path, None, self.stand)
+                self.progress.set_fraction(frac*(n+1))
         except StopIteration:
             pass
         finally:
             self.signals['stop'] = False
             self.signals['break'] = False
+            self.progress.set_text("")
+            self.progress.set_fraction(0)
 
     def get_model_from_cache(self, stand):
         return self.cache.get(stand)
@@ -484,7 +487,6 @@ class SourceManagerUI(gtk.VBox):
 
         stand_label = gtk.Label('Stand:')
         self.stand_choice = gtk.combo_box_new_text()
-        self.fill_combo()
         self.stand_choice.connect('changed', self.change_stand)
 
 
@@ -515,7 +517,7 @@ class SourceManagerUI(gtk.VBox):
         else:
             fpathslist, fentry, epathslist, eentry, stand = ([],("",False),
                                                           [],("",False),
-                                                          -1)
+                                                          self.default)
         self.stand_choice.set_active(stand)
         ftree.model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
@@ -548,8 +550,11 @@ class SourceManagerUI(gtk.VBox):
                             stand)
 
     def fill_combo(self):
-        for stand in self.source_manager.stands:
+        for n, stand in enumerate(self.source_manager.stands):
             self.stand_choice.append_text(stand)
+            if stand == self.source_manager.default_stand:
+                self.stand_choice.set_active(n)
+                self.default = n
 
 
         

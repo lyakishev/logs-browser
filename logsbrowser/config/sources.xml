@@ -149,7 +149,7 @@
             <source server="msk-app-v0223">Application,FORIS.Common,FORIS.ResourceLocking,FORIS.ServiceRegistry,FORIS.Workflow,Intercept,System</source>
         </evlogs>
     </stand>
-    <stand name="MAIN-FORIS">
+    <stand name="MAIN-FORIS" default="1">
         <filelogs>
             <folder>\\00-crm-gui\c$\forislog</folder>
             <folder>\\00-crm-otr\c$\forislog</folder>

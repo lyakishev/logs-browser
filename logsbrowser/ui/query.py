@@ -140,7 +140,7 @@ class Filter():
             self.query_model.append([row[0],'', row[2], row[1]])
         self.query_model.append(['','', '', '#fff'])
 
-    def get_filter(self):
+    def get_filter(self, only_colors):
         
         fts = self.loglist.fts
 
@@ -158,21 +158,29 @@ class Filter():
                                         clause)
         fields = []
         clauses = []
+        only_color_fields = []
         for r in self.query_model:
             if r[0] and r[2]:
                 if r[0] == '---':
-                    form = '%s' % r[2]
+                    form = '(%s)' % r[2]
                 else:
                     form = '%s %s' % (r[0], check_clause(r[2]))
                 if r[3] == '#fff':
-                    clauses.append(form)
+                    if not only_colors:
+                        clauses.append(form)
                 else:
                     fields.append('{%s as %s}' % (form, r[3]))
+                    if only_colors:
+                        only_color_fields.append(form)
 
-        if clauses or fields:
+        if clauses or fields or only_color_fields:
             fields.append('*')
-            sql = "(select %s from $table %s)" % (','.join(fields),
-                        ('where %s' % ' AND '.join(clauses)) if clauses else '')
+            sql = "(select %s from $table " % ','.join(fields)
+            if clauses:
+                sql += 'where %s' % ' AND '.join(clauses)
+            elif only_color_fields:
+                sql += 'where %s' % ' OR '.join(only_color_fields)
+            sql += ')'
         else:
             sql = '$table'
         return sql
@@ -238,11 +246,11 @@ class Query(gtk.Notebook):
     def get_query(self):
         return self.plain.get_text()
 
-    def get_filter(self):
-        return self.query.get_filter()
+    def get_filter(self, only_colors):
+        return self.query.get_filter(only_colors)
 
-    def get_sql(self):
-        return (self.get_query(), self.get_filter())
+    def get_sql(self, only_colors):
+        return (self.get_query(), self.get_filter(only_colors))
 
 
 class QueryLoader(gtk.VBox):
@@ -253,10 +261,14 @@ class QueryLoader(gtk.VBox):
         self.add_lid = gtk.CheckButton('auto__lid')
         self.add_lid.set_active(True)
         self.queries_combo = gtk.HBox()
-        self.filters_label = gtk.Label('Filter')
+        self.filters_label = gtk.Label()
+        self.filters_label.set_markup('<b>Filter</b>')
+        self.only_colors = gtk.CheckButton('only colors')
+        self.only_colors.set_active(False)
         self.filters = gtk.combo_box_new_text()
         self.filters.connect("changed", self.set_filter)
-        self.queries_label = gtk.Label('Query')
+        self.queries_label = gtk.Label()
+        self.queries_label.set_markup('<b>Query</b>')
         self.queries = gtk.combo_box_new_text()
         self.queries.connect("changed", self.set_query)
         self.query_manager = qmanager
@@ -270,6 +282,7 @@ class QueryLoader(gtk.VBox):
                 self.filters.set_active(n)
         self.queries_combo.pack_start(self.filters_label, False, False, 5)
         self.queries_combo.pack_start(self.filters, True, True)
+        self.queries_combo.pack_start(self.only_colors, False, False)
         self.queries_combo.pack_start(self.queries_label, False, False, 5)
         self.queries_combo.pack_start(self.queries, True, True)
         self.tools.pack_start(self.queries_combo)
@@ -285,9 +298,15 @@ class QueryLoader(gtk.VBox):
     def set_filter(self, *args):
         query = self.filters.get_active_text().decode('utf8')
         self.query_constructor.set_filter(self.query_manager.filters[query])
+
+    def get_query(self):
+        return self.query_constructor.get_sql(self.get_only_colors())
         
     def get_auto_lid(self):
         return self.add_lid.get_active()
+
+    def get_only_colors(self):
+        return self.only_colors.get_active()
 
         
 

@@ -87,7 +87,7 @@ class LogList(object):
         except Exception as e:
             merror(str(e))
             return
-        #print sql
+        print sql
         self.view.freeze_child_notify()
         self.view.set_model(None)
         sql_hash = sql_to_hash(sql)
@@ -331,7 +331,7 @@ class LogsListWindow(gtk.Frame):
     def fill(self, *args):
         self.exec_sens(True)
         self.filter_logs.unselect()
-        self.log_list.execute(self.filter_logs.get_sql(),
+        self.log_list.execute(self.loader.get_query(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
 
