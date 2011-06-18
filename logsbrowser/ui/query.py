@@ -22,7 +22,7 @@ class Filter():
         self.field_model = gtk.ListStore(str)
 
         for c in ["---", "log", "logname", "type", "computer", "source", "event",
-                  "date", "time", "lid"]:
+                  "date", "$time", "lid"]:
             self.field_model.append([c])
 
         self.fields = {}
