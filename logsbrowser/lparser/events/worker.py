@@ -96,5 +96,5 @@ def evlogworker(dates, server, logtype, funcs=None):
             if log['the_time'] < dates[0]:
                 raise StopIteration
             if log['the_time'] <= dates[1]:
-                yield log_for_insert(log)
+                yield log_for_insert(log), 1
 
