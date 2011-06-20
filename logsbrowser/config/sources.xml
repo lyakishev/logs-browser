@@ -166,6 +166,7 @@
             <folder>\\00-report\c$\forislog</folder>
             <folder>\\00-doc\c$\forislog</folder>
             <folder>\\00-dmz\c$\forislog</folder>
+            <folder>\\portal-test-02\c$\forislog</folder>
         </filelogs>
         <evlogs>
             <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
@@ -190,5 +191,13 @@
             <folder>/home/user/sharew7/logs/log</folder>
         </filelogs>
         <evlogs />
+    </stand>
+    <stand name="AutoBuild">
+        <filelogs>
+            <folder>\\msk-tfs-lab01\c$\forislog</folder>
+        </filelogs>
+        <evlogs>
+		<source server="msk-tfs-lab01"> Application, CRM.Gateway, FORIS.Common, Foris.SelfCare, Foris.TelCrm.RequestManagement, ForwardedEvents, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, System</source>
+	</evlogs>
     </stand>
 </stands>
