@@ -65,10 +65,9 @@ def _mix_sources(sources, dates):
     sources_for_worker = JoinableQueue()
     for p, l, funcs in sources[0]:
         sources_for_worker.put((fworker ,dates, p, l, funcs))
-    for p, l in sources[1]:
+    for p, l, funcs in sources[1]:
         sources_for_worker.put((eworker, dates, p, l, funcs))
     return sources_for_worker
-    
 
 def generator_from_queue(queue, e_stop):
     get = queue.get

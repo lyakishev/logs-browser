@@ -192,7 +192,7 @@ class LogList(object):
         db.create_new_table(self.table, index)
         self.fts = index
 
-    def up_color(self, *args):
+    def up_color(self, color=None):
         try:
             bgcolor = self.headers.index('bgcolor')
         except ValueError:
@@ -207,7 +207,14 @@ class LogList(object):
             else:
                 path = model.iter_n_children(None) - 1
             if path:
-                while model[path][bgcolor] == '#fff':
+                if not color:
+                    clause = lambda p: model[p][bgcolor] == '#fff'
+                else:
+                    if color == '#fff':
+                        selection.set_mode(gtk.SELECTION_MULTIPLE)
+                        return
+                    clause = lambda p: color not in model[p][bgcolor]
+                while clause(path):
                     path -= 1
                     if path < 0:
                         break
@@ -216,7 +223,7 @@ class LogList(object):
                     self.view.scroll_to_cell(path, use_align=True, row_align=0.5)
             selection.set_mode(gtk.SELECTION_MULTIPLE)
 
-    def down_color(self, *args):
+    def down_color(self, color=None):
         try:
             bgcolor = self.headers.index('bgcolor')
         except ValueError:
@@ -230,7 +237,14 @@ class LogList(object):
             else:
                 iter_ = model.get_iter_first()
             if iter_:
-                while model.get_value(iter_, bgcolor) == '#fff':
+                if not color:
+                    clause = lambda it: model.get_value(it, bgcolor) == '#fff'
+                else:
+                    if color == '#fff':
+                        selection.set_mode(gtk.SELECTION_MULTIPLE)
+                        return
+                    clause = lambda it: color not in model.get_value(it, bgcolor)
+                while clause(iter_):
                     iter_ = model.iter_next(iter_)
                     if not iter_:
                         break
@@ -282,10 +296,10 @@ class LogsListWindow(gtk.Frame):
         sep4 = gtk.SeparatorToolItem()
 
         up_btn = gtk.ToolButton(gtk.STOCK_GO_UP)
-        up_btn.connect("clicked", self.log_list.up_color)
+        up_btn.connect("clicked", lambda btn: self.log_list.up_color())
 
         down_btn = gtk.ToolButton(gtk.STOCK_GO_DOWN)
-        down_btn.connect("clicked", self.log_list.down_color)
+        down_btn.connect("clicked", lambda btn: self.log_list.down_color())
         
         toolbar.insert(exec_btn, 0)
         toolbar.insert(self.break_btn, 1)

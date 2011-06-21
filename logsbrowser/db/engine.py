@@ -10,7 +10,7 @@ _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
 _dbconn.create_function("regexp", 2, functions.regexp)
 _dbconn.create_function("match", 2, functions.rmatch)
 _dbconn.create_function("regex", 3, functions.regex)
-_dbconn.create_function("pretty", 1, functions.pretty_xml)
+_dbconn.create_function("pretty", 1, functions.pretty)
 _dbconn.create_function("group_logname", 1, functions.group_logname)
 _dbconn.create_function("iregexp", 2, functions.iregexp)
 _dbconn.create_function("rmatch", 2, functions.rmatch)
@@ -36,7 +36,6 @@ def set_callback(callback):
     _dbconn.set_progress_handler(callback, 10000)
 
 def interrupt():
-    print 'interrupt'
     _dbconn.interrupt()
 
 def insert_many(table, iter_):
@@ -64,7 +63,7 @@ def get_msg(rows, table):
                  from %s where %s"""
     msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
     msg_sql += ' order by date asc, %s desc' % 'lid'
-    print msg_sql
+    #print msg_sql
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()

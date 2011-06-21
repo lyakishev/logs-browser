@@ -12,7 +12,9 @@ class Filter():
     def __init__(self, plain, loglist):
         self.loglist = loglist
         self.plain = plain
-        self.query_model = gtk.ListStore(str,  #column
+        self.query_model = gtk.ListStore(str,  #up
+                                         str,  #down
+                                         str,  #column
                                          str,  #color
                                          str,  #color
                                          str)  #value        
@@ -20,38 +22,59 @@ class Filter():
         self.field_model = gtk.ListStore(str)
 
         for c in ["---", "log", "logname", "type", "computer", "source", "event",
-                  "date", "time", "lid"]:
+                  "date", "$time", "lid"]:
             self.field_model.append([c])
+
+        self.fields = {}
+        self.fields['UP'] = 0
+        self.fields['DOWN'] = 1
+        self.fields['COLOR'] = 2
+        self.fields['HCOLORV'] = 5
+        self.fields['FIELD'] = 3
+        self.fields['WHERE'] = 4
+
+        up_renderer = gtk.CellRendererPixbuf()
+        down_renderer = gtk.CellRendererPixbuf()
+        self.up_column = gtk.TreeViewColumn("", up_renderer,
+                stock_id=self.fields['UP'])
+        self.down_column = gtk.TreeViewColumn("", down_renderer,
+                stock_id=self.fields['DOWN'])
+
+        color_renderer = gtk.CellRendererText()
+        color_renderer.set_property("editable", False)
+        self.color_column = gtk.TreeViewColumn("color", color_renderer,
+                                                text=self.fields['COLOR'],
+                                                cell_background=self.fields['HCOLORV'])
 
         field_renderer = gtk.CellRendererCombo()
         field_renderer.set_property("model", self.field_model)
         field_renderer.set_property('text-column', 0)
         field_renderer.set_property('editable', True)
         field_renderer.set_property('has-entry', True)
-        field_renderer.connect("changed", self.change_func, 0)
-        field_column = gtk.TreeViewColumn("column", field_renderer, text=0)
+        field_renderer.connect("changed", self.change_func, self.fields['FIELD'])
+        field_column = gtk.TreeViewColumn("column", field_renderer,
+                                                    text=self.fields['FIELD'])
 
-        color_renderer = gtk.CellRendererText()
-        color_renderer.set_property("editable", False)
-        self.color_column = gtk.TreeViewColumn("color", color_renderer,
-                                                text=1, cell_background=3)
         
         where_renderer = gtk.CellRendererText()
         where_renderer.set_property('editable',True)
-        where_renderer.connect("edited", self.change_value, 2)
+        where_renderer.connect("edited", self.change_value,
+                                         self.fields['WHERE'])
         where_renderer.connect("editing-started", self.set_cell_entry_signal)
         self.where_column = gtk.TreeViewColumn("where", where_renderer,
-                                                text=2)
+                                                text=self.fields['WHERE'])
         
         hidden_colorr = gtk.CellRendererText()
         hidden_colorr.set_property('editable',True)
         hidden_color = gtk.TreeViewColumn("value", hidden_colorr,
-                                                text=3)
+                                                text=self.fields['HCOLORV'])
         hidden_color.set_visible(False)
 
         self.view = gtk.TreeView()
-        self.view.append_column(field_column)
+        self.view.append_column(self.up_column)
+        self.view.append_column(self.down_column)
         self.view.append_column(self.color_column)
+        self.view.append_column(field_column)
         self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
 
@@ -69,7 +92,7 @@ class Filter():
 
     def focus_out(self, *args):
         if self.entry_path:
-            self.query_model[self.entry_path][2] = self.cell_entry_text
+            self.query_model[self.entry_path][self.fields['WHERE']] = self.cell_entry_text
             self.cell_entry_text = ""
 
     def set_cell_entry_signal(self, cell, entry, num):
@@ -85,7 +108,7 @@ class Filter():
         if old_path:
             try:
                 if self.cell_entry_text:
-                    self.query_model[old_path][2] = self.cell_entry_text
+                    self.query_model[old_path][self.fields['WHERE']] = self.cell_entry_text
             except AttributeError:
                 pass
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
@@ -97,15 +120,19 @@ class Filter():
                 response = colordlg.run()
                 if response == gtk.RESPONSE_OK:
                     col = colorsel.get_current_color()
-                    view.get_model()[path[0]][3]=col
+                    view.get_model()[path[0]][self.fields['HCOLORV']]=col
                 colordlg.destroy()
             view.set_cursor(path[0], focus_column = path[1], start_editing=True)
             if path[1] == self.where_column:
                 self.entry_path = path[0]
+            if path[1] == self.up_column:
+                self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+            elif path[1] == self.down_column:
+                self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
         elif event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path[1] == self.color_column:
-                view.get_model()[path[0]][3] = '#fff'
+                view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
             if path[1] == self.where_column:
                 self.entry_path = path[0]
             
@@ -122,8 +149,8 @@ class Filter():
         try:
             if not model.iter_next(iter_):
                 c = len(self.query_model)
-                self.query_model[c-1][0] = 'log'
-                self.query_model.append(['', '', '','#fff'])
+                self.query_model[c-1][self.fields['FIELD']] = 'log'
+                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', '','#fff'])
         except TypeError:
             pass
 
@@ -137,12 +164,16 @@ class Filter():
     def set_filter(self, rows):
         self.query_model.clear()
         for row in rows:
-            self.query_model.append([row[0],'', row[2], row[1]])
-        self.query_model.append(['','', '', '#fff'])
+            self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,'',row[0], row[2], row[1]])
+        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', '', '#fff'])
 
     def get_filter(self, only_colors):
         
         fts = self.loglist.fts
+
+        FIELD = self.fields['FIELD']
+        WHERE = self.fields['WHERE']
+        COLOR = self.fields['HCOLORV']
 
         def check_clause(clause):
             words = len(clause.split())
@@ -160,16 +191,16 @@ class Filter():
         clauses = []
         only_color_fields = []
         for r in self.query_model:
-            if r[0] and r[2]:
-                if r[0] == '---':
-                    form = '(%s)' % r[2]
+            if r[FIELD] and r[WHERE]:
+                if r[FIELD] == '---':
+                    form = '(%s)' % r[WHERE]
                 else:
-                    form = '%s %s' % (r[0], check_clause(r[2]))
-                if r[3] == '#fff':
+                    form = '%s %s' % (r[FIELD], check_clause(r[WHERE]))
+                if r[COLOR] == '#fff':
                     if not only_colors:
                         clauses.append(form)
                 else:
-                    fields.append('{%s as %s}' % (form, r[3]))
+                    fields.append('{%s as %s}' % (form, r[COLOR]))
                     if only_colors:
                         only_color_fields.append(form)
 

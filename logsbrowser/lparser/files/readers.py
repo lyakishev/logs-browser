@@ -3,25 +3,9 @@ import mmap
 from contextlib import closing
 import os
 
-
-def mmap_read(path):
-    with open(path, 'rb') as mapped_file:
-        try:
-            data = mmap.mmap(mapped_file.fileno(), 0, access=mmap.ACCESS_READ)
-        except WindowsError:
-            #print "mmap error: %s" % path
-            return
-        mf_size = end_pos = len(data)
-        for i in xrange(mf_size-1, -1, -1):
-            if data[i] == "\n":
-                yield data[i+1:end_pos+1]
-                end_pos = i
-        yield data[0:end_pos+1]
-
-
-def mmap_block_read(fileno, block_size=8192):
+def mmap_block_read(file_, block_size=8192):
     try:
-        with closing(mmap.mmap(fileno, 0,
+        with closing(mmap.mmap(file_.fileno(), 0,
                      access=mmap.ACCESS_READ)) as data:
             mf_size = end_pos = len(data)
             for i in xrange(mf_size-1-block_size, -1, -block_size):
@@ -36,7 +20,27 @@ def mmap_block_read(fileno, block_size=8192):
             text_block = data[0:end_pos+1]
             for line in text_block.splitlines(True)[::-1]:
                 yield line
-    except WindowsError:
-        #if os.path.getsize(path):
-        #    print 'WindowsError: %s' % path
-        raise StopIteration
+    except (WindowsError, MemoryError, ValueError):
+        for line in seek_block_read(file_, block_size):
+            yield line
+
+def seek_block_read(file_, block_size=8192):
+    file_.seek(0,2)
+    mf_size = end_pos = file_.tell()
+    if mf_size > 0:
+        i = mf_size-1-block_size
+        while i > 0:
+            file_.seek(i, 0)
+            text_block = file_.read(end_pos+1-i)
+            ret_pos = text_block.find("\n")
+            if ret_pos >= 0:
+                for line in text_block.splitlines(True)[-1:0:-1]:
+                    yield line
+            else:
+                ret_pos = 0
+            end_pos = i + ret_pos
+            i -= block_size
+        file_.seek(0, 0)
+        text_block = file_.read(end_pos+1)
+        for line in text_block.splitlines(True)[::-1]:
+            yield line

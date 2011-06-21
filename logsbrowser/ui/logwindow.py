@@ -345,11 +345,12 @@ class LogWindow:
 
     def copy_log(self, *args):
         clipboard = gtk.clipboard_get("CLIPBOARD")
-        self.txt_buff.select_range(self.txt_buff.get_start_iter(),
-                                   self.txt_buff.get_end_iter())
-        self.txt_buff.copy_clipboard(clipboard)
-        self.txt_buff.select_range(self.txt_buff.get_end_iter(),
-                                   self.txt_buff.get_end_iter())
+        #self.txt_buff.select_range(self.txt_buff.get_start_iter(),
+        #                           self.txt_buff.get_end_iter())
+        clipboard.set_text(self.get_text())
+        #self.txt_buff.copy_clipboard(clipboard)
+        #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+        #                           self.txt_buff.get_end_iter())
 
     def save_to_file(self, *args):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
@@ -374,7 +375,6 @@ class LogWindow:
         for pattern in col_str[1]:
             fre = re.compile(pattern)
             for m in fre.finditer(txt):
-                print m.end() - m.start()
                 start_iter = self.txt_buff.get_iter_at_offset(m.start())
                 end_iter = self.txt_buff.get_iter_at_offset(m.end())
                 self.txt_buff.remove_all_tags(start_iter, end_iter)

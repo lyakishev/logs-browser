@@ -412,6 +412,8 @@ def process(sql_t, context, autolid, fts):
         query.add_lid()
     query = Template(str(query)).safe_substitute(quotes_dict)
     words_hl = lw_hl_expr(lw_hl_clauses, quotes_dict)
+    query = Template(str(query)).safe_substitute({'time':
+                                                  "strftime('%H:%M:%f',date)"})
     return (query, words_hl)
 
 and_ = re.compile(r'(?i)\sand\s')
