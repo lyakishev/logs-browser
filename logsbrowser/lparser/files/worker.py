@@ -27,7 +27,7 @@ def filelogworker(dates, path, log, funcs):
     else:
         cdate = None
     try:
-        with open(path, 'rb') as file_:
+        with open(path, 'rU') as file_:
             start_date = get_start_date(file_, pformat, cdate, pfunc)
             if start_date > dates[1]:
                 raise StopIteration

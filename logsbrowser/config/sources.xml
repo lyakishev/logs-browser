@@ -195,6 +195,7 @@
     <stand name="AutoBuild">
         <filelogs>
             <folder>\\msk-tfs-lab01\c$\forislog</folder>
+            <folder>\\msk-tfs-lab01\c$\WINDOWS\system32\LogFiles</folder>
         </filelogs>
         <evlogs>
 		<source server="msk-tfs-lab01"> Application, CRM.Gateway, FORIS.Common, Foris.SelfCare, Foris.TelCrm.RequestManagement, ForwardedEvents, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, System</source>

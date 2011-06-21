@@ -2,6 +2,7 @@ import re
 import xml.dom.minidom
 from colorsys import *
 import sys
+from utils.text import convert_line_ends
 
 aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
 
@@ -40,6 +41,9 @@ def pretty_xml(t):
             text = xml_new_bad.sub(parse_bad_xml, text)
         return text.replace("&quot;", '"').replace("&gt;",">").replace("&lt;","<")
     return t
+
+def pretty(t):
+    return pretty_xml(convert_line_ends(t))
 
 
 def regexp(pattern, field):
