@@ -10,7 +10,7 @@ import sys
 from source.worker import dir_walker, join_path, pathes, clear_source_formats
 import config
 from itertools import count
-from utils.xmlmanagers import SourceManager
+from utils.xmlmanagers import SourceManager, SelectManager
 
 
 class ServersModel(object):
@@ -30,6 +30,9 @@ class ServersModel(object):
         else:
             return None
 
+    def select_rows(self, rule):
+        print rule
+
     def set_from_copy(self, copy_treestore):
         self._copy(copy_treestore, self)
 
@@ -37,7 +40,11 @@ class ServersModel(object):
         copy_treestore = ServersModel()
         self._copy(self.treestore, copy_treestore)
         return copy_treestore.treestore
-        
+
+    def node_actions(self, actions):
+        def treewalk():
+            pass
+        pass
 
     def _copy(self, treestore, copytreestore):
         getv = treestore.get_value
@@ -201,7 +208,7 @@ class FileServersModel(ServersModel):
             else:
                 self._fill(dirs, stand)
                 self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
-            
+
     def _fill(self, dirs, stand):
         self.parents={}
         fill = True
@@ -361,10 +368,15 @@ class ServersTree(gtk.Frame):
         self.hide_log.modify_font(pango.FontDescription("italic"))
 
         toolbar = gtk.Toolbar()
-        reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
-        reload_btn.connect("clicked", lambda args: self.model.fill(True))
-        editconf_btn = gtk.ToolButton(gtk.STOCK_EDIT)
-        editconf_btn.connect("clicked", lambda args: self.view.show_config_editor())
+
+        cbtn = gtk.Button()
+        cbtn.connect_object("event", self.select_popup, SelectsMenu(self))
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
+        image.show()
+        cbtn.add(image)
+        editconf_btn = gtk.ToolItem()
+        editconf_btn.add(cbtn)
         search_entry = gtk.ToolItem()
         search_entry.set_expand(True)
         search_entry.add(self.hide_log)
@@ -372,11 +384,10 @@ class ServersTree(gtk.Frame):
         clear_btn.connect("clicked", self.clear_entry)
         sep = gtk.SeparatorToolItem()
 
-        toolbar.insert(reload_btn, 0)
-        toolbar.insert(editconf_btn, 1)
-        toolbar.insert(sep, 2)
-        toolbar.insert(search_entry, 3)
-        toolbar.insert(clear_btn, 4)
+        toolbar.insert(editconf_btn, 0)
+        toolbar.insert(sep, 1)
+        toolbar.insert(search_entry, 2)
+        toolbar.insert(clear_btn, 3)
 
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_MENU)
@@ -393,12 +404,22 @@ class ServersTree(gtk.Frame):
         self.filter_text = ""
         self.show_all()
 
+    def apply_select(self, menuitem, select, manager):
+        rule = manager.get_select_rule(select)
+        self.model.select_rows(rule)
+
+    def select_popup(self, menu, event):
+        if event.type == gtk.gdk.BUTTON_PRESS:
+            menu.popup(None, None, None, event.button, event.time)
+            return True
+        return False
+
     def clear_entry(self, *args):
         self.filter_text = ""
         self.on_hide_log_focus_in()
         if not self.hide_log.is_focus():
             self.on_hide_log_focus_out()
-    
+
     def set_text(self, entry):
         self.on_hide_log_focus_in()
         self.hide_log.set_text(entry[0])
@@ -475,28 +496,44 @@ class LogsTrees(gtk.Notebook):
             self.evlogs_servers_tree.model.fill(evlogs)
         self.file_servers_tree.model.fill(False, filelogs, stand)
 
+    def fill(self, evlogs):
+        self.file_servers_tree.model.fill(True)
+        if self.evlogs_servers_tree:
+            self.evlogs_servers_tree.model.fill(evlogs)
+
 
 class SourceManagerUI(gtk.VBox):
     def __init__(self, progress, sens_func, signals):
         gtk.VBox.__init__(self)
         self.state_ = {}
 
-        stand_manager = gtk.HBox()
+        stand_manager = gtk.Toolbar()
         self.tree = LogsTrees(progress, sens_func, signals)
         self.source_manager = SourceManager(config.SOURCES_XML)
 
-        stand_label = gtk.Label('Stand:')
+
+        reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
+        reload_btn.connect("clicked", lambda args: self.fill())
+        stand_choice_item = gtk.ToolItem()
+        stand_choice_item.set_expand(True)
+
         self.stand_choice = gtk.combo_box_new_text()
         self.stand_choice.connect('changed', self.change_stand)
+        stand_choice_item.add(self.stand_choice)
 
+        stand_manager.insert(reload_btn, 0)
+        stand_manager.insert(stand_choice_item, 1)
+        stand_manager.set_style(gtk.TOOLBAR_ICONS)
+        stand_manager.set_icon_size(gtk.ICON_SIZE_MENU)
 
-        stand_manager.pack_start(stand_label, False, False, 5)
-        stand_manager.pack_start(self.stand_choice, True, True)
-
-        self.pack_start(stand_manager, False, False, 5)
+        self.pack_start(stand_manager, False, False)
         self.pack_start(self.tree, True, True)
 
         self.show_all()
+
+    def fill(self):
+        stand = self.stand_choice.get_active_text()
+        self.tree.fill(self.source_manager.get_evlog_sources(stand))
 
     def get_log_sources(self):
         flogs = pathes(self.tree.file_servers_tree.model.get_active_servers(),
@@ -524,7 +561,7 @@ class SourceManagerUI(gtk.VBox):
         if etree:
             etree.model.set_active_from_paths(epathslist)
             etree.set_text(eentry)
-        
+
 
     def save_state(self, page):
         ftree = self.tree.file_servers_tree
@@ -557,4 +594,30 @@ class SourceManagerUI(gtk.VBox):
                 self.default = n
 
 
-        
+class SelectsMenu(gtk.Menu):
+    def __init__(self, tree):
+        super(SelectsMenu, self).__init__()
+        self.select_manager = SelectManager(config.SELECTS)
+        show = gtk.MenuItem("Select")
+        show.set_submenu(self.build_submenu(tree))
+        save = gtk.MenuItem("Save")
+        new = gtk.MenuItem("New")
+        self.append(show)
+        self.append(save)
+        self.append(new)
+        self.show_all()
+
+    def build_submenu(self, tree):
+        submenu = gtk.Menu()
+        for item in self.select_manager.selects:
+            mitem = gtk.MenuItem(item)
+            mitem.connect("activate", tree.apply_select, item, self.select_manager)
+            submenu.append(mitem)
+        submenu.show_all()
+        return submenu
+
+
+
+
+
+

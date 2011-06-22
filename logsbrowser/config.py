@@ -21,6 +21,7 @@ FLOGS_CFG = get_path(_config.get("config_files", 'file_logs'))
 ELOGS_CFG = get_path(_config.get("config_files", 'event_logs'))
 SYNTAX_CFG = get_path(_config.get("config_files", 'syntax'))
 SOURCES_XML = get_path(_config.get("config_files", 'sources_xml'))
+SELECTS = get_path(_config.get("config_files", 'selects'))
 
 FTSINDEX = _config.getboolean('ui', 'default_ftsindex')
 

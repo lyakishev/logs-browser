@@ -74,38 +74,21 @@ class SourceManager(object):
                 continue
         return i.attrib['name']
 
-        
 
-#    @property
-#    def filters(self):
-#        xml = ET.parse(self.xml)
-#        q = {}
-#        for i in xml.getroot().find('filters'):
-#            rows = []
-#            for r in i:
-#                rows.append((r.attrib['column'],
-#                             r.attrib['color'],
-#                             r.attrib['clause']))
-#            q[i.attrib['name']] = rows
-#        return q
-#
-#    @property
-#    def default_query(self):
-#        xml = ET.parse(self.xml)
-#        for i in xml.getroot().find('queries'):
-#            if int(i.attrib['default']) == 1:
-#                return i.attrib['name']
-#        return i.attrib['name']
-#
-#    @property
-#    def default_filter(self):
-#        xml = ET.parse(self.xml)
-#        for i in xml.getroot().find('filters'):
-#            if int(i.attrib['default']) == 1:
-#                return i.attrib['name']
-#        return i.attrib['name']
-#
-#
+class SelectManager(object):
+
+    def __init__(self, source_xml):
+        self.xml = source_xml
+
+    @property
+    def selects(self):
+        xml = ET.parse(self.xml)
+        return [i.attrib['name'] for i in xml.getroot()]
+
+    def get_select_rule(self, select):
+        xml = ET.parse(self.xml)
+        return xml.getroot().find('select[@name="%s"]' % select).text
+
 if __name__ == '__main__':
     pass
 
