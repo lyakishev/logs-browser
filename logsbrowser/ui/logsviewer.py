@@ -114,7 +114,7 @@ class LogsViewer:
         menu_box = gtk.VBox()
         menu_box.pack_start(menubar, False, False)
         menu_box.pack_start(main_box)
-        
+
         self.root.add(menu_box)
         self.root.show_all()
         #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
@@ -171,7 +171,7 @@ class LogsViewer:
             e_stop.set()
         while gtk.events_pending():
             gtk.main_iteration()
-        
+
 
     @profiler.time_it
     def show_logs(self, *args):

@@ -30,8 +30,24 @@ class ServersModel(object):
         else:
             return None
 
+    def truly(self, rule, iters):
+        getv = self.treestore.get_value
+        name = getv(iter_, 0)
+        type_ = getv(iter_, 3)
+        return True
+
     def select_rows(self, rule):
-        print rule
+        def treewalk(iters):
+            if self.truly(rule, iters):
+                self.treestore.set_value(iters, 2, 1)
+            it = self.treestore.iter_children(iters)
+            while it:
+                treewalk(it)
+                it = self.treestore.iter_next(it)
+        root = self.treestore.iter_children(None)
+        while root:
+            treewalk(root)
+            root = self.treestore.iter_next(root)
 
     def set_from_copy(self, copy_treestore):
         self._copy(copy_treestore, self)

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<selects>
+    <select name="Все">*</select>
+    <select name="No *backup*">*</select>
+    <select name="RemoteDealerWebService">*</select>
+</selects>
