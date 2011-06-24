@@ -19,3 +19,25 @@ def mwarning(parent, text):
         gtk.BUTTONS_CLOSE, text)
     message_dialog.run()
     message_dialog.destroy()
+
+def responseToDialog(entry, dialog, response):
+    dialog.response(response)
+
+def save_dialog():
+    dialog = gtk.MessageDialog(
+        None,
+        gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+        gtk.MESSAGE_QUESTION,
+        gtk.BUTTONS_OK,
+        None)
+    dialog.set_markup('Please enter <b>name</b>:')
+    entry = gtk.Entry()
+    entry.connect("activate", responseToDialog, dialog, gtk.RESPONSE_OK)
+    hbox = gtk.HBox()
+    hbox.pack_start(gtk.Label("Name:"), False, 5, 5)
+    hbox.pack_end(entry)
+    dialog.vbox.pack_end(hbox, True, True, 0)
+    dialog.show_all()
+    dialog.run()
+    text = entry.get_text()
+    return text

@@ -11,7 +11,7 @@ from source.worker import dir_walker, join_path, pathes, clear_source_formats
 import config
 from itertools import count
 from utils.xmlmanagers import SourceManager, SelectManager
-
+from dialogs import save_dialog
 
 class ServersModel(object):
 
@@ -651,10 +651,12 @@ class SelectsMenu(gtk.Menu):
         show = gtk.MenuItem("Select")
         show.set_submenu(self.build_submenu(tree))
         save = gtk.MenuItem("Save")
+        save.connect("activate", self.save)
         new = gtk.MenuItem("New")
         self.append(show)
         self.append(save)
         self.append(new)
+        self.tree = tree
         self.show_all()
 
     def build_submenu(self, tree):
@@ -665,6 +667,9 @@ class SelectsMenu(gtk.Menu):
             submenu.append(mitem)
         submenu.show_all()
         return submenu
+
+    def save(self, *args):
+        print save_dialog()
 
 
 
