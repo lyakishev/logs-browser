@@ -1,6 +1,24 @@
 <?xml version="1.0"?>
 <selects>
-    <select name="Все">*</select>
-    <select name="No *backup*">*</select>
-    <select name="RemoteDealerWebService">*</select>
+    <select name="Select All">
+	<actions>
+	    <action operation="select" type="all" operator="glob" rule="*" />
+	</actions>
+    </select>
+    <select name="Unselect All">
+	<actions>
+	    <action operation="unselect" type="all" operator="glob" rule="*" />
+	</actions>
+    </select>
+    <select name="No backup dirs">
+	<actions>
+	    <action operation="select" type="all" operator="glob" rule="*" />
+	    <action operation="unselect" type="dir" operator="iregexp" rule="backup" />
+	</actions>
+    </select>
+    <select name="RemoteDealer">
+	<actions>
+	    <action operation="select" type="file" operator="contains" rule="RemoteDealer" />
+	</actions>
+    </select>
 </selects>

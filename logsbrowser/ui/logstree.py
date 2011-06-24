@@ -30,17 +30,55 @@ class ServersModel(object):
         else:
             return None
 
-    def truly(self, rule, iters):
+    def do_actions(self, action, iter_):
         getv = self.treestore.get_value
         name = getv(iter_, 0)
         type_ = getv(iter_, 3)
-        return True
+        path_ = self.get_path(iter_)
+        return action(type_, path_, name, self.select_action(iter_),
+                                          self.unselect_action(iter_))
 
-    def select_rows(self, rule):
-        def treewalk(iters):
-            if self.truly(rule, iters):
-                self.treestore.set_value(iters, 2, 1)
-            it = self.treestore.iter_children(iters)
+    def get_path(self, node):
+        getv = self.treestore.get_value
+        path = []
+        path.append(getv(node, 0))
+        parent = self.treestore.iter_parent(node)
+        while parent:
+            path.append(getv(parent, 0))
+            parent = self.treestore.iter_parent(parent)
+        path.reverse()
+        return os.sep.join(path)
+
+    def select_recursively(self, iter_, val):
+        getv = self.treestore.get_value
+        setv = self.treestore.set_value
+        def walk(it):
+            setv(it, 2, val)
+            it_ = self.treestore.iter_children(it)
+            while it_:
+                walk(it_)
+                it_ = self.treestore.iter_next(it_)
+
+        if getv(iter_, 3) in ("d", "n"):
+            walk(iter_)
+        else:
+            setv(iter_, 2, val)
+
+    def select_action(self, iter_):
+        def select():
+            self.select_recursively(iter_, 1)
+        return select
+
+    def unselect_action(self, iter_):
+        def unselect():
+            self.select_recursively(iter_, 0)
+        return unselect
+
+
+    def select_rows(self, action):
+        def treewalk(iter_):
+            self.do_actions(action, iter_)
+            it = self.treestore.iter_children(iter_)
             while it:
                 treewalk(it)
                 it = self.treestore.iter_next(it)
@@ -56,11 +94,6 @@ class ServersModel(object):
         copy_treestore = ServersModel()
         self._copy(self.treestore, copy_treestore)
         return copy_treestore.treestore
-
-    def node_actions(self, actions):
-        def treewalk():
-            pass
-        pass
 
     def _copy(self, treestore, copytreestore):
         getv = treestore.get_value
@@ -421,8 +454,9 @@ class ServersTree(gtk.Frame):
         self.show_all()
 
     def apply_select(self, menuitem, select, manager):
-        rule = manager.get_select_rule(select)
-        self.model.select_rows(rule)
+        actions = manager.get_select_actions(select)
+        for action in actions:
+            self.model.select_rows(action)
 
     def select_popup(self, menu, event):
         if event.type == gtk.gdk.BUTTON_PRESS:

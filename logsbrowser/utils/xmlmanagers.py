@@ -1,4 +1,6 @@
 from xml.etree import ElementTree as ET
+import fnmatch
+import re
 
 class QueriesManager(object):
 
@@ -77,6 +79,17 @@ class SourceManager(object):
 
 class SelectManager(object):
 
+    operator_map = {"glob": fnmatch.fnmatch,
+                    "regexp": lambda name, pat: re.search(pat, name),
+                    "=": lambda name, pat: name == pat,
+                    "contains": lambda name, pat: pat in name,
+                    "iregexp": lambda name, pat: re.search(pat, name, re.I),
+                    "icontains": lambda name, pat: lower(pat) in lower(name)}
+
+    type_map = {"file": ("f,"),
+                "dir": ("d, "),
+                "all": ("d", "f")}
+
     def __init__(self, source_xml):
         self.xml = source_xml
 
@@ -85,9 +98,30 @@ class SelectManager(object):
         xml = ET.parse(self.xml)
         return [i.attrib['name'] for i in xml.getroot()]
 
-    def get_select_rule(self, select):
+    def parse_action(self, attrib):
+        def action(type_, path_, name_, select, unselect):
+            operation = attrib['operation']
+            if operation == "select":
+                act = select
+            elif operation == "unselect":
+                act = unselect
+            a_type = attrib['type']
+            if a_type != 'path':
+                if type_ in self.type_map[a_type]:
+                    if bool(self.operator_map[attrib['operator']](name_, attrib["rule"])):
+                        act()
+            else:
+                if bool(self.operator_map[attrib['operator']](path_, attrib["rule"])):
+                    act()
+        return action
+
+    def get_select_actions(self, select):
         xml = ET.parse(self.xml)
-        return xml.getroot().find('select[@name="%s"]' % select).text
+        actions = []
+        for action in xml.getroot().find('select[@name="%s"]/actions' % select):
+            actions.append(self.parse_action(action.attrib))
+        return actions
+
 
 if __name__ == '__main__':
     pass
