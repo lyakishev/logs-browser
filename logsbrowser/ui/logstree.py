@@ -143,6 +143,25 @@ class ServersModel(object):
             root = self.treestore.iter_next(root)
         return log_for_process
 
+    def get_pathes(self):
+        pathes = []
+        getv = self.treestore.get_value
+
+        def treewalk(iter_):
+            if getv(iter_, 3) == 'f' and getv(iter_, 2):
+                pathes.append(self.get_path(iter_))
+                return
+            it = self.treestore.iter_children(iter_)
+            while it:
+                treewalk(it)
+                it = self.treestore.iter_next(it)
+
+        root = self.treestore.iter_children(None)
+        while root:
+            treewalk(root)
+            root = self.treestore.iter_next(root)
+        return pathes
+    
     def get_active_check_paths(self):
         pathslist = []
         getv = self.treestore.get_value
@@ -242,7 +261,7 @@ class FileServersModel(ServersModel):
         self.cache = {}
         super(FileServersModel, self).__init__()
 
-    def fill(self, fill, dirs = None, stand = None):
+    def fill(self, fill, dirs=None, stand=None):
         self.treestore.clear()
         if fill:
             clear_source_formats(stand)
@@ -259,14 +278,14 @@ class FileServersModel(ServersModel):
                 self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
 
     def _fill(self, dirs, stand):
-        self.parents={}
+        self.parents = {}
         fill = True
         if dirs:
             self.dirs = dirs
             fill = False
         if stand:
             self.stand = stand
-        frac = 1./len(self.dirs)
+        frac = 1. / len(self.dirs)
         try:
             for n, path in enumerate(self.dirs):
                 self.progress.set_text("%s" % path)
@@ -275,7 +294,7 @@ class FileServersModel(ServersModel):
                 self.add_parents(path, None, self.stand)
                 if fill:
                     self.add_logdir(path, None, self.stand)
-                self.progress.set_fraction(frac*(n+1))
+                self.progress.set_fraction(frac * (n + 1))
         except StopIteration:
             pass
         finally:
@@ -290,12 +309,12 @@ class FileServersModel(ServersModel):
     def add_parents(self, path, parent, server):
         parts = [p for p in path.split(os.sep) if p]
         if path.startswith(r"\\"):
-            parts[0] = r"\\"+parts[0]
+            parts[0] = r"\\" + parts[0]
         elif path.startswith(r"/"):
-            parts[0] = "/"+parts[0]
+            parts[0] = "/" + parts[0]
         prev_node_path = server
         for n, p in enumerate(parts):
-            new_node_path = join_path(server, os.sep.join(parts[:n+1]))
+            new_node_path = join_path(server, os.sep.join(parts[:n + 1]))
             self.new_dir_node(p, parent, new_node_path, prev_node_path)
             prev_node_path = new_node_path
             while gtk.events_pending():
@@ -452,6 +471,9 @@ class ServersTree(gtk.Frame):
         self.model.get_model().set_visible_func(self.visible_func)
         self.filter_text = ""
         self.show_all()
+        
+    def get_pathes(self):
+        return self.model.get_pathes()
 
     def apply_select(self, menuitem, select, manager):
         actions = manager.get_select_actions(select)
@@ -460,6 +482,7 @@ class ServersTree(gtk.Frame):
 
     def select_popup(self, menu, event):
         if event.type == gtk.gdk.BUTTON_PRESS:
+            menu.build_submenu()
             menu.popup(None, None, None, event.button, event.time)
             return True
         return False
@@ -602,8 +625,8 @@ class SourceManagerUI(gtk.VBox):
         if state:
             fpathslist, fentry, epathslist, eentry, stand = state
         else:
-            fpathslist, fentry, epathslist, eentry, stand = ([],("",False),
-                                                          [],("",False),
+            fpathslist, fentry, epathslist, eentry, stand = ([], ("", False),
+                                                          [], ("", False),
                                                           self.default)
         self.stand_choice.set_active(stand)
         ftree.model.set_active_from_paths(fpathslist)
@@ -647,29 +670,32 @@ class SourceManagerUI(gtk.VBox):
 class SelectsMenu(gtk.Menu):
     def __init__(self, tree):
         super(SelectsMenu, self).__init__()
+        self.tree = tree
         self.select_manager = SelectManager(config.SELECTS)
-        show = gtk.MenuItem("Select")
-        show.set_submenu(self.build_submenu(tree))
+        self.show = gtk.MenuItem("Select")
         save = gtk.MenuItem("Save")
         save.connect("activate", self.save)
         new = gtk.MenuItem("New")
-        self.append(show)
+        self.append(self.show)
         self.append(save)
         self.append(new)
-        self.tree = tree
         self.show_all()
-
-    def build_submenu(self, tree):
+        
+    def build_submenu(self):
+        self.show.remove_submenu()
         submenu = gtk.Menu()
         for item in self.select_manager.selects:
             mitem = gtk.MenuItem(item)
-            mitem.connect("activate", tree.apply_select, item, self.select_manager)
+            mitem.connect("activate", self.tree.apply_select, item, self.select_manager)
             submenu.append(mitem)
         submenu.show_all()
-        return submenu
+        self.show.set_submenu(submenu)
 
     def save(self, *args):
-        print save_dialog()
+        name = save_dialog()
+        if name != 0:
+            pathes = self.tree.get_pathes()
+            self.select_manager.save_pathes(name, pathes)
 
 
 

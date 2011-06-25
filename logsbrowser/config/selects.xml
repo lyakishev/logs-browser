@@ -1,24 +1,23 @@
-<?xml version="1.0"?>
 <selects>
     <select name="Select All">
 	<actions>
-	    <action operation="select" type="all" operator="glob" rule="*" />
+	    <action operation="select" operator="glob" rule="*" type="all" />
 	</actions>
     </select>
     <select name="Unselect All">
 	<actions>
-	    <action operation="unselect" type="all" operator="glob" rule="*" />
+	    <action operation="unselect" operator="glob" rule="*" type="all" />
 	</actions>
     </select>
     <select name="No backup dirs">
 	<actions>
-	    <action operation="select" type="all" operator="glob" rule="*" />
-	    <action operation="unselect" type="dir" operator="iregexp" rule="backup" />
+	    <action operation="select" operator="glob" rule="*" type="all" />
+	    <action operation="unselect" operator="iregexp" rule="backup" type="dir" />
 	</actions>
     </select>
     <select name="RemoteDealer">
 	<actions>
-	    <action operation="select" type="file" operator="contains" rule="RemoteDealer" />
+	    <action operation="select" operator="contains" rule="RemoteDealer" type="file" />
 	</actions>
     </select>
 </selects>

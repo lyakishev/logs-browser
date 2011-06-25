@@ -95,6 +95,7 @@ class SelectManager(object):
 
     @property
     def selects(self):
+        print 'call'
         xml = ET.parse(self.xml)
         return [i.attrib['name'] for i in xml.getroot()]
 
@@ -114,6 +115,18 @@ class SelectManager(object):
                 if bool(self.operator_map[attrib['operator']](path_, attrib["rule"])):
                     act()
         return action
+
+    def save_pathes(self, name, pathes):
+        xml = ET.parse(self.xml)
+        root = xml.getroot()
+        select = ET.SubElement(root, "select", {'name': name})
+        actions = ET.SubElement(select, "actions")
+        for path in pathes:
+            attrib = {"operation": "select", "type": "path", "operator": "=", "rule": path}
+            action = ET.SubElement(actions, "action", attrib)
+        tree = ET.ElementTree(root)
+        tree.write(self.xml)
+        
 
     def get_select_actions(self, select):
         xml = ET.parse(self.xml)

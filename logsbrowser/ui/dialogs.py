@@ -28,7 +28,7 @@ def save_dialog():
         None,
         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
         gtk.MESSAGE_QUESTION,
-        gtk.BUTTONS_OK,
+        gtk.BUTTONS_OK_CANCEL,
         None)
     dialog.set_markup('Please enter <b>name</b>:')
     entry = gtk.Entry()
@@ -38,6 +38,10 @@ def save_dialog():
     hbox.pack_end(entry)
     dialog.vbox.pack_end(hbox, True, True, 0)
     dialog.show_all()
-    dialog.run()
-    text = entry.get_text()
+    response = dialog.run()
+    if response == gtk.RESPONSE_OK:
+        text = entry.get_text()
+    else:
+        text = 0
+    dialog.destroy()
     return text
