@@ -1,6 +1,5 @@
 #! -*- coding: utf8 -*-
 
-from parse import define_format
 import os
 import time
 from readers import mmap_block_read, seek_block_read
