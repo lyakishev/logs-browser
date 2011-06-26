@@ -19,8 +19,6 @@ from operator import setitem
 import os
 
 
-
-
 class LogsViewer:
     """ The GUI class is the controller for application """
 
@@ -40,6 +38,8 @@ class LogsViewer:
     def __init__(self):
         # setup the main window
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
+        global TOP_LEVEL_WINDOW
+        TOP_LEVEL_WINDOW = self.root
         self.root.set_title("Logs Browser")
         self.root.connect("destroy", self.destroy_cb)
         self.root.set_default_size(1200, 800)
@@ -77,7 +77,7 @@ class LogsViewer:
 
 
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
-                                     self.signals)
+                                     self.signals, self.root)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
         self.source_tree.fill_combo()

@@ -87,7 +87,6 @@ def generator_from_queue(queue, e_stop):
 def _mp_process(table, sources, dates, stop, val):
     sources_for_worker = _mix_sources(sources, dates)
     insert_queue = Queue()
-    processors = []
     for i in xrange(PROCESSES):
         p = Processor(sources_for_worker, insert_queue, stop, val)
         p.daemon = True

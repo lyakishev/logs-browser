@@ -60,7 +60,8 @@ class Filter():
         where_renderer.set_property('editable',True)
         where_renderer.connect("edited", self.change_value,
                                          self.fields['WHERE'])
-        where_renderer.connect("editing-started", self.set_cell_entry_signal)
+        where_renderer.connect("editing-started", self.set_cell_entry_signal,
+                                                  self.fields['WHERE'])
         self.where_column = gtk.TreeViewColumn("where", where_renderer,
                                                 text=self.fields['WHERE'])
         
@@ -83,34 +84,20 @@ class Filter():
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
         self.view.connect("button-press-event", self.activate_cell)
-        self.entry_path = None
 
     def unselect(self):
         path, focus_column = self.view.get_cursor()
         if path:
             self.view.get_selection().unselect_path(path)
 
-    def focus_out(self, *args):
-        if self.entry_path:
-            self.query_model[self.entry_path][self.fields['WHERE']] = self.cell_entry_text
-            self.cell_entry_text = ""
+    def focus_out(self, entry, event, path, col):
+        iter_ = self.query_model.get_iter_from_string(path)
+        self.query_model.set_value(iter_, col, entry.get_text())
 
-    def set_cell_entry_signal(self, cell, entry, num):
-        self.cell_entry_text = entry.get_text()
-        entry.connect("changed", self.save_cell_text)
-        entry.connect("focus-out-event", self.focus_out)
-
-    def save_cell_text(self, entry):
-        self.cell_entry_text = entry.get_text()
+    def set_cell_entry_signal(self, cell, entry, num, col):
+        entry.connect("focus-out-event", self.focus_out, num, col)
 
     def activate_cell(self, view, event):
-        old_path, old_col = view.get_cursor()
-        if old_path:
-            try:
-                if self.cell_entry_text:
-                    self.query_model[old_path][self.fields['WHERE']] = self.cell_entry_text
-            except AttributeError:
-                pass
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path[1] == self.color_column:
@@ -123,8 +110,6 @@ class Filter():
                     view.get_model()[path[0]][self.fields['HCOLORV']]=col
                 colordlg.destroy()
             view.set_cursor(path[0], focus_column = path[1], start_editing=True)
-            if path[1] == self.where_column:
-                self.entry_path = path[0]
             if path[1] == self.up_column:
                 self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
             elif path[1] == self.down_column:
@@ -133,9 +118,6 @@ class Filter():
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path[1] == self.color_column:
                 view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
-            if path[1] == self.where_column:
-                self.entry_path = path[0]
-            
 
     def change_func(self, combo, path, iter_, col):
         self.query_model[path][col] = combo.get_property("model").get_value(iter_,0)

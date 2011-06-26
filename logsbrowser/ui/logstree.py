@@ -9,9 +9,9 @@ from configeditor import ConfigEditor
 import sys
 from source.worker import dir_walker, join_path, pathes, clear_source_formats
 import config
-from itertools import count
 from utils.xmlmanagers import SourceManager, SelectManager
 from dialogs import save_dialog
+from sourceactionsmanager import SourceActionsManagerUI
 
 class ServersModel(object):
 
@@ -423,7 +423,7 @@ def tree_model_pre_order(model, treeiter):
 
 
 class ServersTree(gtk.Frame):
-    def __init__(self):
+    def __init__(self, root):
         super(ServersTree, self).__init__()
         self.view = DisplayServersModel(self.model.get_model(), self.model)
         self.logs_window = gtk.ScrolledWindow()
@@ -438,7 +438,7 @@ class ServersTree(gtk.Frame):
         toolbar = gtk.Toolbar()
 
         cbtn = gtk.Button()
-        cbtn.connect_object("event", self.select_popup, SelectsMenu(self))
+        cbtn.connect_object("event", self.select_popup, SelectsMenu(self, root))
         image = gtk.Image()
         image.set_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
         image.show()
@@ -539,20 +539,20 @@ class ServersTree(gtk.Frame):
             return True
 
 class EvlogsServersTree(ServersTree):
-    def __init__(self):
+    def __init__(self, root):
         self.model = EventServersModel()
-        super(EvlogsServersTree, self).__init__()
+        super(EvlogsServersTree, self).__init__(root)
 
 class FileServersTree(ServersTree):
-    def __init__(self, progress, sens_func, signals):
+    def __init__(self, progress, sens_func, signals, root):
         self.model = FileServersModel(progress, sens_func, signals)
-        super(FileServersTree, self).__init__()
+        super(FileServersTree, self).__init__(root)
 
 
 class LogsTrees(gtk.Notebook):
-    def __init__(self, progress, sens_func, signals):
+    def __init__(self, progress, sens_func, signals, root):
         super(LogsTrees, self).__init__()
-        self.file_servers_tree = FileServersTree(progress, sens_func, signals)
+        self.file_servers_tree = FileServersTree(progress, sens_func, signals, root)
         file_label = gtk.Label("Filelogs")
         file_label.show()
         self.append_page(self.file_servers_tree, file_label)
@@ -560,7 +560,7 @@ class LogsTrees(gtk.Notebook):
         if sys.platform == 'win32':
             evt_label = gtk.Label("Eventlogs")
             evt_label.show()
-            self.evlogs_servers_tree = EvlogsServersTree()
+            self.evlogs_servers_tree = EvlogsServersTree(root)
             self.evlogs_servers_tree.show()
             self.append_page(self.evlogs_servers_tree, evt_label)
 
@@ -576,12 +576,12 @@ class LogsTrees(gtk.Notebook):
 
 
 class SourceManagerUI(gtk.VBox):
-    def __init__(self, progress, sens_func, signals):
+    def __init__(self, progress, sens_func, signals, root):
         gtk.VBox.__init__(self)
         self.state_ = {}
 
         stand_manager = gtk.Toolbar()
-        self.tree = LogsTrees(progress, sens_func, signals)
+        self.tree = LogsTrees(progress, sens_func, signals, root)
         self.source_manager = SourceManager(config.SOURCES_XML)
 
 
@@ -668,18 +668,22 @@ class SourceManagerUI(gtk.VBox):
 
 
 class SelectsMenu(gtk.Menu):
-    def __init__(self, tree):
+    def __init__(self, tree, root):
         super(SelectsMenu, self).__init__()
         self.tree = tree
         self.select_manager = SelectManager(config.SELECTS)
         self.show = gtk.MenuItem("Select")
         save = gtk.MenuItem("Save")
         save.connect("activate", self.save)
-        new = gtk.MenuItem("New")
+        edit = gtk.MenuItem("Edit")
+        edit.connect("activate", self.show_edit_window, root)
         self.append(self.show)
         self.append(save)
-        self.append(new)
+        self.append(edit)
         self.show_all()
+        
+    def show_edit_window(self, menuitem, root):
+        SourceActionsManagerUI(self.select_manager, root)
         
     def build_submenu(self):
         self.show.remove_submenu()

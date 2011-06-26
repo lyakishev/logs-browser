@@ -1,23 +1,7 @@
 <selects>
-    <select name="Select All">
-	<actions>
-	    <action operation="select" operator="glob" rule="*" type="all" />
-	</actions>
-    </select>
-    <select name="Unselect All">
+    <select name="Select All"><actions><action operation="select" operator="glob" rule="*" type="all" /></actions></select><select name="Unselect All">
 	<actions>
 	    <action operation="unselect" operator="glob" rule="*" type="all" />
 	</actions>
     </select>
-    <select name="No backup dirs">
-	<actions>
-	    <action operation="select" operator="glob" rule="*" type="all" />
-	    <action operation="unselect" operator="iregexp" rule="backup" type="dir" />
-	</actions>
-    </select>
-    <select name="RemoteDealer">
-	<actions>
-	    <action operation="select" operator="contains" rule="RemoteDealer" type="file" />
-	</actions>
-    </select>
-</selects>
+    <select name="All, except *backup*"><actions><action operation="select" operator="glob" rule="*" type="all" /><action operation="unselect" operator="iregexp" rule="backup" type="dir" /></actions></select><select name="No *backup*"><actions><action operation="unselect" operator="iregexp" rule="backup" type="dir" /></actions></select><select name="No tbdoc"><actions><action operation="unselect" operator="iregexp" rule="tbdoc" type="dir" /></actions></select><select name="No ThreadMachine"><actions><action operation="unselect" operator="iregexp" rule="threadmachine" type="all" /></actions></select></selects>

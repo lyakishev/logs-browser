@@ -84,14 +84,57 @@ class SelectManager(object):
                     "=": lambda name, pat: name == pat,
                     "contains": lambda name, pat: pat in name,
                     "iregexp": lambda name, pat: re.search(pat, name, re.I),
-                    "icontains": lambda name, pat: lower(pat) in lower(name)}
+                    "icontains": lambda name, pat: pat.lower() in name.lower()}
 
     type_map = {"file": ("f,"),
                 "dir": ("d, "),
-                "all": ("d", "f")}
+                "all": ("d", "f"),
+                "path": ()}
+    
+    operation_map = {'select': 'select',
+                   'unselect': 'unselect'}
 
     def __init__(self, source_xml):
         self.xml = source_xml
+
+    def get_attributes(self):
+        return ["operation", "type", "operator", "rule"]
+    
+    def get_actions(self, actions_name):
+        xml = ET.parse(self.xml)
+        actions = []
+        for action in xml.getroot().find('select[@name="%s"]/actions' % actions_name):
+            attrib = action.attrib
+            attrib_list = []
+            for a in self.get_attributes():
+                attrib_list.append(attrib[a])
+            actions.append(attrib_list)
+        return actions
+    
+    def empty_action(self):
+        return None
+
+    def new_select(self, new_name, new_actions):
+        xml = ET.parse(self.xml)
+        root = xml.getroot()
+        select = ET.SubElement(root, "select", {"name": new_name})
+        actions = ET.SubElement(select, "actions", {})
+        for action in new_actions:
+            ET.SubElement(actions, "action", action)
+        tree = ET.ElementTree(root)
+        tree.write(self.xml)
+                   
+    def update_actions(self, old_name, new_name, new_actions):
+        xml = ET.parse(self.xml)
+        root = xml.getroot()
+        select = root.find('select[@name="%s"]' % old_name)
+        select.clear()
+        select.attrib['name'] = new_name
+        actions = ET.SubElement(select, "actions", {})
+        for action in new_actions:
+            ET.SubElement(actions, "action", action)
+        tree = ET.ElementTree(root)
+        tree.write(self.xml)
 
     @property
     def selects(self):
@@ -102,9 +145,9 @@ class SelectManager(object):
     def parse_action(self, attrib):
         def action(type_, path_, name_, select, unselect):
             operation = attrib['operation']
-            if operation == "select":
+            if operation == self.operation_map["select"]:
                 act = select
-            elif operation == "unselect":
+            elif operation == self.operation_map["unselect"]:
                 act = unselect
             a_type = attrib['type']
             if a_type != 'path':
@@ -123,7 +166,7 @@ class SelectManager(object):
         actions = ET.SubElement(select, "actions")
         for path in pathes:
             attrib = {"operation": "select", "type": "path", "operator": "=", "rule": path}
-            action = ET.SubElement(actions, "action", attrib)
+            ET.SubElement(actions, "action", attrib)
         tree = ET.ElementTree(root)
         tree.write(self.xml)
         
@@ -134,6 +177,15 @@ class SelectManager(object):
         for action in xml.getroot().find('select[@name="%s"]/actions' % select):
             actions.append(self.parse_action(action.attrib))
         return actions
+    
+    def delete_select(self, select_name):
+        xml = ET.parse(self.xml)
+        root = xml.getroot()
+        select = root.find('select[@name="%s"]' % select_name)
+        root.remove(select)
+        tree = ET.ElementTree(root)
+        tree.write(self.xml)
+        
 
 
 if __name__ == '__main__':
