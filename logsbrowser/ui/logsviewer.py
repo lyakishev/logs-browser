@@ -38,8 +38,6 @@ class LogsViewer:
     def __init__(self):
         # setup the main window
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
-        global TOP_LEVEL_WINDOW
-        TOP_LEVEL_WINDOW = self.root
         self.root.set_title("Logs Browser")
         self.root.connect("destroy", self.destroy_cb)
         self.root.set_default_size(1200, 800)
@@ -114,7 +112,6 @@ class LogsViewer:
         menu_box = gtk.VBox()
         menu_box.pack_start(menubar, False, False)
         menu_box.pack_start(main_box)
-
         self.root.add(menu_box)
         self.root.show_all()
         #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
@@ -125,7 +122,8 @@ class LogsViewer:
     def show_about(self, *args):
         about = gtk.AboutDialog()
         about.set_property('authors', ['Lyakishev Andrey <alyakishev@sitronics.com>'])
-        about.set_property('version', '1.8')
+        about.set_property('version', '1.9')
+        about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         about.set_name('LogsBrowser')
         about.run()
         about.destroy()
