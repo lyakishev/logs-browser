@@ -30,13 +30,14 @@ class ServersModel(object):
         else:
             return None
 
-    def do_actions(self, action, iter_):
+    def do_actions(self, actions, iter_):
         getv = self.treestore.get_value
         name = getv(iter_, 0)
         type_ = getv(iter_, 3)
         path_ = self.get_path(iter_)
-        return action(type_, path_, name, self.select_action(iter_),
-                                          self.unselect_action(iter_))
+        for action in actions:
+            action(type_, path_, name, self.select_action(iter_),
+                                       self.unselect_action(iter_))
 
     def get_path(self, node):
         getv = self.treestore.get_value
@@ -75,9 +76,9 @@ class ServersModel(object):
         return unselect
 
 
-    def select_rows(self, action):
+    def select_rows(self, actions):
         def treewalk(iter_):
-            self.do_actions(action, iter_)
+            self.do_actions(actions, iter_)
             it = self.treestore.iter_children(iter_)
             while it:
                 treewalk(it)
@@ -477,8 +478,7 @@ class ServersTree(gtk.Frame):
 
     def apply_select(self, menuitem, select, manager):
         actions = manager.get_select_actions(select)
-        for action in actions:
-            self.model.select_rows(action)
+        self.model.select_rows(actions)
 
     def select_popup(self, menu, event):
         if event.type == gtk.gdk.BUTTON_PRESS:

@@ -122,7 +122,7 @@ class SelectManager(object):
         for action in new_actions:
             ET.SubElement(actions, "action", action)
         tree = ET.ElementTree(root)
-        tree.write(self.xml)
+        tree.write(self.xml, encoding="utf-8")
                    
     def update_actions(self, old_name, new_name, new_actions):
         xml = ET.parse(self.xml)
@@ -134,7 +134,7 @@ class SelectManager(object):
         for action in new_actions:
             ET.SubElement(actions, "action", action)
         tree = ET.ElementTree(root)
-        tree.write(self.xml)
+        tree.write(self.xml, encoding="utf-8")
 
     @property
     def selects(self):
@@ -168,7 +168,7 @@ class SelectManager(object):
             attrib = {"operation": "select", "type": "path", "operator": "=", "rule": path}
             ET.SubElement(actions, "action", attrib)
         tree = ET.ElementTree(root)
-        tree.write(self.xml)
+        tree.write(self.xml, encoding="utf-8")
         
 
     def get_select_actions(self, select):
@@ -184,7 +184,7 @@ class SelectManager(object):
         select = root.find('select[@name="%s"]' % select_name)
         root.remove(select)
         tree = ET.ElementTree(root)
-        tree.write(self.xml)
+        tree.write(self.xml, encoding="utf-8")
         
 
 

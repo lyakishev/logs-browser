@@ -1,3 +1,4 @@
+#! -*- coding: utf-8 -*-
 from cleaner import clear
 import os
 from operator import itemgetter
@@ -77,7 +78,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                             files.add(name)
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
-                        node = dir_callback(f, parent, ext_parent)
+                        node = dir_callback(f.decode('cp1251'), parent, ext_parent)
                         dir_walker(fullf, dir_callback, log_callback, node, prefix)
             else:
                 node = dir_callback(f, parent, ext_parent)
