@@ -4,6 +4,7 @@ import os
 from operator import itemgetter
 import config
 from parse import define_format
+from utils.common import to_unicode, from_unicode
 
 source_formats = {}
 
@@ -14,13 +15,14 @@ def clear_source_formats(stand):
 def file_preparator(folders, stand):
     flf = []
     for key, value in folders.iteritems():
-        for file_ in os.listdir(key):
-            fullf = os.path.join(key, file_)
+        raw_key = from_unicode(key)
+        for file_ in os.listdir(raw_key):
+            fullf = os.path.join(raw_key, file_)
             pfn, ext = clear(file_)
             if not pfn:
                 pfn = "undefined"
             if ext in ('txt', 'log') and pfn in value:
-                flf.append([fullf, pfn, source_formats[stand][key, pfn]])
+                flf.append([fullf, pfn, source_formats[stand][raw_key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
 def lists_to_pathes(lists):
@@ -61,8 +63,9 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
     files = set()
     try:
         for f in os.listdir(path):
-            fext = os.path.splitext(f)[1]
             fullf = os.path.join(path, f)
+            f = to_unicode(f)
+            fext = os.path.splitext(f)[1]
             ext_parent = join_path(prefix, fullf)
             if fext:
                 name, ext = clear(f)
@@ -78,7 +81,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                             files.add(name)
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
-                        node = dir_callback(f.decode('cp1251'), parent, ext_parent)
+                        node = dir_callback(f, parent, ext_parent)
                         dir_walker(fullf, dir_callback, log_callback, node, prefix)
             else:
                 node = dir_callback(f, parent, ext_parent)

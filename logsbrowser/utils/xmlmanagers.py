@@ -165,6 +165,10 @@ class SelectManager(object):
         select = ET.SubElement(root, "select", {'name': name})
         actions = ET.SubElement(select, "actions")
         for path in pathes:
+            try:
+                path.encode('utf8')
+            except UnicodeDecodeError:
+                continue
             attrib = {"operation": "select", "type": "path", "operator": "=", "rule": path}
             ET.SubElement(actions, "action", attrib)
         tree = ET.ElementTree(root)

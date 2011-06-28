@@ -9,3 +9,9 @@ def to_unicode(msg):
     except UnicodeDecodeError:
         return msg.decode('cp1251')
 
+def from_unicode(msg):
+    try:
+        return msg.encode('cp1251')
+    except UnicodeEncodeError:
+        return msg.encode('utf-8')
+
