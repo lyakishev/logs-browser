@@ -84,6 +84,7 @@
             <folder>\\msk-func-11\c$\forislog</folder>
             <folder>\\msk-func-12\c$\forislog</folder>
             <folder>\\msk-func-dmz\c$\forislog</folder>
+            <folder>\\portal-test-02\c$\forislog</folder>
         </filelogs>
         <evlogs>
             <source server="msk-func-01">Application, CRM.Gateway, CRM_Errors CRM_Interfaces,  Foris.Catalogues,  FORIS.Common,  FORIS.Production, FORIS.RemoteDealer,  FORIS.Sales,  FORIS.ScratchCards, FORIS.ScratchCards.Activation,  Foris.SelfCare,  FORIS.TelCRM.GUI, Foris.TelCRM.Marketing,  Foris.TelCrm.RequestManagement,  FORIS.TelCRM.Sales, ForwardedEvents,  Marti.CommunityManagementUI,  Marti.OrderCatalogueUI, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational,  System,  TelCRM.Marketing, TelCRM.Production,  Windows PowerShell</source>
@@ -167,7 +168,7 @@
             <folder>\\00-report\c$\forislog</folder>
             <folder>\\00-doc\c$\forislog</folder>
             <folder>\\00-dmz\c$\forislog</folder>
-            <folder>\\portal-test-02\c$\forislog</folder>
+            <folder>\\portal-test-04\c$\forislog</folder>
         </filelogs>
         <evlogs>
             <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
@@ -201,11 +202,5 @@
         <evlogs>
 		<source server="msk-tfs-lab01"> Application, CRM.Gateway, FORIS.Common, Foris.SelfCare, Foris.TelCrm.RequestManagement, ForwardedEvents, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, System</source>
 	</evlogs>
-    </stand>
- <stand name="portal-test-03">
-        <filelogs>
-            <folder>\\portal-test-03\c$\forislog</folder>
-        </filelogs>
-        <evlogs />
     </stand>
 </stands>
