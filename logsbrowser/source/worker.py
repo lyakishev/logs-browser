@@ -5,8 +5,9 @@ from operator import itemgetter
 import config
 from parse import define_format
 from utils.common import to_unicode, from_unicode
+from collections import defaultdict
 
-source_formats = {}
+source_formats = defaultdict(dict)
 
 def clear_source_formats(stand):
     if stand:
@@ -59,7 +60,6 @@ def date_format(path):
         return None
 
 def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
-    source_formats.setdefault(prefix, {})
     files = set()
     try:
         for f in os.listdir(path):
