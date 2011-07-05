@@ -5,6 +5,7 @@ pygtk.require("2.0")
 import gtk
 import gobject
 import gio
+import traceback
 
 
 def merror(text):
@@ -12,6 +13,23 @@ def merror(text):
                            buttons=gtk.BUTTONS_CANCEL, message_format=text)
     md.run()
     md.destroy()
+
+def exception_dialog(type_, value, tb):
+    dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                           buttons=gtk.BUTTONS_CLOSE)
+    dialog.set_markup("%s" % '\n'.join(traceback.format_exception_only(type_, value)))
+    info = gtk.Expander('Stack trace')
+    scr = gtk.ScrolledWindow()
+    textview = gtk.TextView()
+    textview.set_editable(False)
+    scr.add(textview)
+    info.add(scr)
+    textview.get_buffer().set_text('%s' % '\n'.join(traceback.format_tb(tb)))
+    dialog.vbox.pack_end(info, True, True)
+    dialog.show_all()
+    dialog.run()
+    dialog.destroy()
+    
 
 def mwarning(parent, text):
     message_dialog = gtk.MessageDialog(parent,
@@ -45,3 +63,8 @@ def save_dialog():
         text = 0
     dialog.destroy()
     return text
+
+if __name__ == "__main__":
+    import sys
+    sys.excepthook = exception_dialog
+    print 1/0
