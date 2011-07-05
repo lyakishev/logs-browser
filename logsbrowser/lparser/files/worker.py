@@ -4,7 +4,7 @@ import os
 import time
 from readers import mmap_block_read, seek_block_read
 from operator import itemgetter
-from lparser.utils import to_unicode, isoformat
+from utils.common import to_unicode, isoformat
 import config
 
 
@@ -31,6 +31,7 @@ def filelogworker(dates, path, log, funcs):
             if start_date > dates[1]:
                 raise StopIteration
             comp = [p for p in path.split(os.sep) if p][0]
+            path = to_unicode(path)
             msg, clines = "", 0
             for string in mmap_block_read(file_, 16*1024):
                 parsed_date = pfunc(string, cdate, pformat)

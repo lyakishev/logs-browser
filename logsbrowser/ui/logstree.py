@@ -35,8 +35,8 @@ class ServersModel(object):
         name = getv(iter_, 0)
         type_ = getv(iter_, 3)
         path_ = self.get_path(iter_)
-        return action(type_, path_, name, self.select_action(iter_),
-                                          self.unselect_action(iter_))
+        action(type_, path_, name, self.select_action(iter_),
+                                   self.unselect_action(iter_))
 
     def get_path(self, node):
         getv = self.treestore.get_value

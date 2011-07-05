@@ -8,7 +8,7 @@ import win32evtlogutil
 import winerror
 import pywintypes
 import time
-from lparser.utils import to_unicode
+from utils.common import to_unicode
 
 
 EVT_DICT = {win32con.EVENTLOG_AUDIT_FAILURE: 'AUDIT_FAILURE',

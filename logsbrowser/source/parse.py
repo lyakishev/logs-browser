@@ -57,43 +57,44 @@ def _log4j_parser(line, cdate, re_obj):
 def _short_year_parser(line, cdate, re_obj):
     parsed_line = re_obj.match(line)
     if parsed_line:
-        groups = parsed_line.group
-        millisecs = groups("ms") or '000'
-        return "20%s-%s-%s %02d:%s:%s.%s" % (groups('short_year'),
-                                             groups('month'),
-                                             groups('day'),
-                                             int(groups('hour')),
-                                             groups('min'),
-                                             groups('sec'),
-                                             millisecs)
+        year, month, day, hour, min_, sec, ms = \
+            parsed_line.group("year", "month", "day", "hour", "min",
+                               "sec", "ms")
+        return "20%s-%s-%s %02d:%s:%s.%s" % (year,
+                                             month,
+                                             day,
+                                             int(hour),
+                                             min_,
+                                             sec,
+                                             ms or '000')
     return None
 
 
 def _only_time_parser(line, cdate, re_obj):
     parsed_line = re_obj.match(line)
     if parsed_line:
-        groups = parsed_line.group
-        millisecs = groups("ms") or '000'
+        hour, min_, sec, ms = parsed_line.group("hour", "min", "sec", "ms")
         return "%s-%02d-%02d %02d:%s:%s.%s" % (cdate.tm_year, cdate.tm_mon,
                                                cdate.tm_mday,
-                                               int(groups('hour')),
-                                               groups('min'),
-                                               groups('sec'),
-                                               millisecs)
+                                               int(hour),
+                                               min_,
+                                               sec,
+                                               ms or '000')
     return None
 
 def _normal_parser(line, cdate, re_obj):
     parsed_line = re_obj.match(line)
     if parsed_line:
-        groups = parsed_line.group
-        millisecs = groups("ms") or '000'
-        return "%s-%s-%s %02d:%s:%s.%s" % (groups('year'),
-                                           groups('month'),
-                                           groups('day'),
-                                           int(groups('hour')),
-                                           groups('min'),
-                                           groups('sec'),
-                                           millisecs)
+        year, month, day, hour, min_, sec, ms = \
+            parsed_line.group("year", "month", "day", "hour", "min",
+                               "sec", "ms")
+        return "%s-%s-%s %02s:%s:%s.%s" % (year,
+                                           month,
+                                           day,
+                                           int(hour),
+                                           min_,
+                                           sec,
+                                           ms or '000')
     return None
 
 def define_parser(pdict):
