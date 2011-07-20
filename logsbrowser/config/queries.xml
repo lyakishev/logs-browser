@@ -96,4 +96,14 @@ order by date desc
     </filter>
 </filters>
 
+<defaults>
+	<operators use="true">
+		<column name="lid" operator="=" />
+		<column name="type" operator="=" />
+		<column name="logname" operator="=" />
+		<column name="event" operator="=" />
+		<column name="*" operator="REGEXP" />
+	</operators>
+</defaults>
+
 </root>

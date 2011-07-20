@@ -14,24 +14,32 @@ class Filter():
         self.plain = plain
         self.query_model = gtk.ListStore(str,  #up
                                          str,  #down
+                                         str,  #color
                                          str,  #column
-                                         str,  #color
-                                         str,  #color
-                                         str)  #value        
+                                         bool, #NOT
+                                         str,  #operator
+                                         str,  #clause
+                                         str)  #color
 
+        self.operator_model = gtk.ListStore(str)
         self.field_model = gtk.ListStore(str)
 
         for c in ["---", "log", "logname", "type", "computer", "source", "event",
                   "date", "$time", "lid"]:
             self.field_model.append([c])
 
+        for c in ["---", "REGEXP", "LIKE", "MATCH", "="]:
+            self.operator_model.append([c])
+
         self.fields = {}
         self.fields['UP'] = 0
         self.fields['DOWN'] = 1
         self.fields['COLOR'] = 2
-        self.fields['HCOLORV'] = 5
+        self.fields['HCOLORV'] = 7
+        self.fields['NOT'] = 4
+        self.fields['OPERATOR'] = 5
         self.fields['FIELD'] = 3
-        self.fields['WHERE'] = 4
+        self.fields['WHERE'] = 6
 
         up_renderer = gtk.CellRendererPixbuf()
         down_renderer = gtk.CellRendererPixbuf()
@@ -55,6 +63,19 @@ class Filter():
         field_column = gtk.TreeViewColumn("column", field_renderer,
                                                     text=self.fields['FIELD'])
 
+        not_renderer = gtk.CellRendererToggle()
+        not_renderer.set_property('activatable', True)
+        not_renderer.connect("toggled", self.not_toggle, self.fields['NOT'])
+        not_column = gtk.TreeViewColumn("NOT", not_renderer)
+
+        operator_renderer = gtk.CellRendererCombo()
+        operator_renderer.set_property("model", self.operator_model)
+        operator_renderer.set_property('text-column', 0)
+        operator_renderer.set_property('editable', True)
+        operator_renderer.set_property('has-entry', True)
+        operator_renderer.connect("changed", self.change_func, self.fields['OPERATOR'])
+        operator_column = gtk.TreeViewColumn("operator", operator_renderer,
+                                                    text=self.fields['OPERATOR'])
         
         where_renderer = gtk.CellRendererText()
         where_renderer.set_property('editable',True)
@@ -76,6 +97,8 @@ class Filter():
         self.view.append_column(self.down_column)
         self.view.append_column(self.color_column)
         self.view.append_column(field_column)
+        self.view.append_column(not_column)
+        self.view.append_column(operator_column)
         self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
 
@@ -84,6 +107,9 @@ class Filter():
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
         self.view.connect("button-press-event", self.activate_cell)
+
+    def not_toggle(self, toggle, path, col):
+        self.query_model[path][col] = not self.query_model[path][col]
 
     def unselect(self):
         path, focus_column = self.view.get_cursor()
@@ -120,7 +146,15 @@ class Filter():
                 view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
 
     def change_func(self, combo, path, iter_, col):
-        self.query_model[path][col] = combo.get_property("model").get_value(iter_,0)
+        new_value = combo.get_property("model").get_value(iter_,0)
+        if new_value == '---':
+            self.query_model[path][self.fields['OPERATOR']] = '---'
+        else:
+            if col == self.fields['FIELD'] and hasattr(self, 'default_operator'):
+                new_operator = self.default_operator(new_value)
+                if new_operator:
+                    self.query_model[path][self.fields['OPERATOR']] = self.default_operator(new_value)
+        self.query_model[path][col] = new_value
 
     def change_value(self, cell, path, new_text, col):
         self.query_model[path][col] = new_text
@@ -132,7 +166,8 @@ class Filter():
             if not model.iter_next(iter_):
                 c = len(self.query_model)
                 self.query_model[c-1][self.fields['FIELD']] = 'log'
-                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', '','#fff'])
+                self.query_model[c-1][self.fields['OPERATOR']] = self.default_operator('log') or '---'
+                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', False, '', '','#fff'])
         except TypeError:
             pass
 
@@ -146,8 +181,9 @@ class Filter():
     def set_filter(self, rows):
         self.query_model.clear()
         for row in rows:
-            self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,'',row[0], row[2], row[1]])
-        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', '', '#fff'])
+            self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,
+                        '',row[0], False, self.default_operator(row[0]) or '---', row[2], row[1]])
+        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', False,'','', '#fff'])
 
     def get_filter(self, only_colors):
         
@@ -270,6 +306,7 @@ class QueryLoader(gtk.VBox):
     def __init__(self, query_constructor, qmanager):
         gtk.VBox.__init__(self)
         self.query_constructor = query_constructor
+        self.query_constructor.query.default_operator = qmanager.default_operator
         self.tools = gtk.HBox()
         self.add_lid = gtk.CheckButton('auto__lid')
         self.add_lid.set_active(True)
