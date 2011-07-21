@@ -30,6 +30,8 @@ SYNCRONIZE_SERVER = _config.get('time', 'syncronize_server')
 SERVER_TIME_FORMAT = _config.get('time', 'server_time_format')
 
 MULTIPROCESS = _config.getboolean('multiprocessing', 'multiprocess')
+XMLRPC = _config.getboolean('rpc', 'enable_xml_rpc')
+RPC_PORT = _config.getint('rpc', 'xml_rpc_port')
 GRID_LINES = _config.getboolean('table', 'grid_default')
 FILL_LOGSTREE_AT_START = _config.getboolean('tree', 'fill_at_start')
 
