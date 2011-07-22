@@ -206,7 +206,7 @@ class LogList(object):
                 path = int(path) - 1
             else:
                 path = model.iter_n_children(None) - 1
-            if path:
+            if path >= 0:
                 if not color:
                     clause = lambda p: model[p][bgcolor] == '#fff'
                 else:
