@@ -12,12 +12,15 @@ if config.XMLRPC:
 
 def xml_rpc_init(logsviewer):
     if config.XMLRPC:
-        server = SimpleXMLRPCServer(("localhost", config.RPC_PORT), allow_none=True)
-        server.register_introspection_functions()
-        server.register_function(logsviewer.set_from_date, 'begin')
-        server.register_function(logsviewer.set_to_date, 'end')
-        Thread(target=server.serve_forever).start()
-        return server
+        try:
+            server = SimpleXMLRPCServer(("localhost", config.RPC_PORT), allow_none=True)
+            server.register_introspection_functions()
+            server.register_function(logsviewer.set_from_date, 'begin')
+            server.register_function(logsviewer.set_to_date, 'end')
+            Thread(target=server.serve_forever).start()
+            return server
+        except Exception:
+            return None
     else:
         return None
 

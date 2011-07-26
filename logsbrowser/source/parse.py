@@ -58,7 +58,7 @@ def _short_year_parser(line, cdate, re_obj):
     parsed_line = re_obj.match(line)
     if parsed_line:
         year, month, day, hour, min_, sec, ms = \
-            parsed_line.group("year", "month", "day", "hour", "min",
+            parsed_line.group("short_year", "month", "day", "hour", "min",
                                "sec", "ms")
         return "20%s-%s-%s %02d:%s:%s.%s" % (year,
                                              month,
