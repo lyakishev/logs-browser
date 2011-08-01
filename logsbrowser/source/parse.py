@@ -88,7 +88,7 @@ def _normal_parser(line, cdate, re_obj):
         year, month, day, hour, min_, sec, ms = \
             parsed_line.group("year", "month", "day", "hour", "min",
                                "sec", "ms")
-        return "%s-%s-%s %02s:%s:%s.%s" % (year,
+        return "%s-%s-%s %02d:%s:%s.%s" % (year,
                                            month,
                                            day,
                                            int(hour),

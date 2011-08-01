@@ -91,7 +91,6 @@ class FromToOption(gtk.HBox):
         else:
             self.to_date.set_sens(False)
 
-    @isoformat
     def get_dates(self):
         if self.to_check:
             return (self.from_date.get_datetime(), self.to_date.get_datetime())
@@ -120,7 +119,6 @@ class LastDateOption(gtk.HBox):
         self.pack_start(self.last_date_spin, False, False)
         self.pack_start(self.last_date_combo, False, False)
 
-    @isoformat
     def get_dates(self):
         end_date = datetime.datetime.fromtimestamp(get_true_time())
         dateunit = [1. * 24 * 60 * 60, 1. * 24 * 60, 1. * 24, 1.]
@@ -146,7 +144,6 @@ class ThisOption(gtk.HBox):
         self.pack_start(self.this_date_radio, False, False)
         self.pack_start(self.this_date_combo, False, False)
 
-    @isoformat
     def get_dates(self):
         end_date = datetime.datetime.fromtimestamp(get_true_time())
         start_hour = datetime.datetime(end_date.year,
@@ -192,6 +189,7 @@ class DateFilter(CommonFilter):
         self.set_start_active(True)
 
     @property
+    @isoformat
     def get_dates(self):
         if self.last_option.get_active():
             return self.last_option.get_dates()
