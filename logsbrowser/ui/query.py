@@ -66,7 +66,8 @@ class Filter():
         not_renderer = gtk.CellRendererToggle()
         not_renderer.set_property('activatable', True)
         not_renderer.connect("toggled", self.not_toggle, self.fields['NOT'])
-        not_column = gtk.TreeViewColumn("NOT", not_renderer)
+        self.not_column = gtk.TreeViewColumn("NOT", not_renderer)
+        self.not_column.add_attribute(not_renderer, 'active', self.fields['NOT'])
 
         operator_renderer = gtk.CellRendererCombo()
         operator_renderer.set_property("model", self.operator_model)
@@ -97,7 +98,7 @@ class Filter():
         self.view.append_column(self.down_column)
         self.view.append_column(self.color_column)
         self.view.append_column(field_column)
-        self.view.append_column(not_column)
+        self.view.append_column(self.not_column)
         self.view.append_column(operator_column)
         self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
@@ -126,20 +127,21 @@ class Filter():
     def activate_cell(self, view, event):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            if path[1] == self.color_column:
-                colordlg = gtk.ColorSelectionDialog("Select color")
-                colorsel = colordlg.colorsel
-                colorsel.set_has_palette(True)
-                response = colordlg.run()
-                if response == gtk.RESPONSE_OK:
-                    col = colorsel.get_current_color()
-                    view.get_model()[path[0]][self.fields['HCOLORV']]=col
-                colordlg.destroy()
-            view.set_cursor(path[0], focus_column = path[1], start_editing=True)
-            if path[1] == self.up_column:
-                self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
-            elif path[1] == self.down_column:
-                self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+            if path[1] != self.not_column:
+                if path[1] == self.color_column:
+                    colordlg = gtk.ColorSelectionDialog("Select color")
+                    colorsel = colordlg.colorsel
+                    colorsel.set_has_palette(True)
+                    response = colordlg.run()
+                    if response == gtk.RESPONSE_OK:
+                        col = colorsel.get_current_color()
+                        view.get_model()[path[0]][self.fields['HCOLORV']]=col
+                    colordlg.destroy()
+                view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+                if path[1] == self.up_column:
+                    self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+                elif path[1] == self.down_column:
+                    self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
         elif event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path[1] == self.color_column:
