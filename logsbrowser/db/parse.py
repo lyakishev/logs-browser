@@ -35,7 +35,7 @@ op_to_re = {'LIKE': lambda v: re.escape(v.strip('%')).replace('\%s' % '%',
             'GLOB': lambda v: re.escape(v.strip('*')).replace('\%s' % '*',
                                 '.*').replace('\%s' % '?', '.'),
             'REGEXP': lambda v: v,
-            'MATCH': lambda v: '(?i)'+re.escape(v).replace('\%s' % '*', '\w*')
+            'MATCH': lambda v: '(?i)'+re.escape(v.decode('utf8')).replace('\%s' % '*', '\w*')
             }
         
 
