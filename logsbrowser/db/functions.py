@@ -55,8 +55,11 @@ def iregexp(pattern, field):
     return True if ret else False
 
 def regex(t, pattern, gr):
-    ret = re.compile(pattern).search(t).group(gr)
-    return ret
+    ret = re.compile(pattern).search(t)
+    if ret:
+        return ret.group(gr)
+    else:
+        return ""
 
 def rmatch(pattern, field):
     pattern = re.escape(pattern).replace('\*', '\w*')

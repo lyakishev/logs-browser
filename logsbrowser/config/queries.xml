@@ -1,6 +1,13 @@
 <?xml version="1.0"?>
 <root>
         <queries>
+	<!--<query name="Время, вызов, имя лога, тип" add_lid="1" default="1">
+	select strftime('%H:%M:%f',date) as time,
+	regex(log, '(?im)call(?:(?:\W*\s+<)|(?:\s+method\s+)|(?:ing:\s+method\s)|(\s))([A-Za-z_.]+)(?(1)(\sargs\[))', 2) as call, 
+	logname, type from #this
+	order by date desc
+	</query>-->
+
 	<query name="Дата сообщения, имя лога, тип" add_lid="1" default="0">
 select date, logname, type from #this
 order by date desc
