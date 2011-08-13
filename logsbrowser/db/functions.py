@@ -50,9 +50,15 @@ def regexp(pattern, field):
     ret = re.compile(pattern).search(field)
     return True if ret else False
 
-def iregexp(pattern, field):
+def iregexp(field, pattern):
     ret = re.compile(pattern, re.I).search(field)
     return True if ret else False
+
+def icontains(field, text):
+    return text.lower() in field.lower()
+
+def contains(field, text):
+    return text in field
 
 def regex(t, pattern, gr):
     ret = re.compile(pattern).search(t).group(gr)
