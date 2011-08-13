@@ -402,7 +402,7 @@ def cut_quotes(query):
 def split(select):
     results = []
     cur_column = ""
-    in_brackets = False
+    in_brackets = 0
     for c in select:
         if c == "," and not in_brackets:
             results.append(cur_column.strip())
@@ -410,9 +410,9 @@ def split(select):
         else:
             cur_column += c
         if c == '(':
-            in_brackets = True
-        elif c == ')' and in_brackets:
-            in_brackets = False
+            in_brackets += 1
+        elif c == ')':
+            in_brackets -= 1
     results.append(cur_column.strip())
     return results
 
