@@ -6,9 +6,25 @@ import gio
 import pango
 import re
 import config
+from collections import OrderedDict
+import pango
 
 
 class Filter():
+
+    operators = OrderedDict({'---': ' ',
+                 'REGEXP': 'NOT',
+                 'MATCH': 'NOT',
+                 'LIKE': 'NOT',
+                 'GLOB': 'NOT',
+                 '=': '!',
+                 ">": ' ',
+                 "<": ' ',
+                 "CONTAINS": 'NOT',
+                 "ICONTAINS": 'NOT',
+                 "IREGEXP": 'NOT'
+    })
+
     def __init__(self, plain, loglist):
         self.loglist = loglist
         self.plain = plain
@@ -16,7 +32,7 @@ class Filter():
                                          str,  #down
                                          str,  #color
                                          str,  #column
-                                         bool, #NOT
+                                         str, #NOT
                                          str,  #operator
                                          str,  #clause
                                          str)  #color
@@ -28,7 +44,7 @@ class Filter():
                   "date", "$time", "lid"]:
             self.field_model.append([c])
 
-        for c in ["---", "REGEXP", "LIKE", "MATCH", "="]:
+        for c in self.operators.keys():
             self.operator_model.append([c])
 
         self.fields = {}
@@ -63,17 +79,21 @@ class Filter():
         field_column = gtk.TreeViewColumn("column", field_renderer,
                                                     text=self.fields['FIELD'])
 
-        not_renderer = gtk.CellRendererToggle()
-        not_renderer.set_property('activatable', True)
-        not_renderer.connect("toggled", self.not_toggle, self.fields['NOT'])
-        self.not_column = gtk.TreeViewColumn("NOT", not_renderer)
-        self.not_column.add_attribute(not_renderer, 'active', self.fields['NOT'])
+        not_renderer = gtk.CellRendererText()
+        not_renderer.set_property("editable", False)
+        not_renderer.set_property('xalign', 1.0)
+        font = pango.FontDescription('italic')
+        not_renderer.set_property('font-desc', font)
+        self.not_column = gtk.TreeViewColumn("no", not_renderer,
+                                                text=self.fields['NOT'])
 
         operator_renderer = gtk.CellRendererCombo()
         operator_renderer.set_property("model", self.operator_model)
         operator_renderer.set_property('text-column', 0)
         operator_renderer.set_property('editable', True)
         operator_renderer.set_property('has-entry', True)
+        font = pango.FontDescription('italic')
+        operator_renderer.set_property('font-desc', font)
         operator_renderer.connect("changed", self.change_func, self.fields['OPERATOR'])
         operator_column = gtk.TreeViewColumn("operator", operator_renderer,
                                                     text=self.fields['OPERATOR'])
@@ -103,14 +123,11 @@ class Filter():
         self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
 
-        #self.view.set_property("enable-grid-lines", True)
+        self.view.set_property("enable-grid-lines", True)
         self.view.set_model(self.query_model)
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
         self.view.connect("button-press-event", self.activate_cell)
-
-    def not_toggle(self, toggle, path, col):
-        self.query_model[path][col] = not self.query_model[path][col]
 
     def unselect(self):
         path, focus_column = self.view.get_cursor()
@@ -127,21 +144,34 @@ class Filter():
     def activate_cell(self, view, event):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            if path[1] != self.not_column:
-                if path[1] == self.color_column:
-                    colordlg = gtk.ColorSelectionDialog("Select color")
-                    colorsel = colordlg.colorsel
-                    colorsel.set_has_palette(True)
-                    response = colordlg.run()
-                    if response == gtk.RESPONSE_OK:
-                        col = colorsel.get_current_color()
-                        view.get_model()[path[0]][self.fields['HCOLORV']]=col
-                    colordlg.destroy()
-                view.set_cursor(path[0], focus_column = path[1], start_editing=True)
-                if path[1] == self.up_column:
-                    self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
-                elif path[1] == self.down_column:
-                    self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+            if path[1] == self.not_column:
+                row = view.get_model()[path[0]]
+                operator = row[self.fields['OPERATOR']]
+                if operator == ">":
+                    view.get_model()[path[0]][self.fields['OPERATOR']] = '<'
+                elif operator == "<":
+                    view.get_model()[path[0]][self.fields['OPERATOR']] = '>'
+                no = self.operators[operator]
+                val = row[self.fields['NOT']]
+                if val == no:
+                    row[self.fields['NOT']] = ' '
+                else:
+                    row[self.fields['NOT']] = no
+                return
+            if path[1] == self.color_column:
+                colordlg = gtk.ColorSelectionDialog("Select color")
+                colorsel = colordlg.colorsel
+                colorsel.set_has_palette(True)
+                response = colordlg.run()
+                if response == gtk.RESPONSE_OK:
+                    col = colorsel.get_current_color()
+                    view.get_model()[path[0]][self.fields['HCOLORV']]=col
+                colordlg.destroy()
+            view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+            if path[1] == self.up_column:
+                self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+            elif path[1] == self.down_column:
+                self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
         elif event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path[1] == self.color_column:
@@ -151,6 +181,7 @@ class Filter():
         new_value = combo.get_property("model").get_value(iter_,0)
         if new_value == '---':
             self.query_model[path][self.fields['OPERATOR']] = '---'
+            self.query_model[path][self.fields['NOT']] = ' '
         else:
             if col == self.fields['FIELD'] and hasattr(self, 'default_operator'):
                 new_operator = self.default_operator(new_value)
@@ -169,7 +200,7 @@ class Filter():
                 c = len(self.query_model)
                 self.query_model[c-1][self.fields['FIELD']] = 'log'
                 self.query_model[c-1][self.fields['OPERATOR']] = self.default_operator('log') or '---'
-                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', False, '', '','#fff'])
+                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', ' ', '', '','#fff'])
         except TypeError:
             pass
 
@@ -184,8 +215,8 @@ class Filter():
         self.query_model.clear()
         for row in rows:
             self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,
-                        '',row[0], False, self.default_operator(row[0]) or '---', row[2], row[1]])
-        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', False,'','', '#fff'])
+                        '',row[0], ' ', self.default_operator(row[0]) or '---', row[2], row[1]])
+        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', ' ','','', '#fff'])
 
     def get_filter(self, only_colors):
         

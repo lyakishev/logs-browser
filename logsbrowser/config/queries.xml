@@ -102,7 +102,10 @@ order by date desc
 		<column name="type" operator="=" />
 		<column name="logname" operator="=" />
 		<column name="event" operator="=" />
-		<column name="*" operator="REGEXP" />
+		<column name="computer" operator="=" />
+		<column name="date" operator=">" />
+		<column name="$time" operator=">" />
+		<column name="*" operator="ICONTAINS" />
 	</operators>
 </defaults>
 
