@@ -116,6 +116,12 @@ class LogsViewer:
         self.root.show_all()
         #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
 
+    def set_from_date(self):
+        self.date_filter.fromto_option.from_date.set_now()
+
+    def set_to_date(self):
+        self.date_filter.fromto_option.to_date.set_now()
+
     def show_help(self, *args):
         os.system('start %s' % config.HELP_INDEX)
 

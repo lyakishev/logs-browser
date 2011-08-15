@@ -25,11 +25,11 @@ _formats = [
     "".join([r"(?P<year1>\d{4})[-.]",
             r"(?P<month1>\d{2})[-.]",
             r"(?P<day1>\d{2}) "]),
-    "".join([r"(?P<day2>\d{2})[.-]",
-             r"(?P<month2>\d{2})[.-]",
+    "".join([r"(?P<day2>\d{2})[-.]",
+             r"(?P<month2>\d{2})[-.]",
              r"(?P<year2>\d{4}) "]),
-    "".join([r"(?<!\d)(?P<day3>\d{2})[.-]",
-             r"(?P<month3>\d{2})[.-]",
+    "".join([r"(?<!\d)(?P<day3>\d{2})[-.]",
+             r"(?P<month3>\d{2})[-.]",
              r"(?P<short_year3>\d{2}) "]),
     "".join([r"(?P<month4>\d{2})[/]",
              r"(?P<day4>\d{2})[/]",
@@ -58,7 +58,7 @@ def _short_year_parser(line, cdate, re_obj):
     parsed_line = re_obj.match(line)
     if parsed_line:
         year, month, day, hour, min_, sec, ms = \
-            parsed_line.group("year", "month", "day", "hour", "min",
+            parsed_line.group("short_year", "month", "day", "hour", "min",
                                "sec", "ms")
         return "20%s-%s-%s %02d:%s:%s.%s" % (year,
                                              month,
@@ -88,7 +88,7 @@ def _normal_parser(line, cdate, re_obj):
         year, month, day, hour, min_, sec, ms = \
             parsed_line.group("year", "month", "day", "hour", "min",
                                "sec", "ms")
-        return "%s-%s-%s %02s:%s:%s.%s" % (year,
+        return "%s-%s-%s %02d:%s:%s.%s" % (year,
                                            month,
                                            day,
                                            int(hour),
