@@ -254,7 +254,7 @@ class SelectCore:
         
     def parse(self):
         results = self.select_expr.search(self.sql).group(1).strip()
-        self.result_list = [c.strip() for c in results.split(',')]
+        self.result_list = split(results)
         group = self.group_re.search(self.sql)
         if group:
             self.group = [g.strip() for g in group.group(1).split(',')]
@@ -382,7 +382,7 @@ class SelectCore:
 
 def reset_select_core_counter():
     SelectCore.color_count = count(1)
-            
+
 def cut_quotes(query):
     qoutes_count = count(1)
     quotes = re.compile(r'''('|")(.+?)\1''')
@@ -398,6 +398,24 @@ def cut_quotes(query):
         lend = end
     new_query+=query[lend:]
     return new_query, quotes_dict
+
+def split(select):
+    results = []
+    cur_column = ""
+    in_brackets = 0
+    for c in select:
+        if c == "," and not in_brackets:
+            results.append(cur_column.strip())
+            cur_column = ""
+        else:
+            cur_column += c
+        if c == '(':
+            in_brackets += 1
+        elif c == ')':
+            in_brackets -= 1
+    results.append(cur_column.strip())
+    return results
+
 
 ss = re.compile('\s+')
 

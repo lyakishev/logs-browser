@@ -45,6 +45,19 @@ class QueriesManager(object):
                 return i['name']
         return i['name']
 
+    def default_operator(self, field):
+        xml = ET.parse(self.xml)
+        use = xml.getroot().find('.//defaults/operators')
+        if use.attrib['use'] == 'true':
+            element = xml.getroot().find('.//defaults/operators/column[@name="%s"]' % field)
+            if element is not None:
+                return element.attrib['operator']
+            else:
+                element = xml.getroot().find('.//defaults/operators/column[@name="*"]')
+                if element is not None:
+                    return element.attrib['operator']
+        return None
+
 class SourceManager(object):
 
     def __init__(self, source_xml):
