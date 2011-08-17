@@ -20,24 +20,31 @@ def operator_to_regexp(op, val):
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
 
-clause = re.compile('(?i)(?P<field>log)\s+(?P<op>(like|regexp|match|glob))\s+(?P<val>\$quote\d+)\s+as\s+(?P<color>.+)')
+clause1 = re.compile('(?i)(?P<field>log)\s+(?P<op>(like|regexp|match|glob|=))\s+(?P<val>\$quote\d+)\s+as\s+(?P<color>.+)')
+clause2 = re.compile('(?i)(?P<op>(icontains|contains|iregexp))\(\s*(?P<field>log)\s*,\s*(?P<val>\$quote\d+)\s*\)\s+as\s+(?P<color>.+)')
 
 
 def log_color_clauses(clauses):
     clauses = [c.strip('{}') for c in clauses]
     for cl in clauses:
-        c = clause.match(cl)
+        c = clause1.match(cl)
         if c:
             yield (c.group('op'), c.group('val'), c.group('color'))
+        else:
+            c = clause2.match(cl)
+            if c:
+                yield (c.group('op'), c.group('val'), c.group('color'))
 
-op_to_re = {'LIKE': lambda v: re.escape(v.strip('%')).replace('\%s' % '%',
+op_to_re = {'LIKE': lambda v: re.escape(v.decode('utf8').strip('%')).replace('\%s' % '%',
                                 '.*').replace('\%s' % '_', '.'),
-            'GLOB': lambda v: re.escape(v.strip('*')).replace('\%s' % '*',
+            'GLOB': lambda v: re.escape(v.decode('utf8').strip('*')).replace('\%s' % '*',
                                 '.*').replace('\%s' % '?', '.'),
             'REGEXP': lambda v: v,
-            'MATCH': lambda v: '(?i)'+re.escape(v.decode('utf8')).replace('\%s' % '*', '\w*')
+            'MATCH': lambda v: '(?i)'+re.escape(v.decode('utf8')).replace('\%s' % '*', '\w*'),
+            'CONTAINS': lambda v: re.escape(v.decode('utf8')),
+            'ICONTAINS': lambda v: '(?i)'+re.escape(v.decode('utf8')),
+            'IREGEXP': lambda v: '(?i)'+v,
             }
-        
 
 def lw_hl_expr(lw_hl_clauses, quotes_dict):
     hls = []
@@ -114,12 +121,6 @@ class Query(object):
             query = self.qdict.get(q)
             if query:
                 query.add_lid(group)
-
-    def get_colors(self):
-        colors = []
-        for k,v in self.qdict.iteritems():
-            colors.extend(v.get_colors())
-        return colors
 
 class Select:
 
