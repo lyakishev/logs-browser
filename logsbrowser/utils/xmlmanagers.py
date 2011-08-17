@@ -1,48 +1,49 @@
 from xml.etree import ElementTree as ET
+import yaml
 import fnmatch
 import re
 
 class QueriesManager(object):
 
     def __init__(self, source_xml):
-        self.xml = source_xml
+        self.queries_file = source_xml
 
     @property
     def queries(self):
-        xml = ET.parse(self.xml)
+        config = yaml.load(open(self.queries_file))
         q = {}
-        for i in xml.getroot().find('queries'):
-            q[i.attrib['name']] = i.text
+        for i in config['queries']:
+            q[i['name']] = i['sql']
         return q
 
     @property
     def filters(self):
-        xml = ET.parse(self.xml)
+        config = yaml.load(open(self.queries_file))
         q = {}
-        for i in xml.getroot().find('filters'):
+        for i in config['filters']:
             rows = []
-            for r in i:
-                rows.append((r.attrib['column'],
-                             r.attrib['color'],
-                             r.attrib['clause']))
-            q[i.attrib['name']] = rows
+            for r in i['rows']:
+                rows.append((r['column'],
+                             r['color'],
+                             r['clause']))
+            q[i['name']] = rows
         return q
 
     @property
     def default_query(self):
-        xml = ET.parse(self.xml)
-        for i in xml.getroot().find('queries'):
-            if int(i.attrib['default']) == 1:
-                return i.attrib['name']
-        return i.attrib['name']
+        config = yaml.load(open(self.queries_file))
+        for i in config['queries']:
+            if i['default'] == 1:
+                return i['name']
+        return i['name']
 
     @property
     def default_filter(self):
-        xml = ET.parse(self.xml)
-        for i in xml.getroot().find('filters'):
-            if int(i.attrib['default']) == 1:
-                return i.attrib['name']
-        return i.attrib['name']
+        config = yaml.load(open(self.queries_file))
+        for i in config['filters']:
+            if i['default'] == 1:
+                return i['name']
+        return i['name']
 
 class SourceManager(object):
 

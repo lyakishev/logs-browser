@@ -170,11 +170,11 @@ class LogsViewer:
         return self.signals['stop'] or self.signals['break']
 
     def mpcallback(self, e_stop, val):
+        while gtk.events_pending():
+            gtk.main_iteration()
         self.progressbar.set_fraction(self.frac*val)
         if self.signals['stop'] or self.signals['break']:
             e_stop.set()
-        while gtk.events_pending():
-            gtk.main_iteration()
 
 
     @profiler.time_it
