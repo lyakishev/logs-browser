@@ -46,17 +46,14 @@ class QueriesManager(object):
         return i['name']
 
     def default_operator(self, field):
-        xml = ET.parse(self.xml)
-        use = xml.getroot().find('.//defaults/operators')
-        if use.attrib['use'] == 'true':
-            element = xml.getroot().find('.//defaults/operators/column[@name="%s"]' % field)
-            if element is not None:
-                return element.attrib['operator']
-            else:
-                element = xml.getroot().find('.//defaults/operators/column[@name="*"]')
-                if element is not None:
-                    return element.attrib['operator']
-        return None
+        config = yaml.load(open(self.queries_file))
+        default = None
+        for op in config['defaults']:
+            if op['column'] == field:
+                return op['operator']
+            if op['column'] == '*':
+                default = op['operator']
+        return default
 
 class SourceManager(object):
 

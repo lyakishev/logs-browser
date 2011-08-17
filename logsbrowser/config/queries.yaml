@@ -114,4 +114,23 @@ filters:
       default: 0
       rows:
         - {column: "type", color: "red", clause: "ERROR"}
+
+defaults:
+        - column: 'lid'
+          operator: '='
+        - column: 'type'
+          operator: '='
+        - column: 'logname'
+          operator: '='
+        - column: 'event'
+          operator: '='
+        - column: 'computer'
+          operator: '='
+        - column: 'date'
+          operator: '>'
+        - column: '$time'
+          operator: '>'
+        - column: '*'
+          operator: 'ICONTAINS'
+        
    
