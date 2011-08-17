@@ -3,12 +3,32 @@ import xml.dom.minidom
 from colorsys import *
 import sys
 from utils.text import convert_line_ends
+from collections import OrderedDict
 
 aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
+
+operators = OrderedDict([('---', ' '),
+                ('REGEXP', 'NOT'),
+                ('MATCH', 'NOT'),
+                ('LIKE', 'NOT'),
+                ('GLOB', 'NOT'),
+                ('=', '!'),
+                (">", ' '),
+                ("<", ' '),
+                ("CONTAINS", 'NOT'),
+                ("ICONTAINS", 'NOT'),
+                ("IREGEXP", 'NOT')
+   ])
+
+operator_functions = {"CONTAINS": ["contains", "not_contains"],
+            "ICONTAINS": ["icontains", "not_icontains"],
+            "IREGEXP": ["iregexp", "not_iregexp"]
+}
 
 xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))")
 xml_bad = re.compile(r"<.+?><.+?>")
 xml_new_bad = re.compile(r"<(\w+).*?>.*?</\1>")
+
 
 #TODO SPA, ProdUI
 def xml_pretty(txt):
@@ -54,11 +74,21 @@ def iregexp(field, pattern):
     ret = re.compile(pattern, re.I).search(field)
     return True if ret else False
 
+def not_iregexp(field, pattern):
+    ret = re.compile(pattern, re.I).search(field)
+    return False if ret else True
+
 def icontains(field, text):
     return text.lower() in field.lower()
 
+def not_icontains(field, text):
+    return text.lower() not in field.lower()
+
 def contains(field, text):
     return text in field
+
+def not_contains(field, text):
+    return text not in field
 
 def regex(t, pattern, gr):
     ret = re.compile(pattern).search(t).group(gr)

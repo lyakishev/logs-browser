@@ -6,25 +6,14 @@ import gio
 import pango
 import re
 import config
-from collections import OrderedDict
 import pango
+import db
 
 
 class Filter():
 
-    operators = OrderedDict({'---': ' ',
-                 'REGEXP': 'NOT',
-                 'MATCH': 'NOT',
-                 'LIKE': 'NOT',
-                 'GLOB': 'NOT',
-                 '=': '!',
-                 ">": ' ',
-                 "<": ' ',
-                 "CONTAINS": 'NOT',
-                 "ICONTAINS": 'NOT',
-                 "IREGEXP": 'NOT'
-    })
-
+    operators = db.functions.operators
+   
     def __init__(self, plain, loglist):
         self.loglist = loglist
         self.plain = plain
@@ -104,7 +93,7 @@ class Filter():
                                          self.fields['WHERE'])
         where_renderer.connect("editing-started", self.set_cell_entry_signal,
                                                   self.fields['WHERE'])
-        self.where_column = gtk.TreeViewColumn("where", where_renderer,
+        self.where_column = gtk.TreeViewColumn("clause", where_renderer,
                                                 text=self.fields['WHERE'])
         
         hidden_colorr = gtk.CellRendererText()
@@ -179,14 +168,18 @@ class Filter():
 
     def change_func(self, combo, path, iter_, col):
         new_value = combo.get_property("model").get_value(iter_,0)
-        if new_value == '---':
-            self.query_model[path][self.fields['OPERATOR']] = '---'
+        if col == self.fields['FIELD']:
+            if new_value == '---':
+                self.query_model[path][self.fields['OPERATOR']] = '---'
+                self.query_model[path][self.fields['NOT']] = ' '
+            else:
+                if hasattr(self, 'default_operator'):
+                    new_operator = self.default_operator(new_value)
+                    if new_operator:
+                        self.query_model[path][self.fields['OPERATOR']] = new_operator
+                        self.query_model[path][self.fields['NOT']] = ' '
+        if col == self.fields['OPERATOR']:
             self.query_model[path][self.fields['NOT']] = ' '
-        else:
-            if col == self.fields['FIELD'] and hasattr(self, 'default_operator'):
-                new_operator = self.default_operator(new_value)
-                if new_operator:
-                    self.query_model[path][self.fields['OPERATOR']] = self.default_operator(new_value)
         self.query_model[path][col] = new_value
 
     def change_value(self, cell, path, new_text, col):
@@ -219,25 +212,34 @@ class Filter():
         self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', ' ','','', '#fff'])
 
     def get_filter(self, only_colors):
+
+        ops_funcs = db.functions.operator_functions
         
         fts = self.loglist.fts
 
         FIELD = self.fields['FIELD']
         WHERE = self.fields['WHERE']
         COLOR = self.fields['HCOLORV']
+        OPERATOR = self.fields['OPERATOR']
+        NOT = self.fields['NOT']
 
-        def check_clause(clause):
-            words = len(clause.split())
-            if words > 1 and clause.count("'")>1:
-                return clause
-            else:
-                if fts:
-                    return ("%s '%s'" %
-                            (config.DEFAULT_WHERE_OPERATOR_FTS.upper(),
-                                        clause))
+        def check_clause(field, not_, operator, clause):
+            #words = len(clause.split())
+            #if words > 1 and clause.count("'")>1:
+            #    return clause
+            #else:
+            if operator in ops_funcs:
+                if not_ == self.operators[operator]:
+                    return ("%s(%s, '%s')" % (ops_funcs[operator][1], field, clause))
                 else:
-                    return "%s '%s'" % (config.DEFAULT_WHERE_OPERATOR.upper(),
-                                        clause)
+                    return ("%s(%s, '%s')" % (ops_funcs[operator][0], field, clause))
+            else:
+                return ("%s %s%s '%s'" % (field, not_+(' ' if not_ != '!' else '') ,operator, clause))
+                #if fts:
+                #    return ("%s '%s'" % (not_ ,operator, clause))
+                #else:
+                #    return ("%s '%s'" % (not_ ,operator, clause))
+
         fields = []
         clauses = []
         only_color_fields = []
@@ -246,7 +248,7 @@ class Filter():
                 if r[FIELD] == '---':
                     form = '(%s)' % r[WHERE]
                 else:
-                    form = '%s %s' % (r[FIELD], check_clause(r[WHERE]))
+                    form = '%s' % check_clause(r[FIELD], r[NOT], r[OPERATOR], r[WHERE])
                 if r[COLOR] == '#fff':
                     if not only_colors:
                         clauses.append(form)

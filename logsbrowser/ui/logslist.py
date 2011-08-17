@@ -308,7 +308,9 @@ class LogsListWindow(gtk.Frame):
         sep5 = gtk.SeparatorToolItem()
 
         export_btn = gtk.ToolButton(gtk.STOCK_COPY)
+        export_btn.set_is_important(True)
         export_btn.connect("clicked", self.csv_export)
+        export_btn.set_label("Export...")
 
         
         toolbar.insert(exec_btn, 0)
