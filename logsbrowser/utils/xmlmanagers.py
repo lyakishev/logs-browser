@@ -7,20 +7,19 @@ class QueriesManager(object):
 
     def __init__(self, source_xml):
         self.queries_file = source_xml
+        self.page_filters = {}
+        self.config = yaml.load(open(self.queries_file))
 
     @property
     def queries(self):
-        config = yaml.load(open(self.queries_file))
         q = {}
-        for i in config['queries']:
+        for i in self.config['queries']:
             q[i['name']] = i['sql']
         return q
 
-    @property
-    def filters(self):
-        config = yaml.load(open(self.queries_file))
+    def get_filters_from_config(self):
         q = {}
-        for i in config['filters']:
+        for i in self.config['filters']:
             rows = []
             for r in i['rows']:
                 rows.append((r['column'],
@@ -29,26 +28,32 @@ class QueriesManager(object):
             q[i['name']] = rows
         return q
 
+    def get_filters_from_pages(self, filters):
+        self.page_filters = dict(filters)
+
+    @property
+    def filters(self):
+        cf = self.get_filters_from_config()
+        cf.update(self.page_filters)
+        return cf
+        
     @property
     def default_query(self):
-        config = yaml.load(open(self.queries_file))
-        for i in config['queries']:
+        for i in self.config['queries']:
             if i['default'] == 1:
                 return i['name']
         return i['name']
 
     @property
     def default_filter(self):
-        config = yaml.load(open(self.queries_file))
-        for i in config['filters']:
+        for i in self.config['filters']:
             if i['default'] == 1:
                 return i['name']
         return i['name']
 
     def default_operator(self, field):
-        config = yaml.load(open(self.queries_file))
         default = None
-        for op in config['defaults']:
+        for op in self.config['defaults']:
             if op['column'] == field:
                 return op['operator']
             if op['column'] == '*':

@@ -8,6 +8,7 @@ import re
 import config
 import pango
 import db
+from utils.profiler import profile
 
 
 class Filter():
@@ -204,6 +205,13 @@ class Filter():
             if iter_ is not None and model.iter_next(iter_):
                 model.remove(iter_)
 
+    def get_filter_table(self):
+        rows = []
+        for row in list(self.query_model)[:-1]:
+            rows.append((row[self.fields['FIELD']], row[self.fields['HCOLORV']],
+                        row[self.fields['WHERE']]))
+        return rows
+
     def set_filter(self, rows):
         self.query_model.clear()
         for row in rows:
@@ -338,8 +346,9 @@ class Query(gtk.Notebook):
 
 
 class QueryLoader(gtk.VBox):
-    def __init__(self, query_constructor, qmanager):
+    def __init__(self, query_constructor, qmanager, notify_func):
         gtk.VBox.__init__(self)
+        self.notify_all = notify_func
         self.query_constructor = query_constructor
         self.query_constructor.query.default_operator = qmanager.default_operator
         self.tools = gtk.HBox()
@@ -351,20 +360,15 @@ class QueryLoader(gtk.VBox):
         self.only_colors = gtk.CheckButton('only colors')
         self.only_colors.set_active(False)
         self.filters = gtk.combo_box_new_text()
-        self.filters.connect("changed", self.set_filter)
         self.queries_label = gtk.Label()
         self.queries_label.set_markup('<b>Query</b>')
         self.queries = gtk.combo_box_new_text()
-        self.queries.connect("changed", self.set_query)
         self.query_manager = qmanager
-        for n,q in enumerate(self.query_manager.queries):
-            self.queries.append_text(q)
-            if q == self.query_manager.default_query:
-                self.queries.set_active(n)
-        for n,q in enumerate(self.query_manager.filters):
-            self.filters.append_text(q)
-            if q == self.query_manager.default_filter:
-                self.filters.set_active(n)
+        self.queries.connect("changed", self.set_query)
+        self.filters.connect("changed", self.set_filter)
+        self.update_queries_combo()
+        self.update_filters_combo()
+        self.filters.connect("notify::popup-shown", self._update_fcombo)
         self.queries_combo.pack_start(self.filters_label, False, False, 5)
         self.queries_combo.pack_start(self.filters, True, True)
         self.queries_combo.pack_start(self.only_colors, False, False)
@@ -376,13 +380,55 @@ class QueryLoader(gtk.VBox):
         self.pack_start(self.query_constructor)
         self.show_all()
 
+    def update_queries_combo(self, set_def=True):
+        for n,q in enumerate(self.query_manager.queries):
+            self.queries.append_text(q)
+            if q == self.query_manager.default_query and set_def:
+                self.queries.set_active(n)
+
+    def update_filters_combo(self, set_def=True):
+        filters = [t[0] for t in self.filters.get_model()]
+        for n,q in enumerate(self.query_manager.filters):
+            if q not in filters:
+                self.filters.append_text(q)
+                if q == self.query_manager.default_filter and set_def:
+                    self.filters.set_active(n)
+            else:
+                filters.remove(q)
+        if filters:
+            model = self.filters.get_model()
+            next_ = model.get_iter_first()
+            while next_:
+                if model.get_value(next_, 0) in filters:
+                    model.remove(next_)
+                next_ = model.iter_next(next_)
+
+    def _update_fcombo(self, combo, popup):
+        if combo.get_property('popup-shown'):
+            self.current = self.query_constructor.query.get_filter_table()
+            self.update_filters_combo(False)
+            self.filters.prepend_text("###Current###")
+            self.filters.set_active(0)
+
+    def update_filters(self, filters):
+        self.query_manager.get_filters_from_pages([(k,v.query_constructor.query.get_filter_table())
+                                                    for k,v in filters.items()
+                                                        if v != self])
+
     def set_query(self, *args):
         query = self.queries.get_active_text().decode('utf8')
         self.query_constructor.set_query(self.query_manager.queries[query].strip())
 
     def set_filter(self, *args):
-        query = self.filters.get_active_text().decode('utf8')
-        self.query_constructor.set_filter(self.query_manager.filters[query])
+        self.notify_all()
+        try:
+            query = self.filters.get_active_text().decode('utf8')
+            if query == "###Current###":
+                self.query_constructor.set_filter(self.current)
+            else:
+                self.query_constructor.set_filter(self.query_manager.filters[query])
+        except AttributeError:
+            self.filters.set_active(0)
 
     def get_query(self):
         return self.query_constructor.get_sql(self.get_only_colors())

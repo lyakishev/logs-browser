@@ -332,7 +332,7 @@ class LogsListWindow(gtk.Frame):
 
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
-        self.loader = QueryLoader(self.filter_logs, self.qm)
+        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_filters)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 
@@ -349,6 +349,9 @@ class LogsListWindow(gtk.Frame):
         if config.GRID_LINES:
             grid_btn.set_active(True)
             self.show_gridlines(grid_btn)
+
+    def get_filter(self):
+        return self.loader
 
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,

@@ -9,6 +9,7 @@ from logslist import LogsListWindow
 class LogsNotebook(gtk.Notebook):
     def __init__(self, tree, btn):
         super(LogsNotebook, self).__init__()
+        self.filters = {}
         self.tree = tree
         act_box = gtk.HBox()
         add_btn = gtk.Button()
@@ -74,17 +75,22 @@ class LogsNotebook(gtk.Notebook):
             self.entry.set_has_frame(False)
             self.entry.set_width_chars(12)
             self.entry.set_text(txt)
-            self.entry.connect("focus-out-event", self.new_page_name)
+            self.entry.connect("focus-out-event", self.new_page_name, txt)
             self.set_tab_label(self.page, self.entry)
             self.entry.grab_focus()
 
     def new_page_name(self, *args):
+        old_name = args[-1]
         name = self.entry.get_text().replace(" ","_")
         self.mem_tab.get_children()[0].get_children()[0].\
                            set_text(name)
+        filter_ = self.filters[old_name]
+        self.filters[name] = filter_
+        del self.filters[old_name]
         self.page.set_name(name)
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
+        self.notify_filters()
 
     def add_new_page(self):
         tab_lab = gtk.HBox()
@@ -113,6 +119,8 @@ class LogsNotebook(gtk.Notebook):
         num = self.append_page(l_list, tab_lab)
         self.show_all()
         self.counter += 1
+        self.filters[name] = l_list.get_filter()
+        self.notify_filters()
         return l_list
 
     def add_new(self, *args):
@@ -162,14 +170,22 @@ class LogsNotebook(gtk.Notebook):
     def get_logs_list_window(self):
         return self.get_nth_page(self.get_current_page())
 
+    def notify_filters(self):
+        for page, filter_ in self.filters.iteritems():
+            filter_.update_filters(self.filters)
+
     def close_tab(self, args):
         child = self.btns.index(args)
         page = self.get_nth_page(child)
+        tab = self.get_tab_label(page)
+        txt = tab.get_children()[0].get_children()[0].get_text()
         self.tree.free_state(page)
         self.btns.pop(child)
         self.labels.pop(child)
+        self.filters.pop(txt)
         page.log_list.clear()
         self.remove_page(child)
         if len(self.get_children()) == 0:
             self.counter = 1
             self.add_new_page()
+        self.notify_filters()
