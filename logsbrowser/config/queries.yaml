@@ -8,6 +8,14 @@ queries:
          logname, type from #this
          order by date desc
 
+    - name: 'SelfCare calls'
+      add_lid: 1
+      default: 1
+      sql: |
+        select strftime('%H:%M:%f',date) as time, regex(log, '(?m)^([A-Za-z_<>.]+) \[\d{4}.\d{2}.\d{2} \d{2}:\d{2}\]', 1) as call, logname, type
+        from #this
+        order by date desc
+
     - name: 'OCAT'
       add_lid: 1
       default: 0
