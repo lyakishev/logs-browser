@@ -7,6 +7,11 @@ from utils.ranges import ranges
 
 
 _dbconn = sqlite3.connect(config.SQL_URI, check_same_thread = False)
+
+_dbconn.execute("PRAGMA synchronous = OFF;")
+_dbconn.execute("PRAGMA journal_mode = OFF;")
+_dbconn.execute("PRAGMA PAGE_SIZE = 4096;")
+
 _dbconn.create_function("regexp", 2, functions.regexp)
 _dbconn.create_function("match", 2, functions.rmatch)
 _dbconn.create_function("regex", 3, functions.regex)
@@ -20,7 +25,6 @@ _dbconn.create_function("contains", 2, functions.contains)
 _dbconn.create_function("not_contains", 2, functions.not_contains)
 _dbconn.create_function("rmatch", 2, functions.rmatch)
 _dbconn.create_function("intersct", 2, functions.intersct)
-_dbconn.execute("PRAGMA synchronous=OFF;")
 
 
 def register_agg(name, nargs, object_):

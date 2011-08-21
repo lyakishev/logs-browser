@@ -46,13 +46,13 @@ class Processor(Process):
                 break
             else:
                 buffer_, clines = [], 0
-                for value in worker(dates, path, log, parser):
+                for row, cl in worker(dates, path, log, parser):
                     if stop():
                         put(None)
                         raise SystemExit
-                    clines += value[1]
-                    buffer_.append(value[0])
-                    if clines > 300:
+                    clines += cl
+                    buffer_.append(row)
+                    if clines > 256:
                         put(buffer_)
                         buffer_, clines = [], 0
                 put(buffer_)

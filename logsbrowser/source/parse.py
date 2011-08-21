@@ -14,7 +14,7 @@ for p in sorted(prefixes.keys(), key=lambda x:x[-1]):
     _prefix += "(?P<%s>%s)" % (p, prefixes[p][0])
 
 def prefixes_for_formats(dict_):
-    prefix = ""
+    prefix = "^"
     for p in sorted(prefixes.keys(), key=lambda x: x[-1]):
         if dict_[p]:
             prefix += prefixes[p][1]
