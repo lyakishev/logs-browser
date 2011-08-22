@@ -128,7 +128,7 @@ class LogsViewer:
     def show_about(self, *args):
         about = gtk.AboutDialog()
         about.set_property('authors', ['Lyakishev Andrey <alyakishev@sitronics.com>'])
-        about.set_property('version', '2.0')
+        about.set_property('version', '2.0a')
         about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         about.set_name('LogsBrowser')
         about.run()

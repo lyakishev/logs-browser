@@ -139,6 +139,6 @@ defaults:
         - column: '$time'
           operator: '>'
         - column: '*'
-          operator: 'ICONTAINS'
+          operator: 'CONTAINS'
         
    
