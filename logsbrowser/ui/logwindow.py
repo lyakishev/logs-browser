@@ -361,7 +361,7 @@ class LogWindow:
         response = fchooser.run()
         if response == gtk.RESPONSE_OK:
             path = fchooser.get_filename()
-            f = open(path, "w")
+            f = open(path.decode('utf8'), "w")
             f.write(self.get_text())
             f.close()
         fchooser.destroy()

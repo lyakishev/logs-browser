@@ -191,7 +191,8 @@
     </stand>
     <stand name="TEST">
         <filelogs>
-            <folder>/home/user/sharew7/logs/log</folder>
+            <!--<folder>/home/user/sharew7/logs/log</folder>-->
+	    <folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>
         </filelogs>
         <evlogs />
     </stand>
