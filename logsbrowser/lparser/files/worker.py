@@ -6,6 +6,7 @@ from readers import mmap_block_read, seek_block_read
 from operator import itemgetter
 from utils.common import to_unicode, isoformat
 import config
+from collections import deque
 
 
 def get_start_date(file_, pformat, cdate, pfunc):
@@ -32,17 +33,17 @@ def filelogworker(dates, path, log, funcs):
                 raise StopIteration
             comp = [p for p in path.split(os.sep) if p][0]
             path = to_unicode(path)
-            msg, clines = "", 0
+            msg, clines = deque(), 0
             for string in mmap_block_read(file_, 16*1024):
                 parsed_date = pfunc(string, cdate, pformat)
                 if not parsed_date:
-                    msg = string + msg
+                    msg.appendleft(string)
                     clines += 1
                 else:
                     if parsed_date < dates[0]:
                         raise StopIteration
                     if parsed_date <= dates[1]:
-                        msg = to_unicode(string + msg)
+                        msg.appendleft(string)
                         clines += 1
                         yield (parsed_date,
                                comp,
@@ -51,8 +52,8 @@ def filelogworker(dates, path, log, funcs):
                                        else "?"),
                                path,
                                0,
-                               msg), clines
-                    msg, clines = "", 0
+                               to_unicode("".join(msg))), clines
+                    msg.clear()
+                    clines = 0
     except IOError:
         raise StopIteration
-        
