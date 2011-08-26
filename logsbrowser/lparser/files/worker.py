@@ -16,7 +16,7 @@ def get_start_date(file_, pformat, cdate, pfunc):
             return start_date
 
 
-def filelogworker1(dates, path, log, funcs):
+def filelogworker2(dates, path, log, funcs):
     pformat, pfunc, need_date = funcs
     if need_date:
         try:
@@ -95,6 +95,8 @@ def filelogworker(dates, path, log, funcs):
                                path,
                                0,
                                to_unicode(msg)), clines
+                    else:
+                        reader.send(0)
                     clines = 0
     except IOError:
         raise StopIteration
