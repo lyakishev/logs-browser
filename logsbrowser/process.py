@@ -4,13 +4,13 @@ import sys
 if sys.platform == 'win32':
     from lparser.events.worker import evlogworker as eworker
 from utils.profiler import time_it, profile
-from multiprocessing import Event, Process, Queue, JoinableQueue, Value
+from multiprocessing import Event, Process, Queue, JoinableQueue, Value, cpu_count
 from itertools import chain
 from threading import Thread
 import time
 from Queue import Empty as qEmpty
 
-PROCESSES = 2
+PROCESSES = cpu_count()
 
 @time_it
 def process(table, sources, dates, callback):
@@ -21,7 +21,6 @@ def process(table, sources, dates, callback):
             if stop_:
                 break
             insert_many(table, (val[0] for val in worker(dates, path, log, funcs)))
-        
     flogs, elogs = sources
     _process(fworker, flogs)
     if elogs:
@@ -47,12 +46,9 @@ class Processor(Process):
             else:
                 buffer_, clines = [], 0
                 for row, cl in worker(dates, path, log, parser):
-                    if stop():
-                        put(None)
-                        raise SystemExit
                     clines += cl
                     buffer_.append(row)
-                    if clines > 256:
+                    if clines > 255:
                         put(buffer_)
                         buffer_, clines = [], 0
                 put(buffer_)
@@ -69,39 +65,43 @@ def _mix_sources(sources, dates):
         sources_for_worker.put((eworker, dates, p, l, funcs))
     return sources_for_worker
 
-def generator_from_queue(queue, e_stop):
+def terminate(processes):
+    for process in processes:
+        process.terminate()
+
+def generator_from_queue(queue, e_stop, vall, callback, p):
     get = queue.get
     stop = e_stop.is_set
     c = 0
     while 1:
+        callback(e_stop, vall.value)
+        if stop():
+            terminate(p)
+            raise StopIteration
         if c == PROCESSES:
             break
-        if stop():
-            raise StopIteration
         val = get()
         if val == None:
             c += 1
             continue
         yield val
 
-def _mp_process(table, sources, dates, stop, val):
+def _mp_process(table, sources, dates, stop, val, callback):
     sources_for_worker = _mix_sources(sources, dates)
     insert_queue = Queue()
+    processes = []
     for i in xrange(PROCESSES):
         p = Processor(sources_for_worker, insert_queue, stop, val)
+        processes.append(p)
         p.daemon = True
         p.start()
-    insert_many(table, chain.from_iterable(generator_from_queue(insert_queue, stop)))
+    insert_many(table, chain.from_iterable(generator_from_queue(insert_queue,
+                                                stop, val, callback, processes)))
 
 @time_it
 def mp_process(table, sources, dates, callback):
     _e_stop = Event()
     val = Value('i', 0)
-    t=Thread(target=_mp_process, args=(table, sources, dates, _e_stop, val))
-    t.start()
-    while t.is_alive():
-        callback(_e_stop, val.value)
-        time.sleep(0.2)
+    _mp_process(table, sources, dates, _e_stop, val, callback)
     _e_stop.clear()
-    
 
