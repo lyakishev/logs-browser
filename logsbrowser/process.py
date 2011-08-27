@@ -44,13 +44,13 @@ class Processor(Process):
             except qEmpty:
                 break
             else:
-                buffer_, clines = [], 0
-                for row, cl in worker(dates, path, log, parser):
-                    clines += cl
+                buffer_, chars = [], 0
+                for row, ch in worker(dates, path, log, parser):
+                    chars += ch
                     buffer_.append(row)
-                    if clines >= 16*1024:
+                    if chars >= 16*1024:
                         put(buffer_)
-                        buffer_, clines = [], 0
+                        buffer_, chars = [], 0
                 put(buffer_)
                 self.in_queue.task_done()
                 self.value.value += 1
