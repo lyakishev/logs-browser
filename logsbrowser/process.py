@@ -48,7 +48,7 @@ class Processor(Process):
                 for row, cl in worker(dates, path, log, parser):
                     clines += cl
                     buffer_.append(row)
-                    if clines > 255:
+                    if clines >= 16*1024:
                         put(buffer_)
                         buffer_, clines = [], 0
                 put(buffer_)

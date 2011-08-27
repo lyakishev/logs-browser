@@ -43,7 +43,8 @@ def mmap_block_read2(file_, block_size=8192):
                         get_msg = (yield line)
                         start_msg_pos -= len(line)
                         if get_msg == 1:
-                            yield data[start_msg_pos:end_msg_pos]
+                            yield (data[start_msg_pos:end_msg_pos],
+                                    end_msg_pos - start_msg_pos)
                             end_msg_pos = start_msg_pos
                         elif get_msg == 0:
                             end_msg_pos = start_msg_pos
@@ -53,7 +54,8 @@ def mmap_block_read2(file_, block_size=8192):
                 get_msg = (yield line)
                 start_msg_pos -= len(line)
                 if get_msg == 1:
-                    yield data[start_msg_pos:end_msg_pos]
+                    yield (data[start_msg_pos:end_msg_pos],
+                            end_msg_pos - start_msg_pos)
                     end_msg_pos = start_msg_pos
                 elif get_msg == 0:
                     end_msg_pos = start_msg_pos
