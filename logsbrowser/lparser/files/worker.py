@@ -33,18 +33,17 @@ def filelogworker2(dates, path, log, funcs):
                 raise StopIteration
             comp = [p for p in path.split(os.sep) if p][0]
             path = to_unicode(path)
-            msg, clines = deque(), 0
+            msg_deque = deque()
             for string in mmap_block_read(file_, 16*1024):
                 parsed_date = pfunc(string, cdate, pformat)
                 if not parsed_date:
-                    msg.appendleft(string)
-                    clines += 1
+                    msg_deque.appendleft(string)
                 else:
                     if parsed_date < dates[0]:
                         raise StopIteration
                     if parsed_date <= dates[1]:
-                        msg.appendleft(string)
-                        clines += 1
+                        msg_deque.appendleft(string)
+                        msg = to_unicode("".join(msg_deque))
                         yield (parsed_date,
                                comp,
                                log,
@@ -52,9 +51,8 @@ def filelogworker2(dates, path, log, funcs):
                                        else "?"),
                                path,
                                0,
-                               to_unicode("".join(msg))), clines
-                    msg.clear()
-                    clines = 0
+                               msg), len(msg)
+                    msg_deque.clear()
     except IOError:
         raise StopIteration
 

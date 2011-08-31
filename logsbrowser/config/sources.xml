@@ -230,7 +230,8 @@
     </stand>
     <stand name="TEST">
         <filelogs>
-        <folder>/home/user/sharew7/logs/log</folder>
+        <!--<folder>/home/user/sharew7/logs/log</folder>-->
+        <folder>C:\Users\ALyakishev\logs2</folder>
 	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>
 	    <folder>C:\Users\ALyakishev\logs\forislog</folder>
 	    <folder>C:\Users\ALyakishev\share</folder>-->
