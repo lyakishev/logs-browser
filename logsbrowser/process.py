@@ -77,6 +77,7 @@ def generator_from_queue(queue, e_stop, vall, callback, p):
         callback(e_stop, vall.value)
         if stop():
             terminate(p)
+            queue.close()
             raise StopIteration
         if c == PROCESSES:
             break
@@ -97,6 +98,8 @@ def _mp_process(table, sources, dates, stop, val, callback):
         p.start()
     insert_many(table, chain.from_iterable(generator_from_queue(insert_queue,
                                                 stop, val, callback, processes)))
+    sources_for_worker.close()
+    insert_queue.close()
 
 @time_it
 def mp_process(table, sources, dates, callback):

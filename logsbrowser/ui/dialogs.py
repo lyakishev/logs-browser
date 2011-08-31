@@ -67,4 +67,3 @@ def save_dialog():
 if __name__ == "__main__":
     import sys
     sys.excepthook = exception_dialog
-    print 1/0

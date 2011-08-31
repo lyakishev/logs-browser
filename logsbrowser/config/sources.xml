@@ -20,7 +20,6 @@
 	    <folder>\\msk-dev-01\c$\foris\TelCRM\WindowsServices\True</folder>
 	    <folder>\\msk-dev-02\c$\foris\Billing\BillingManagementConsole\log</folder>
 	    <folder>\\msk-dev-02\c$\foris\Billing\Server\AccountsReceivableWCF\Log</folder>
-	    <folder>\\msk-dev-03\c$\foris\Account Management</folder>
 	    <folder>\\msk-dev-04\c$\foris\Report\log</folder>
 	    <folder>\\msk-dev-07\c$\foris\BonusSystem\CollectionPaymentExport</folder>
 	    <folder>\\msk-dev-07\c$\foris\BonusSystem\EventProcessor</folder>
@@ -115,7 +114,6 @@
             <folder>\\msk-func-11\c$\forislog</folder>
             <folder>\\msk-func-12\c$\forislog</folder>
             <folder>\\msk-func-dmz\c$\forislog</folder>
-            <folder>\\portal-test-02\c$\forislog</folder>
 	    <folder>\\msk-func-01\c$\foris\MARTI\OrderStorage\Logs</folder>
 	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow</folder>
 	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow\Logs</folder>
@@ -211,7 +209,6 @@
             <folder>\\00-report\c$\forislog</folder>
             <folder>\\00-doc\c$\forislog</folder>
             <folder>\\00-dmz\c$\forislog</folder>
-            <folder>\\portal-test-04\c$\forislog</folder>
         </filelogs>
         <evlogs>
             <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
@@ -229,7 +226,6 @@
             <source server="00-spa-sa">Application,Foris.Catalogues,FORIS.Common,Foris.SPA.SA,Foris.SPA.ScenarioEditor,Foris.SPA.Sync,System</source>
             <source server="00-term">Application,FORIS.Billing,Foris.Catalogues,FORIS.Common,Foris.ODS,Foris.REService,FORIS.RI,FORIS.SUPS.SPFServer,Internet,System</source> 
             <source server="00-wfm">Application,FORIS.Common,FORIS.ResourceLocking,FORIS.ServiceRegistry,FORIS.Workflow,System</source>
-            <source server="portal-test-04">Application, CRM.Gateway, CRM_Interfaces, Foris.Catalogues, FORIS.Common, FORIS.Production, FORIS.ResourceLocking, FORIS.ScratchCards, FORIS.ScratchCards.Activation, Foris.SelfCare, FORIS.TelCRM.GUI, Foris.TelCRM.Marketing, Foris.TelCrm.RequestManagement, FORIS.TelCRM.Sales, FORIS.Workflow, System, TelCRM.Marketing, TelCRM.WindowsServices</source>
         </evlogs>
     </stand>
     <stand name="TEST">

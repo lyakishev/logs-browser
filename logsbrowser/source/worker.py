@@ -54,7 +54,7 @@ def date_format(path):
                 else:
                     break
             if not pfunc:
-                print "Not found format for file %s" % path
+                #print "Not found format for file %s" % path
                 return None
     except IOError:
         return None

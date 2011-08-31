@@ -154,7 +154,6 @@ class SelectManager(object):
 
     @property
     def selects(self):
-        print 'call'
         xml = ET.parse(self.xml)
         return [i.attrib['name'] for i in xml.getroot()]
 

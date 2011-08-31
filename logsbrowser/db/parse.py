@@ -508,6 +508,7 @@ def wrap(expr):
 
 
 if __name__ == '__main__':
+    pass
     #print process("select date, time, {log regexp 'abc' as #ff0} from this where log MATCH 'test' AND (log=123 OR log NOT LIKE 'abcd') group by date order by date desc")
     ##print q
     #print 80*'_'
@@ -539,7 +540,7 @@ if __name__ == '__main__':
 #order by logname_group desc""")
     #print process('''select date from (select a,$color{log match 'test' as #ff0} from this union select a, $color{log match 'xaxaxa' as #fff} from
 
-    print process("select date, logname, type, {log MATCH 'SUCCESS' as #ff0} from _asacsaca")
+    #print process("select date, logname, type, {log MATCH 'SUCCESS' as #ff0} from _asacsaca")
 
 
 

@@ -23,7 +23,6 @@ from cellrenderercolors import CellRendererColors
 from string import Template
 from utils.profiler import time_it, profile
 from utils.colors import ColorError
-import pdb
 
 def callback():
     while gtk.events_pending():
@@ -91,7 +90,6 @@ class LogList(object):
         except Exception as e:
             merror(str(e))
             return
-        print sql
         self.view.freeze_child_notify()
         self.view.set_model(None)
         sql_hash = sql_to_hash(sql)
