@@ -3,13 +3,11 @@
         <filelogs>
             <folder>\\msk-dev-01\c$\forislog</folder>
 	    <folder>\\msk-dev-01\c$\foris\Marti\OrderStorage\Logs</folder>
-            <folder>\\msk-dev-01\c$\forislog</folder>
             <folder>\\msk-dev-02\c$\forislog</folder>
             <folder>\\msk-dev-03\c$\forislog</folder>
             <folder>\\msk-dev-04\c$\forislog</folder>
             <folder>\\msk-dev-05\c$\forislog</folder>
             <folder>\\msk-dev-06\c$\forislog</folder>
-            <folder>\\msk-dev-07\c$\forislog</folder>
             <folder>\\msk-dev-08\c$\forislog</folder>
             <folder>\\msk-dev-09\c$\forislog</folder>
             <folder>\\msk-dev-10\c$\forislog</folder>

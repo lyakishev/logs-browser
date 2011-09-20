@@ -223,10 +223,10 @@ class ServersModel(object):
             walker(it)
             it = self.treestore.iter_next(it)
 
-    def add_root(self, name, filled=True):
+    def add_root(self, name, filled=False):
         return self.treestore.append(None, [name,
-                                            (gtk.STOCK_CONNECT if filled
-                                            else gtk.STOCK_DISCONNECT),
+                                            gtk.STOCK_DISCONNECT if not filled
+                                            else gtk.STOCK_CONNECT,
                                             None, 'n'])
 
     def add_dir(self, name, parent):
@@ -290,13 +290,11 @@ class FileServersModel(ServersModel):
             for n, path in enumerate(self.dirs):
                 self.progress.set_text("%s" % path)
                 if self.signals['stop'] or self.signals['break']:
-                    raise StopIteration
-                self.add_parents(path, None, self.stand)
+                    fill = False
+                self.add_parents(path, None, self.stand, fill)
                 if fill:
                     self.add_logdir(path, None, self.stand)
                 self.progress.set_fraction(frac * (n + 1))
-        except StopIteration:
-            pass
         finally:
             self.signals['stop'] = False
             self.signals['break'] = False
@@ -306,15 +304,18 @@ class FileServersModel(ServersModel):
     def get_model_from_cache(self, stand):
         return self.cache.get(stand)
 
-    def add_parents(self, path, parent, server):
+    def add_parents(self, path, parent, server, fill):
         parts = [p for p in path.split(os.sep) if p]
         if path.startswith(r"\\"):
             parts[0] = r"\\" + parts[0]
         elif path.startswith(r"/"):
             parts[0] = "/" + parts[0]
-        prev_node_path = server
-        for n, p in enumerate(parts):
-            new_node_path = join_path(server, os.sep.join(parts[:n + 1]))
+        root, dirs = parts[0], parts[1:]
+        new_node_path = join_path(server, root)
+        self.new_root_node(root, None, new_node_path, fill)
+        prev_node_path = new_node_path
+        for n, p in enumerate(dirs):
+            new_node_path = join_path(server, os.sep.join(parts[:n + 2]))
             self.new_dir_node(p, parent, new_node_path, prev_node_path)
             prev_node_path = new_node_path
             while gtk.events_pending():
@@ -323,6 +324,16 @@ class FileServersModel(ServersModel):
     def check_break(self):
         if self.signals['break']:
             raise StopIteration
+
+    def new_root_node(self, f, parent, ext_parent, fill):
+        while gtk.events_pending():
+            gtk.main_iteration()
+        self.check_break()
+        node = self.parents.get(ext_parent)
+        if not node:
+            node = self.add_root(f, fill)
+            self.parents[ext_parent] = node
+        return node
 
     def new_dir_node(self, f, parent, ext_parent, ext_prev_parent=None):
         while gtk.events_pending():
