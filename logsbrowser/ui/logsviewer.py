@@ -40,7 +40,7 @@ class LogsViewer:
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Logs Browser")
         self.root.connect("destroy", self.destroy_cb)
-        self.root.set_default_size(1200, 800)
+        self.root.set_default_size(config.WIDTH_MAIN_WINDOW, config.HEIGHT_MAIN_WINDOW)
 
         self.date_filter = DateFilter()
 

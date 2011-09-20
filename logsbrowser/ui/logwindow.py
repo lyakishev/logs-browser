@@ -38,7 +38,7 @@ class LogWindow:
         self.iter = iter
         self.popup = gtk.Window()
         self.popup.set_title("Log")
-        self.popup.set_default_size(700, 700)
+        self.popup.set_default_size(config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
         self.box = gtk.VBox()
         self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
