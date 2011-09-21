@@ -18,6 +18,8 @@ from db.engine import close_conn
 from operator import setitem
 import os
 
+license = open("LICENSE").read()
+
 
 class LogsViewer:
     """ The GUI class is the controller for application """
@@ -125,6 +127,7 @@ class LogsViewer:
         about.set_property('version', '1.9')
         about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         about.set_name('LogsBrowser')
+	about.set_license(license)
         about.run()
         about.destroy()
 
