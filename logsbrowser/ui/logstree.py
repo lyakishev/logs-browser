@@ -12,6 +12,7 @@ import config
 from utils.xmlmanagers import SourceManager, SelectManager
 from dialogs import save_dialog
 from sourceactionsmanager import SourceActionsManagerUI
+from source.monitor import ConfigMonitor
 
 class ServersModel(object):
 
@@ -19,7 +20,8 @@ class ServersModel(object):
         self.treestore = gtk.TreeStore(gobject.TYPE_STRING,
                                        gobject.TYPE_STRING,
                                        gobject.TYPE_BOOLEAN,
-                                       gobject.TYPE_STRING)
+                                       gobject.TYPE_STRING,
+                                       gobject.TYPE_PYOBJECT)
 
         self.model_filter = self.treestore.filter_new()
 
@@ -87,28 +89,34 @@ class ServersModel(object):
             treewalk(root)
             root = self.treestore.iter_next(root)
 
-    def set_from_copy(self, copy_treestore):
-        self._copy(copy_treestore, self)
 
     def copy(self):
         copy_treestore = ServersModel()
         self._copy(self.treestore, copy_treestore)
         return copy_treestore.treestore
 
-    def _copy(self, treestore, copytreestore):
+    def _copy(self, treestore, copytreestore, old_parents=None):
         getv = treestore.get_value
         copy_treestore = copytreestore
+        new_parents = {}
+        if not old_parents:
+            old_parents = {}
+        old_parents_swap = dict([(v, k) for (k, v) in old_parents.iteritems()])
 
         def treewalk(iter_, parent):
             val = getv(iter_, 3)
             name = getv(iter_, 0)
+            path = getv(iter_, 4)
             if val == 'n':
                 filled = True if getv(iter_, 1) == gtk.STOCK_CONNECT else False
-                parent_copy = copy_treestore.add_root(name, filled)
+                parent_copy = copy_treestore.add_root(name, filled, path)
             elif val == 'd':
-                parent_copy = copy_treestore.add_dir(name, parent)
+                parent_copy = copy_treestore.add_dir(name, parent, path)
             elif val == 'f':
-                parent_copy = copy_treestore.add_file(name, parent)
+                parent_copy = copy_treestore.add_file(name, parent, path)
+            copy_path = treestore.get_path(iter_)
+            if copy_path in old_parents_swap:
+                new_parents[old_parents_swap[copy_path]] = parent_copy
             it = treestore.iter_children(iter_)
             while it:
                 treewalk(it, parent_copy)
@@ -117,6 +125,13 @@ class ServersModel(object):
         while root:
             treewalk(root, None)
             root = treestore.iter_next(root)
+        return new_parents
+
+    def iters_to_pathes(self, parents):
+        new_parents = {}
+        for k,v in parents.iteritems():
+            new_parents[k] = self.treestore.get_path(v)
+        return new_parents
 
     def get_active_servers(self):
         log_for_process = []
@@ -223,21 +238,36 @@ class ServersModel(object):
             walker(it)
             it = self.treestore.iter_next(it)
 
-    def add_root(self, name, filled=False):
+    def add_root(self, name, filled, path):
         return self.treestore.append(None, [name,
                                             gtk.STOCK_DISCONNECT if not filled
                                             else gtk.STOCK_CONNECT,
-                                            None, 'n'])
+                                            None, 'n', (path,) if type(path) is
+                                            not tuple else path])
 
-    def add_dir(self, name, parent):
+    def add_dir(self, name, parent, path):
+        if type(path) is not tuple:
+            path = (path,)
+        node_pathes_set = set(path)
+        if parent:
+            pathes = self.treestore.get_value(parent, 4)
+            pathes_set = set(pathes) | node_pathes_set
+            self.treestore.set_value(parent, 4, tuple(pathes_set))
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_DIRECTORY,
-                                            None, 'd'])
+                                            None, 'd', path])
 
-    def add_file(self, name, parent):
+    def add_file(self, name, parent, path):
+        if type(path) is not tuple:
+            path = (path,)
+        node_pathes_set = set(path)
+        if parent:
+            pathes = self.treestore.get_value(parent, 4)
+            pathes_set = set(pathes) | node_pathes_set
+            self.treestore.set_value(parent, 4, tuple(pathes_set))
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_FILE,
-                                            None, 'f'])
+                                            None, 'f', path])
 
 class EventServersModel(ServersModel):
     def __init__(self):
@@ -246,9 +276,9 @@ class EventServersModel(ServersModel):
     def fill(self, sources):
         self.treestore.clear()
         for k, v in sources.iteritems():
-            child = self.add_dir(k, None)
+            child = self.add_dir(k, None, k)
             for l in v:
-                self.add_file(l, child)
+                self.add_file(l, child, os.path.join(k,l))
 
 
 class FileServersModel(ServersModel):
@@ -257,49 +287,61 @@ class FileServersModel(ServersModel):
         self.signals = signals
         self.fill = sens_func(self.fill)
         self.dirs = None
+        self.dir_ = ""
         self.stand = None
         self.cache = {}
+        self.parents = {}
         super(FileServersModel, self).__init__()
 
     def fill(self, fill, dirs=None, stand=None):
         self.treestore.clear()
         if fill:
             clear_source_formats(stand)
-            self._fill(dirs, stand)
-            self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
+            self._fill(fill, self.dirs, stand)
+            self.cache[self.stand] = (self.copy(), self.dirs, self.stand,
+                                        self.iters_to_pathes(self.parents))
+            self.parents = {}
         else:
             cached_model = self.get_model_from_cache(stand)
             if cached_model:
-                self.set_from_copy(cached_model[0])
                 self.dirs = cached_model[1]
                 self.stand = cached_model[2]
+                parents = cached_model[3]
+                self.set_from_copy(cached_model[0], dirs, parents)
             else:
-                self._fill(dirs, stand)
-                self.cache[self.stand] = (self.copy(), self.dirs, self.stand)
+                self.dirs = dirs
+                self._fill(fill, dirs, stand)
+                self.cache[self.stand] = (self.copy(), self.dirs, self.stand,
+                                            self.iters_to_pathes(self.parents))
 
-    def _fill(self, dirs, stand):
-        self.parents = {}
-        fill = True
+    def _fill(self, fill, dirs, stand, clean_parents=True):
         if dirs:
-            self.dirs = dirs
-            fill = False
-        if stand:
-            self.stand = stand
-        frac = 1. / len(self.dirs)
-        try:
-            for n, path in enumerate(self.dirs):
-                self.progress.set_text("%s" % path)
-                if self.signals['stop'] or self.signals['break']:
-                    fill = False
-                self.add_parents(path, None, self.stand, fill)
-                if fill:
-                    self.add_logdir(path, None, self.stand)
-                self.progress.set_fraction(frac * (n + 1))
-        finally:
-            self.signals['stop'] = False
-            self.signals['break'] = False
-            self.progress.set_text("")
-            self.progress.set_fraction(0)
+            if clean_parents:
+                self.parents = {}
+            if stand:
+                self.stand = stand
+            frac = 1. / len(dirs)
+            try:
+                for n, path in enumerate(dirs):
+                    self.dir_ = path
+                    self.progress.set_text("%s" % path)
+                    if self.signals['stop'] or self.signals['break']:
+                        fill = False
+                        if clean_parents:
+                            self.parents = {}
+                        self.signals['stop'] = False
+                        self.signals['break'] = False
+                    self.add_parents(path, None, self.stand, fill)
+                    if fill:
+                        self.add_logdir(path, None, self.stand)
+                    self.progress.set_fraction(frac * (n + 1))
+            finally:
+                self.signals['stop'] = False
+                self.signals['break'] = False
+                self.progress.set_text("")
+                self.progress.set_fraction(0)
+            if fill:
+                self.parents = {}
 
     def get_model_from_cache(self, stand):
         return self.cache.get(stand)
@@ -312,7 +354,7 @@ class FileServersModel(ServersModel):
             parts[0] = "/" + parts[0]
         root, dirs = parts[0], parts[1:]
         new_node_path = join_path(server, root)
-        self.new_root_node(root, None, new_node_path, fill)
+        parent = self.new_root_node(root, None, new_node_path, fill)
         prev_node_path = new_node_path
         for n, p in enumerate(dirs):
             new_node_path = join_path(server, os.sep.join(parts[:n + 2]))
@@ -321,6 +363,7 @@ class FileServersModel(ServersModel):
             while gtk.events_pending():
                 gtk.main_iteration()
 
+   
     def check_break(self):
         if self.signals['break']:
             raise StopIteration
@@ -331,7 +374,7 @@ class FileServersModel(ServersModel):
         self.check_break()
         node = self.parents.get(ext_parent)
         if not node:
-            node = self.add_root(f, fill)
+            node = self.add_root(f, fill, self.dir_)
             self.parents[ext_parent] = node
         return node
 
@@ -342,7 +385,7 @@ class FileServersModel(ServersModel):
         node = self.parents.get(ext_parent)
         if not node:
             parent_ = self.parents.get(ext_prev_parent, parent)
-            node = self.add_dir(f, parent_)
+            node = self.add_dir(f, parent_, self.dir_)
             self.parents[ext_parent] = node
         return node
 
@@ -351,12 +394,44 @@ class FileServersModel(ServersModel):
             gtk.main_iteration()
         self.check_break()
         parent_ = self.parents.get(ext_parent, parent)
-        self.add_file(name, parent_)
+        self.add_file(name, parent_, self.dir_)
 
     def add_logdir(self, path, parent, server):
         parent_ = self.parents.get(join_path(server, path), parent)
         dir_walker(path, self.new_dir_node, self.file_callback, parent_,
                     server)
+
+    def diff_dirs(self, dirs):
+        new_dirs = [d for d in dirs if d not in self.dirs]
+        dirs_for_del = [d for d in self.dirs if d not in dirs]
+        self._fill(False, new_dirs, None, False)
+        for dir_ in dirs_for_del:
+            self.remove_iter_by_dir(dir_)
+        self.dirs = dirs
+
+    def remove_iter_by_dir(self, dir_):
+        getv = self.treestore.get_value
+
+        def treewalk(iters):
+            node_dirs = getv(iters, 4)
+            if dir_ in node_dirs  and len(node_dirs) == 1:
+                self.treestore.remove(iters)
+            else:
+                it = self.treestore.iter_children(iters)
+                while it:
+                    treewalk(it)
+                    it = self.treestore.iter_next(it)
+
+        root = self.treestore.iter_children(None)
+        while root:
+            next_root = self.treestore.iter_next(root)
+            treewalk(root)
+            root = next_root
+
+    def set_from_copy(self, copy_treestore, dirs, parents):
+        self.parents = self._copy(copy_treestore, self, parents)
+        self.diff_dirs(dirs)
+
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
@@ -575,6 +650,9 @@ class LogsTrees(gtk.Notebook):
             self.evlogs_servers_tree.show()
             self.append_page(self.evlogs_servers_tree, evt_label)
 
+    def config_changed(self, manag):
+        pass
+
     def fill_tree(self, filelogs, evlogs, stand):
         if self.evlogs_servers_tree:
             self.evlogs_servers_tree.model.fill(evlogs)
@@ -594,6 +672,8 @@ class SourceManagerUI(gtk.VBox):
         stand_manager = gtk.Toolbar()
         self.tree = LogsTrees(progress, sens_func, signals, root)
         self.source_manager = SourceManager(config.SOURCES_XML)
+        self.config_monitor = ConfigMonitor(config.SOURCES_XML)
+        self.config_monitor.register_action(self.config_changed)
 
 
         reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
@@ -614,6 +694,20 @@ class SourceManagerUI(gtk.VBox):
         self.pack_start(self.tree, True, True)
 
         self.show_all()
+
+    def config_changed(self, *args):
+        stand = self.stand_choice.get_active_text()
+        new_model = gtk.ListStore(str)
+        self.stand_choice.set_model(None)
+        active = None
+        for n, st in enumerate(self.source_manager.stands):
+            new_model.append([st])
+            if st == self.source_manager.default_stand:
+                self.default = n
+            if st == stand:
+                active = n
+        self.stand_choice.set_model(new_model)
+        self.stand_choice.set_active(active if active is not None else self.default)
 
     def fill(self):
         stand = self.stand_choice.get_active_text()

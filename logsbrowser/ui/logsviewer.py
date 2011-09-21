@@ -72,8 +72,6 @@ class LogsViewer:
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
-
-
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals, self.root)
 
