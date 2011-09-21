@@ -1,4 +1,32 @@
 <stands>
+    <stand name="MSK-DEV">
+        <filelogs>
+            <folder>\\msk-dev-01\c$\forislog</folder>
+	    <folder>\\msk-dev-01\c$\foris\Marti\OrderStorage\Logs</folder>
+            <folder>\\msk-dev-02\c$\forislog</folder>
+            <folder>\\msk-dev-03\c$\forislog</folder>
+            <folder>\\msk-dev-04\c$\forislog</folder>
+            <folder>\\msk-dev-05\c$\forislog</folder>
+            <folder>\\msk-dev-06\c$\forislog</folder>
+            <folder>\\msk-dev-08\c$\forislog</folder>
+            <folder>\\msk-dev-09\c$\forislog</folder>
+            <folder>\\msk-dev-10\c$\forislog</folder>
+            <folder>\\msk-dev-11\c$\forislog</folder>
+            <folder>\\msk-dev-12\c$\forislog</folder>
+	    <folder>\\msk-dev-01\c$\foris\Marti\OrderCatalogue\Logs\PAM</folder>
+	    <folder>\\msk-dev-01\c$\foris\TelCRM\CRM.Workflow</folder>
+	    <folder>\\msk-dev-01\c$\foris\TelCRM\WindowsServices\True</folder>
+	    <folder>\\msk-dev-02\c$\foris\Billing\BillingManagementConsole\log</folder>
+	    <folder>\\msk-dev-02\c$\foris\Billing\Server\AccountsReceivableWCF\Log</folder>
+	    <folder>\\msk-dev-04\c$\foris\Report\log</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\CollectionPaymentExport</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\EventProcessor</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\Services</folder>
+	    <folder>\\msk-dev-08\c$\foris\MARTI\Workflow\Addons\Logs</folder>
+	    <folder>\\msk-dev-08\c$\foris\MARTI\Workflow\Logs</folder>
+    </filelogs>
+        <evlogs />
+    </stand>
     <stand name="NAG-TC">
         <filelogs>
             <folder>\\nag-tc-01\c$\forislog</folder>
@@ -84,7 +112,18 @@
             <folder>\\msk-func-11\c$\forislog</folder>
             <folder>\\msk-func-12\c$\forislog</folder>
             <folder>\\msk-func-dmz\c$\forislog</folder>
-            <folder>\\portal-test-02\c$\forislog</folder>
+	    <folder>\\msk-func-01\c$\foris\MARTI\OrderStorage\Logs</folder>
+	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow</folder>
+	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow\Logs</folder>
+	    <folder>\\msk-func-04\c$\foris\ForisLog\Security</folder>
+	    <folder>\\msk-func-04\c$\foris\Report\log</folder>
+	    <folder>\\msk-func-04\c$\foris\TaskScheduler\WebUI</folder>
+	    <folder>\\msk-func-05\c$\foris\TelBill\DOC\log</folder>
+	    <folder>\\msk-func-08\c$\foris\Billing\Client\BillingManagementConsole\log</folder>
+	    <folder>\\msk-func-09\c$\foris\MARTI\Workflow\Addons\Logs</folder>
+	    <folder>\\msk-func-09\c$\foris\MARTI\Workflow\Logs</folder>
+	    <folder>\\msk-func-11\c$\foris\Billing\Client\BillingManagementConsole\log</folder>
+	    <folder>\\msk-func-11\c$\foris\ResourceInventory\Client\logs</folder>
         </filelogs>
         <evlogs>
             <source server="msk-func-01">Application, CRM.Gateway, CRM_Errors CRM_Interfaces,  Foris.Catalogues,  FORIS.Common,  FORIS.Production, FORIS.RemoteDealer,  FORIS.Sales,  FORIS.ScratchCards, FORIS.ScratchCards.Activation,  Foris.SelfCare,  FORIS.TelCRM.GUI, Foris.TelCRM.Marketing,  Foris.TelCrm.RequestManagement,  FORIS.TelCRM.Sales, ForwardedEvents,  Marti.CommunityManagementUI,  Marti.OrderCatalogueUI, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational,  System,  TelCRM.Marketing, TelCRM.Production,  Windows PowerShell</source>
@@ -153,7 +192,7 @@
     </stand>
     <stand name="MAIN-FORIS" default="1">
         <filelogs>
-            <folder>\\00-crm-gui\c$\forislog</folder>
+	    <folder>\\00-crm-gui\c$\forislog</folder>
             <folder>\\00-crm-otr\c$\forislog</folder>
             <folder>\\00-crm-wf\c$\forislog</folder>
             <folder>\\00-bill\c$\forislog</folder>
@@ -168,7 +207,6 @@
             <folder>\\00-report\c$\forislog</folder>
             <folder>\\00-doc\c$\forislog</folder>
             <folder>\\00-dmz\c$\forislog</folder>
-            <folder>\\portal-test-04\c$\forislog</folder>
         </filelogs>
         <evlogs>
             <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
@@ -190,7 +228,11 @@
     </stand>
     <stand name="TEST">
         <filelogs>
-            <folder>/home/user/sharew7/logs/log</folder>
+        <!--<folder>/home/user/sharew7/logs/log</folder>-->
+        <folder>C:\Users\ALyakishev\logs2</folder>
+	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>
+	    <folder>C:\Users\ALyakishev\logs\forislog</folder>
+	    <folder>C:\Users\ALyakishev\share</folder>-->
         </filelogs>
         <evlogs />
     </stand>

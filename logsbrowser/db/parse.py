@@ -20,24 +20,31 @@ def operator_to_regexp(op, val):
 class AutoLid(Exception): pass
 class ManySources(Exception): pass
 
-clause = re.compile('(?i)(?P<field>log)\s+(?P<op>(like|regexp|match|glob))\s+(?P<val>\$quote\d+)\s+as\s+(?P<color>.+)')
+clause1 = re.compile('(?i)(?P<field>log)\s+(?P<op>(like|regexp|match|glob|=))\s+(?P<val>\$quote\d+)\s+as\s+(?P<color>.+)')
+clause2 = re.compile('(?i)(?P<op>(icontains|contains|iregexp))\(\s*(?P<field>log)\s*,\s*(?P<val>\$quote\d+)\s*\)\s+as\s+(?P<color>.+)')
 
 
 def log_color_clauses(clauses):
     clauses = [c.strip('{}') for c in clauses]
     for cl in clauses:
-        c = clause.match(cl)
+        c = clause1.match(cl)
         if c:
             yield (c.group('op'), c.group('val'), c.group('color'))
+        else:
+            c = clause2.match(cl)
+            if c:
+                yield (c.group('op'), c.group('val'), c.group('color'))
 
-op_to_re = {'LIKE': lambda v: re.escape(v.strip('%')).replace('\%s' % '%',
+op_to_re = {'LIKE': lambda v: re.escape(v.decode('utf8').strip('%')).replace('\%s' % '%',
                                 '.*').replace('\%s' % '_', '.'),
-            'GLOB': lambda v: re.escape(v.strip('*')).replace('\%s' % '*',
+            'GLOB': lambda v: re.escape(v.decode('utf8').strip('*')).replace('\%s' % '*',
                                 '.*').replace('\%s' % '?', '.'),
             'REGEXP': lambda v: v,
-            'MATCH': lambda v: '(?i)'+re.escape(v).replace('\%s' % '*', '\w*')
+            'MATCH': lambda v: '(?i)'+re.escape(v.decode('utf8')).replace('\%s' % '*', '\w*'),
+            'CONTAINS': lambda v: re.escape(v.decode('utf8')),
+            'ICONTAINS': lambda v: '(?i)'+re.escape(v.decode('utf8')),
+            'IREGEXP': lambda v: '(?i)'+v,
             }
-        
 
 def lw_hl_expr(lw_hl_clauses, quotes_dict):
     hls = []
@@ -114,12 +121,6 @@ class Query(object):
             query = self.qdict.get(q)
             if query:
                 query.add_lid(group)
-
-    def get_colors(self):
-        colors = []
-        for k,v in self.qdict.iteritems():
-            colors.extend(v.get_colors())
-        return colors
 
 class Select:
 
@@ -254,7 +255,7 @@ class SelectCore:
         
     def parse(self):
         results = self.select_expr.search(self.sql).group(1).strip()
-        self.result_list = [c.strip() for c in results.split(',')]
+        self.result_list = split(results)
         group = self.group_re.search(self.sql)
         if group:
             self.group = [g.strip() for g in group.group(1).split(',')]
@@ -382,7 +383,7 @@ class SelectCore:
 
 def reset_select_core_counter():
     SelectCore.color_count = count(1)
-            
+
 def cut_quotes(query):
     qoutes_count = count(1)
     quotes = re.compile(r'''('|")(.+?)\1''')
@@ -398,6 +399,24 @@ def cut_quotes(query):
         lend = end
     new_query+=query[lend:]
     return new_query, quotes_dict
+
+def split(select):
+    results = []
+    cur_column = ""
+    in_brackets = 0
+    for c in select:
+        if c == "," and not in_brackets:
+            results.append(cur_column.strip())
+            cur_column = ""
+        else:
+            cur_column += c
+        if c == '(':
+            in_brackets += 1
+        elif c == ')':
+            in_brackets -= 1
+    results.append(cur_column.strip())
+    return results
+
 
 ss = re.compile('\s+')
 
@@ -489,6 +508,7 @@ def wrap(expr):
 
 
 if __name__ == '__main__':
+    pass
     #print process("select date, time, {log regexp 'abc' as #ff0} from this where log MATCH 'test' AND (log=123 OR log NOT LIKE 'abcd') group by date order by date desc")
     ##print q
     #print 80*'_'
@@ -520,7 +540,7 @@ if __name__ == '__main__':
 #order by logname_group desc""")
     #print process('''select date from (select a,$color{log match 'test' as #ff0} from this union select a, $color{log match 'xaxaxa' as #fff} from
 
-    print process("select date, logname, type, {log MATCH 'SUCCESS' as #ff0} from _asacsaca")
+    #print process("select date, logname, type, {log MATCH 'SUCCESS' as #ff0} from _asacsaca")
 
 
 

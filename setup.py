@@ -18,7 +18,8 @@ buildOptions = dict(
             optimize = 2,
             packages = ['logsbrowser'],
             path = sys.path+['logsbrowser/'],
-            include_files = includefiles
+            include_files = includefiles,
+            excludes = ["Tkinter", "ttk"]
             )
 
 setup(name='logsbrowser',

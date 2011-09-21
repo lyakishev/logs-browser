@@ -74,8 +74,6 @@ class LogsViewer:
         self.progressbar = gtk.ProgressBar()
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
-
-
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals, self.root)
 
@@ -118,13 +116,19 @@ class LogsViewer:
         self.root.show_all()
         #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
 
+    def set_from_date(self):
+        self.date_filter.fromto_option.from_date.set_now()
+
+    def set_to_date(self):
+        self.date_filter.fromto_option.to_date.set_now()
+
     def show_help(self, *args):
         os.system('start %s' % config.HELP_INDEX)
 
     def show_about(self, *args):
         about = gtk.AboutDialog()
         about.set_property('authors', ['Lyakishev Andrey <alyakishev@sitronics.com>'])
-        about.set_property('version', '1.9')
+        about.set_property('version', '2.0a')
         about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         about.set_name('LogsBrowser')
 	about.set_license(license)
@@ -167,11 +171,11 @@ class LogsViewer:
         return self.signals['stop'] or self.signals['break']
 
     def mpcallback(self, e_stop, val):
+        while gtk.events_pending():
+            gtk.main_iteration()
         self.progressbar.set_fraction(self.frac*val)
         if self.signals['stop'] or self.signals['break']:
             e_stop.set()
-        while gtk.events_pending():
-            gtk.main_iteration()
 
 
     @profiler.time_it

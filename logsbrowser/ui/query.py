@@ -6,32 +6,46 @@ import gio
 import pango
 import re
 import config
+import pango
+import db
+from utils.profiler import profile
 
 
 class Filter():
+
+    operators = db.functions.operators
+   
     def __init__(self, plain, loglist):
         self.loglist = loglist
         self.plain = plain
         self.query_model = gtk.ListStore(str,  #up
                                          str,  #down
+                                         str,  #color
                                          str,  #column
-                                         str,  #color
-                                         str,  #color
-                                         str)  #value        
+                                         str, #NOT
+                                         str,  #operator
+                                         str,  #clause
+                                         str)  #color
 
+        self.operator_model = gtk.ListStore(str)
         self.field_model = gtk.ListStore(str)
 
         for c in ["---", "log", "logname", "type", "computer", "source", "event",
                   "date", "$time", "lid"]:
             self.field_model.append([c])
 
+        for c in self.operators.keys():
+            self.operator_model.append([c])
+
         self.fields = {}
         self.fields['UP'] = 0
         self.fields['DOWN'] = 1
         self.fields['COLOR'] = 2
-        self.fields['HCOLORV'] = 5
+        self.fields['HCOLORV'] = 7
+        self.fields['NOT'] = 4
+        self.fields['OPERATOR'] = 5
         self.fields['FIELD'] = 3
-        self.fields['WHERE'] = 4
+        self.fields['WHERE'] = 6
 
         up_renderer = gtk.CellRendererPixbuf()
         down_renderer = gtk.CellRendererPixbuf()
@@ -55,6 +69,24 @@ class Filter():
         field_column = gtk.TreeViewColumn("column", field_renderer,
                                                     text=self.fields['FIELD'])
 
+        not_renderer = gtk.CellRendererText()
+        not_renderer.set_property("editable", False)
+        not_renderer.set_property('xalign', 1.0)
+        font = pango.FontDescription('italic')
+        not_renderer.set_property('font-desc', font)
+        self.not_column = gtk.TreeViewColumn("no", not_renderer,
+                                                text=self.fields['NOT'])
+
+        operator_renderer = gtk.CellRendererCombo()
+        operator_renderer.set_property("model", self.operator_model)
+        operator_renderer.set_property('text-column', 0)
+        operator_renderer.set_property('editable', True)
+        operator_renderer.set_property('has-entry', True)
+        font = pango.FontDescription('italic')
+        operator_renderer.set_property('font-desc', font)
+        operator_renderer.connect("changed", self.change_func, self.fields['OPERATOR'])
+        operator_column = gtk.TreeViewColumn("operator", operator_renderer,
+                                                    text=self.fields['OPERATOR'])
         
         where_renderer = gtk.CellRendererText()
         where_renderer.set_property('editable',True)
@@ -62,7 +94,7 @@ class Filter():
                                          self.fields['WHERE'])
         where_renderer.connect("editing-started", self.set_cell_entry_signal,
                                                   self.fields['WHERE'])
-        self.where_column = gtk.TreeViewColumn("where", where_renderer,
+        self.where_column = gtk.TreeViewColumn("clause", where_renderer,
                                                 text=self.fields['WHERE'])
         
         hidden_colorr = gtk.CellRendererText()
@@ -76,10 +108,12 @@ class Filter():
         self.view.append_column(self.down_column)
         self.view.append_column(self.color_column)
         self.view.append_column(field_column)
+        self.view.append_column(self.not_column)
+        self.view.append_column(operator_column)
         self.view.append_column(self.where_column)
         self.view.append_column(hidden_color)
 
-        #self.view.set_property("enable-grid-lines", True)
+        self.view.set_property("enable-grid-lines", True)
         self.view.set_model(self.query_model)
         self.view.connect("cursor-changed", self.add_row)
         self.view.connect("key-press-event", self.delete_row)
@@ -100,6 +134,20 @@ class Filter():
     def activate_cell(self, view, event):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
+            if path[1] == self.not_column:
+                row = view.get_model()[path[0]]
+                operator = row[self.fields['OPERATOR']]
+                if operator == ">":
+                    view.get_model()[path[0]][self.fields['OPERATOR']] = '<'
+                elif operator == "<":
+                    view.get_model()[path[0]][self.fields['OPERATOR']] = '>'
+                no = self.operators[operator]
+                val = row[self.fields['NOT']]
+                if val == no:
+                    row[self.fields['NOT']] = ' '
+                else:
+                    row[self.fields['NOT']] = no
+                return
             if path[1] == self.color_column:
                 colordlg = gtk.ColorSelectionDialog("Select color")
                 colorsel = colordlg.colorsel
@@ -120,7 +168,20 @@ class Filter():
                 view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
 
     def change_func(self, combo, path, iter_, col):
-        self.query_model[path][col] = combo.get_property("model").get_value(iter_,0)
+        new_value = combo.get_property("model").get_value(iter_,0)
+        if col == self.fields['FIELD']:
+            if new_value == '---':
+                self.query_model[path][self.fields['OPERATOR']] = '---'
+                self.query_model[path][self.fields['NOT']] = ' '
+            else:
+                if hasattr(self, 'default_operator'):
+                    new_operator = self.default_operator(new_value)
+                    if new_operator:
+                        self.query_model[path][self.fields['OPERATOR']] = new_operator
+                        self.query_model[path][self.fields['NOT']] = ' '
+        if col == self.fields['OPERATOR']:
+            self.query_model[path][self.fields['NOT']] = ' '
+        self.query_model[path][col] = new_value
 
     def change_value(self, cell, path, new_text, col):
         self.query_model[path][col] = new_text
@@ -132,7 +193,8 @@ class Filter():
             if not model.iter_next(iter_):
                 c = len(self.query_model)
                 self.query_model[c-1][self.fields['FIELD']] = 'log'
-                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', '','#fff'])
+                self.query_model[c-1][self.fields['OPERATOR']] = self.default_operator('log') or '---'
+                self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '', '', ' ', '', '','#fff'])
         except TypeError:
             pass
 
@@ -143,32 +205,49 @@ class Filter():
             if iter_ is not None and model.iter_next(iter_):
                 model.remove(iter_)
 
+    def get_filter_table(self):
+        rows = []
+        for row in list(self.query_model)[:-1]:
+            rows.append((row[self.fields['FIELD']], row[self.fields['HCOLORV']],
+                        row[self.fields['WHERE']]))
+        return rows
+
     def set_filter(self, rows):
         self.query_model.clear()
         for row in rows:
-            self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,'',row[0], row[2], row[1]])
-        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', '', '#fff'])
+            self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,
+                        '',row[0], ' ', self.default_operator(row[0]) or '---', row[2], row[1]])
+        self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', ' ','','', '#fff'])
 
     def get_filter(self, only_colors):
+
+        ops_funcs = db.functions.operator_functions
         
         fts = self.loglist.fts
 
         FIELD = self.fields['FIELD']
         WHERE = self.fields['WHERE']
         COLOR = self.fields['HCOLORV']
+        OPERATOR = self.fields['OPERATOR']
+        NOT = self.fields['NOT']
 
-        def check_clause(clause):
-            words = len(clause.split())
-            if words > 1 and clause.count("'")>1:
-                return clause
-            else:
-                if fts:
-                    return ("%s '%s'" %
-                            (config.DEFAULT_WHERE_OPERATOR_FTS.upper(),
-                                        clause))
+        def check_clause(field, not_, operator, clause):
+            #words = len(clause.split())
+            #if words > 1 and clause.count("'")>1:
+            #    return clause
+            #else:
+            if operator in ops_funcs:
+                if not_ == self.operators[operator]:
+                    return ("%s(%s, '%s')" % (ops_funcs[operator][1], field, clause))
                 else:
-                    return "%s '%s'" % (config.DEFAULT_WHERE_OPERATOR.upper(),
-                                        clause)
+                    return ("%s(%s, '%s')" % (ops_funcs[operator][0], field, clause))
+            else:
+                return ("%s %s%s '%s'" % (field, not_+(' ' if not_ != '!' else '') ,operator, clause))
+                #if fts:
+                #    return ("%s '%s'" % (not_ ,operator, clause))
+                #else:
+                #    return ("%s '%s'" % (not_ ,operator, clause))
+
         fields = []
         clauses = []
         only_color_fields = []
@@ -177,7 +256,7 @@ class Filter():
                 if r[FIELD] == '---':
                     form = '(%s)' % r[WHERE]
                 else:
-                    form = '%s %s' % (r[FIELD], check_clause(r[WHERE]))
+                    form = '%s' % check_clause(r[FIELD], r[NOT], r[OPERATOR], r[WHERE])
                 if r[COLOR] == '#fff':
                     if not only_colors:
                         clauses.append(form)
@@ -267,9 +346,11 @@ class Query(gtk.Notebook):
 
 
 class QueryLoader(gtk.VBox):
-    def __init__(self, query_constructor, qmanager):
+    def __init__(self, query_constructor, qmanager, notify_func):
         gtk.VBox.__init__(self)
+        self.notify_all = notify_func
         self.query_constructor = query_constructor
+        self.query_constructor.query.default_operator = qmanager.default_operator
         self.tools = gtk.HBox()
         self.add_lid = gtk.CheckButton('auto__lid')
         self.add_lid.set_active(True)
@@ -279,20 +360,15 @@ class QueryLoader(gtk.VBox):
         self.only_colors = gtk.CheckButton('only colors')
         self.only_colors.set_active(False)
         self.filters = gtk.combo_box_new_text()
-        self.filters.connect("changed", self.set_filter)
         self.queries_label = gtk.Label()
         self.queries_label.set_markup('<b>Query</b>')
         self.queries = gtk.combo_box_new_text()
-        self.queries.connect("changed", self.set_query)
         self.query_manager = qmanager
-        for n,q in enumerate(self.query_manager.queries):
-            self.queries.append_text(q)
-            if q == self.query_manager.default_query:
-                self.queries.set_active(n)
-        for n,q in enumerate(self.query_manager.filters):
-            self.filters.append_text(q)
-            if q == self.query_manager.default_filter:
-                self.filters.set_active(n)
+        self.queries.connect("changed", self.set_query)
+        self.filters.connect("changed", self.set_filter)
+        self.update_queries_combo()
+        self.update_filters_combo()
+        self.filters.connect("notify::popup-shown", self._update_fcombo)
         self.queries_combo.pack_start(self.filters_label, False, False, 5)
         self.queries_combo.pack_start(self.filters, True, True)
         self.queries_combo.pack_start(self.only_colors, False, False)
@@ -304,13 +380,55 @@ class QueryLoader(gtk.VBox):
         self.pack_start(self.query_constructor)
         self.show_all()
 
+    def update_queries_combo(self, set_def=True):
+        for n,q in enumerate(self.query_manager.queries):
+            self.queries.append_text(q)
+            if q == self.query_manager.default_query and set_def:
+                self.queries.set_active(n)
+
+    def update_filters_combo(self, set_def=True):
+        filters = [t[0] for t in self.filters.get_model()]
+        for n,q in enumerate(self.query_manager.filters):
+            if q not in filters:
+                self.filters.append_text(q)
+                if q == self.query_manager.default_filter and set_def:
+                    self.filters.set_active(n)
+            else:
+                filters.remove(q)
+        if filters:
+            model = self.filters.get_model()
+            next_ = model.get_iter_first()
+            while next_:
+                if model.get_value(next_, 0) in filters:
+                    model.remove(next_)
+                next_ = model.iter_next(next_)
+
+    def _update_fcombo(self, combo, popup):
+        if combo.get_property('popup-shown'):
+            self.current = self.query_constructor.query.get_filter_table()
+            self.update_filters_combo(False)
+            self.filters.prepend_text("###Current###")
+            self.filters.set_active(0)
+
+    def update_filters(self, filters):
+        self.query_manager.get_filters_from_pages([(k,v.query_constructor.query.get_filter_table())
+                                                    for k,v in filters.items()
+                                                        if v != self])
+
     def set_query(self, *args):
         query = self.queries.get_active_text().decode('utf8')
         self.query_constructor.set_query(self.query_manager.queries[query].strip())
 
     def set_filter(self, *args):
-        query = self.filters.get_active_text().decode('utf8')
-        self.query_constructor.set_filter(self.query_manager.filters[query])
+        self.notify_all()
+        try:
+            query = self.filters.get_active_text().decode('utf8')
+            if query == "###Current###":
+                self.query_constructor.set_filter(self.current)
+            else:
+                self.query_constructor.set_filter(self.query_manager.filters[query])
+        except AttributeError:
+            self.filters.set_active(0)
 
     def get_query(self):
         return self.query_constructor.get_sql(self.get_only_colors())

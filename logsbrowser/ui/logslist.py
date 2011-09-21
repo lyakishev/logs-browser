@@ -23,7 +23,6 @@ from cellrenderercolors import CellRendererColors
 from string import Template
 from utils.profiler import time_it, profile
 from utils.colors import ColorError
-import pdb
 
 def callback():
     while gtk.events_pending():
@@ -64,6 +63,10 @@ class LogList(object):
                     clipboard = gtk.clipboard_get("CLIPBOARD")
                     clipboard.set_text(value)
 
+    def visible_rows(self):
+        visible_columns = [n for n, c in enumerate(self.columns) if c.get_visible()]
+        for row in self.model:
+            yield [c for n,c in enumerate(row) if n in visible_columns]
         
     def change_name(self, name):
         try:
@@ -87,7 +90,6 @@ class LogList(object):
         except Exception as e:
             merror(str(e))
             return
-        print sql
         self.view.freeze_child_notify()
         self.view.set_model(None)
         sql_hash = sql_to_hash(sql)
@@ -206,7 +208,7 @@ class LogList(object):
                 path = int(path) - 1
             else:
                 path = model.iter_n_children(None) - 1
-            if path:
+            if path >= 0:
                 if not color:
                     clause = lambda p: model[p][bgcolor] == '#fff'
                 else:
@@ -300,6 +302,14 @@ class LogsListWindow(gtk.Frame):
 
         down_btn = gtk.ToolButton(gtk.STOCK_GO_DOWN)
         down_btn.connect("clicked", lambda btn: self.log_list.down_color())
+
+        sep5 = gtk.SeparatorToolItem()
+
+        export_btn = gtk.ToolButton(gtk.STOCK_COPY)
+        export_btn.set_is_important(True)
+        export_btn.connect("clicked", self.csv_export)
+        export_btn.set_label("Export...")
+
         
         toolbar.insert(exec_btn, 0)
         toolbar.insert(self.break_btn, 1)
@@ -312,13 +322,15 @@ class LogsListWindow(gtk.Frame):
         toolbar.insert(sep4, 8)
         toolbar.insert(up_btn, 9)
         toolbar.insert(down_btn, 10)
+        toolbar.insert(sep5, 11)
+        toolbar.insert(export_btn, 12)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
 
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
-        self.loader = QueryLoader(self.filter_logs, self.qm)
+        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_filters)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 
@@ -335,6 +347,23 @@ class LogsListWindow(gtk.Frame):
         if config.GRID_LINES:
             grid_btn.set_active(True)
             self.show_gridlines(grid_btn)
+
+    def get_filter(self):
+        return self.loader
+
+    def csv_export(self, *args):
+        fchooser = gtk.FileChooserDialog("Export logs list...", None,
+            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
+            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+        fchooser.set_current_name("logslist.csv")
+        response = fchooser.run()
+        if response == gtk.RESPONSE_OK:
+            import csv
+            path = fchooser.get_filename()
+            with open(path, 'wb') as f:
+                writer = csv.writer(f)
+                writer.writerows(self.log_list.visible_rows())
+        fchooser.destroy()
 
     def set_name(self, name):
         self.log_list.change_name(name)

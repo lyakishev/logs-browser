@@ -1,48 +1,64 @@
 from xml.etree import ElementTree as ET
+import yaml
 import fnmatch
 import re
 
 class QueriesManager(object):
 
     def __init__(self, source_xml):
-        self.xml = source_xml
+        self.queries_file = source_xml
+        self.page_filters = {}
+        self.config = yaml.load(open(self.queries_file))
 
     @property
     def queries(self):
-        xml = ET.parse(self.xml)
         q = {}
-        for i in xml.getroot().find('queries'):
-            q[i.attrib['name']] = i.text
+        for i in self.config['queries']:
+            q[i['name']] = i['sql']
         return q
+
+    def get_filters_from_config(self):
+        q = {}
+        for i in self.config['filters']:
+            rows = []
+            for r in i['rows']:
+                rows.append((r['column'],
+                             r['color'],
+                             r['clause']))
+            q[i['name']] = rows
+        return q
+
+    def get_filters_from_pages(self, filters):
+        self.page_filters = dict(filters)
 
     @property
     def filters(self):
-        xml = ET.parse(self.xml)
-        q = {}
-        for i in xml.getroot().find('filters'):
-            rows = []
-            for r in i:
-                rows.append((r.attrib['column'],
-                             r.attrib['color'],
-                             r.attrib['clause']))
-            q[i.attrib['name']] = rows
-        return q
-
+        cf = self.get_filters_from_config()
+        cf.update(self.page_filters)
+        return cf
+        
     @property
     def default_query(self):
-        xml = ET.parse(self.xml)
-        for i in xml.getroot().find('queries'):
-            if int(i.attrib['default']) == 1:
-                return i.attrib['name']
-        return i.attrib['name']
+        for i in self.config['queries']:
+            if i['default'] == 1:
+                return i['name']
+        return i['name']
 
     @property
     def default_filter(self):
-        xml = ET.parse(self.xml)
-        for i in xml.getroot().find('filters'):
-            if int(i.attrib['default']) == 1:
-                return i.attrib['name']
-        return i.attrib['name']
+        for i in self.config['filters']:
+            if i['default'] == 1:
+                return i['name']
+        return i['name']
+
+    def default_operator(self, field):
+        default = None
+        for op in self.config['defaults']:
+            if op['column'] == field:
+                return op['operator']
+            if op['column'] == '*':
+                default = op['operator']
+        return default
 
 class SourceManager(object):
 
@@ -138,7 +154,6 @@ class SelectManager(object):
 
     @property
     def selects(self):
-        print 'call'
         xml = ET.parse(self.xml)
         return [i.attrib['name'] for i in xml.getroot()]
 

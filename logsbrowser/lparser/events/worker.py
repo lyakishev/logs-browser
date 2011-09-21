@@ -84,7 +84,7 @@ def evlogworker(dates, server, logtype, funcs=None):
                 else:
                     raise StopIteration
         else:
-            print "Can't read eventlogs: %s %s " % (serve,logtype)
+            #print "Can't read eventlogs: %s %s " % (serve,logtype)
             try:
                 win32evtlog.CloseEventLog(hand)
             except pywintypes.error:

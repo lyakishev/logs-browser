@@ -1,0 +1,144 @@
+queries:
+    - name: 'Время, вызов, имя лога, тип'
+      add_lid: 1
+      default: 1
+      sql: |
+         select strftime('%H:%M:%f',date) as time,
+         regex(log, '(?im)call(?:(?:\W*\s+<)|(?:\s+method\s+)|(?:ing:\s+method\s)|(\s))([A-Za-z_.]+)(?(1)(\sargs\[))', 2) as call, 
+         logname, type from #this
+         order by date desc
+
+    - name: 'SelfCare calls'
+      add_lid: 1
+      default: 1
+      sql: |
+        select strftime('%H:%M:%f',date) as time, regex(log, '(?m)^([A-Za-z_<>.]+) \[\d{4}.\d{2}.\d{2} \d{2}:\d{2}\]', 1) as call, logname, type
+        from #this
+        order by date desc
+
+    - name: 'OCAT'
+      add_lid: 1
+      default: 0
+      sql: |
+        select strftime('%H:%M:%f',date) as time, 
+        regex(log, '\]\[(\d+)\] \([A-Z ]+\)',1) as thr,
+        regex(log, '\]\[\d+\] \(([A-Z]+)\)',1) as level,
+        regex(log, '  \[call\] <(\w+)>\s+call', 1) as call,
+        regex(log, '  \[result\] <(\w+)>\s+outputs', 1) as result,
+        logname, type from #this
+        group by date, thr, level, call, result, logname
+        order by date desc
+
+    - name: 'Дата сообщения, имя лога, тип'
+      add_lid: 1
+      default: 0
+      sql: |
+        select date, logname, type from #this
+        order by date desc
+
+
+    - name: 'Дата сообщения, имя лога, тип'
+      add_lid: 1
+      default: 0
+      sql: |
+        select date, logname, type from #this
+        order by date desc
+
+    - name: 'Время сообщения, имя лога, тип'
+      add_lid: 1
+      default: 0
+      sql: |
+        select strftime('%H:%M:%f',date) as time, logname, type from #this
+        order by date desc
+
+    - name: 'Дата сообщения, имя лога, тип; группировка по дате, логу, типу'
+      add_lid: 1
+      default: 0
+      sql: |
+        select date, logname, type from #this
+        group by date, logname, type
+        order by date desc
+
+    - name: 'Время сообщения, имя лога, тип; группировка по дате, логу, типу' 
+      add_lid: 1 
+      default: 0
+      sql: |
+        select strftime('%H:%M:%f',date), logname, type from #this
+        group by date, logname, type
+        order by date desc
+
+    - name: 'Группировка по идущим подряд именам логa'
+      add_lid: 1 
+      default: 1
+      sql: |
+        select strftime('%H:%M:%f',min(date)) as ftime, 
+        strftime('%H:%M:%f',max(date)) as totime,
+        logname, computer, error(type)
+        from (select date, logname, computer, type, group_logname(logname) as logname_group
+              from #this
+              group by date, logname, computer, type
+              order by date DESC)
+        group by logname_group
+        order by logname_group desc
+
+    - name: 'Количество сообщений по именам лога'
+      add_lid: 1
+      default: 0
+      sql: |
+        select logname, computer, count(log) as c, error(type)
+        from #this
+        group by logname, computer
+        order by c desc
+
+    - name: 'Количество сообщений'
+      add_lid: 1
+      default: 0
+      sql: |
+        select count(*)
+        from #this
+
+    - name: 'Ошибки'
+      add_lid: 1
+      default: 1
+      sql: |
+        select strftime('%H:%M:%f',date), logname, type from #this
+        where type = 'ERROR'
+        order by date desc
+
+filters:
+    - name: "Новый" 
+      default: 1
+      rows:
+        - {column: "log", color: "steelblue", clause: ""}
+        - {column: "log", color: "seagreen", clause: ""}
+        - {column: "log", color: "darkorange", clause: "" }
+        - {column: "log", color: "firebrick", clause: "" }
+        - {column: "log", color: "purple", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
+
+    - name: 'Ошибки - красным'
+      default: 0
+      rows:
+        - {column: "type", color: "red", clause: "ERROR"}
+
+defaults:
+        - column: 'lid'
+          operator: '='
+        - column: 'type'
+          operator: '='
+        - column: 'logname'
+          operator: '='
+        - column: 'event'
+          operator: '='
+        - column: 'computer'
+          operator: '='
+        - column: 'date'
+          operator: '>'
+        - column: '$time'
+          operator: '>'
+        - column: '*'
+          operator: 'CONTAINS'
+        
+   
