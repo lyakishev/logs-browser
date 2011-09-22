@@ -285,7 +285,7 @@ class FileServersModel(ServersModel):
     def __init__(self, progress, sens_func, signals):
         self.progress = progress
         self.signals = signals
-        self.fill = sens_func(self.fill)
+        self._fill = sens_func(self._fill)
         self.dirs = None
         self.dir_ = ""
         self.stand = None
@@ -432,7 +432,6 @@ class FileServersModel(ServersModel):
         self.parents = self._copy(copy_treestore, self, parents)
         self.diff_dirs(dirs)
 
-
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
     def __init__(self, model, srvrs):
@@ -450,7 +449,7 @@ class DisplayServersModel:
         # changed (toggled) by the user.
         self.renderer1 = gtk.CellRendererToggle()
         self.renderer1.set_property('activatable', True)
-        self.renderer1.connect('toggled', self.col1_toggled_cb, model)
+        #self.renderer1.connect('toggled', self.col1_toggled_cb, model)
         self.renderer2 = gtk.CellRendererText()
         # Connect column0 of the display with column 0 in our list model
         # The renderer will then display whatever is in column 0 of
@@ -469,6 +468,7 @@ class DisplayServersModel:
         self.column2.set_visible(False)
         self.view.append_column(self.column0)
         self.view.append_column(self.column2)
+        self.view.connect("button-press-event", self.tree_actions)
 
     def show_config_editor(self, *args):
         if not config.EXT_CONFIG_EDITOR:
@@ -476,22 +476,30 @@ class DisplayServersModel:
         else:
             os.system('%s %s' % (config.EXT_CONFIG_EDITOR, self.srvrs.file))
 
-    def col1_toggled_cb(self, cell, path, model):
-        """
-        Sets the toggled state on the toggle button to true or false.
-        """
-        true_model = model.get_model()
-        true_path = model.convert_path_to_child_path(path)
-        state = true_model[true_path][2] = not true_model[true_path][2]
+    def tree_actions(self, view, event):
+        if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
+            path = view.get_path_at_pos(int(event.x), int(event.y))
+            model = view.get_model()
+            true_model = model.get_model()
+            true_path = model.convert_path_to_child_path(path[0])
+            state = true_model[true_path][2] = not true_model[true_path][2]
 
-        def walk(child):
-            for ch in child.iterchildren():
-                ch[2] = state
-                walk(ch)
+            def walk(child):
+                for ch in child.iterchildren():
+                    ch[2] = state
+                    walk(ch)
 
-        walk(true_model[true_path])
-        #model.refilter()
-        return
+            walk(true_model[true_path])
+            return
+        if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
+            path = view.get_path_at_pos(int(event.x), int(event.y))
+            model = view.get_model()
+            true_model = model.get_model()
+            true_path = model.convert_path_to_child_path(path[0])
+            dirs = true_model[true_path][4]
+            for dir_ in dirs:
+                self.srvrs.remove_iter_by_dir(dir_)
+            self.srvrs._fill(True, dirs)
 
 
 def tree_model_iter_children(model, treeiter):
