@@ -1,5 +1,5 @@
 <stands>
-    <stand name="MSK-DEV">
+    <stand name="MSK-DEV" default="1">
         <filelogs>
             <folder>\\msk-dev-01\c$\forislog</folder>
 	    <folder>\\msk-dev-01\c$\foris\Marti\OrderStorage\Logs</folder>
