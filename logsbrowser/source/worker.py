@@ -66,7 +66,7 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
             fullf = os.path.join(path, f)
             f = to_unicode(f)
             fext = os.path.splitext(f)[1]
-            ext_parent = join_path(prefix, fullf)
+            ext_parent = fullf
             if fext:
                 name, ext = clear(f)
                 if ext in ('txt', 'log'):
@@ -81,10 +81,10 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                             files.add(name)
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
-                        node = dir_callback(f, parent, ext_parent)
+                        node = dir_callback(f, parent, ext_parent, True)
                         dir_walker(fullf, dir_callback, log_callback, node, prefix)
             else:
-                node = dir_callback(f, parent, ext_parent)
+                node = dir_callback(f, parent, ext_parent, True)
                 dir_walker(fullf, dir_callback, log_callback, node, prefix)
     except OSError:
         pass

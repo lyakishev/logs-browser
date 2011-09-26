@@ -14,7 +14,6 @@
             <folder>\\msk-dev-11\c$\forislog</folder>
             <folder>\\msk-dev-12\c$\forislog</folder>
 	    <folder>\\msk-dev-01\c$\foris\Marti\OrderCatalogue\Logs\PAM</folder>
-	    <folder>\\msk-dev-01\c$\foris\TelCRM\CRM.Workflow</folder>
 	    <folder>\\msk-dev-01\c$\foris\TelCRM\WindowsServices\True</folder>
 	    <folder>\\msk-dev-02\c$\foris\Billing\BillingManagementConsole\log</folder>
 	    <folder>\\msk-dev-02\c$\foris\Billing\Server\AccountsReceivableWCF\Log</folder>

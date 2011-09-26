@@ -15,6 +15,8 @@ from sourceactionsmanager import SourceActionsManagerUI
 from source.monitor import ConfigMonitor
 
 
+
+
 class ServersModel(object):
 
     def __init__(self):
@@ -228,12 +230,12 @@ class FileServersModel(ServersModel):
         self.progress = progress
         self.signals = signals
         self.fill_tree = sens_func(self.fill_tree)
+        self.fill_node = sens_func(self.fill_node)
         self.change_model = sens_func(self.change_model)
         self.stand = stand
         self.dirs = []
         super(FileServersModel, self).__init__()
         self.change_model(logs)
-
 
     def check_break(self):
         if self.signals['break']:
@@ -248,13 +250,13 @@ class FileServersModel(ServersModel):
             self.add_nodes(dir_)
         self.dirs = dirs
 
-    def add_nodes(self, path):
+    def add_nodes(self, path, conn=False):
         parts = self.split_path(path)
         root, dirs = parts[0], parts[1:]
-        parent = self.new_root_node(root)
+        parent = self.new_root_node(root, conn)
         for n, node_name in enumerate(dirs):
             node_path = os.sep.join(parts[:n + 2])
-            parent = self.new_dir_node(node_name, parent, node_path)
+            parent = self.new_dir_node(node_name, parent, node_path, conn)
             while gtk.events_pending():
                 gtk.main_iteration()
 
@@ -273,20 +275,20 @@ class FileServersModel(ServersModel):
         for n, p in enumerate(dirs):
             yield os.sep.join(parts[:n+2])
 
-    def new_root_node(self, node_name):
+    def new_root_node(self, node_name, conn):
         while gtk.events_pending():
             gtk.main_iteration()
         self.check_break()
-        node = self.get_iter_by_path(node_name)
+        node = self.get_iter_by_path(node_name, conn)
         if not node:
             node = self.add_root(node_name, node_name)
         return node
 
-    def new_dir_node(self, node_name, parent, node_path):
+    def new_dir_node(self, node_name, parent, node_path, conn):
         while gtk.events_pending():
             gtk.main_iteration()
         self.check_break()
-        node = self.get_iter_by_path(node_path)
+        node = self.get_iter_by_path(node_path, conn)
         if not node:
             node = self.add_dir(node_name, parent, node_path)
         return node
@@ -300,13 +302,30 @@ class FileServersModel(ServersModel):
             it = self.treestore.iter_next(it)
         return None
 
-    def get_iter_by_path(self, path):
+    def find_root(self, name, conn):
+        getv = self.treestore.get_value
+        it = self.treestore.iter_children(None)
+        while it:
+            if getv(it, 0) == name and getv(it, 1) == (gtk.STOCK_CONNECT if
+                                                        conn else gtk.STOCK_DISCONNECT):
+                return it
+            it = self.treestore.iter_next(it)
+            while gtk.events_pending():
+                gtk.main_iteration()
+        return None
+
+    def get_iter_by_path(self, path, conn=False):
         getv = self.treestore.get_value
         parts = self.split_path(path)
-        it = None
-        for p in parts:
-            it = self.find_iter_in_childs_by_name(it, p)
-        return it
+        it = self.find_root(parts[0], conn)
+        if it:
+            for p in parts[1:]:
+                it = self.find_iter_in_childs_by_name(it, p)
+                while gtk.events_pending():
+                    gtk.main_iteration()
+            return it
+        else:
+            return None
 
     def remove_dirs(self, dirs):
         iters_for_rm = []
@@ -327,34 +346,128 @@ class FileServersModel(ServersModel):
             except ValueError:
                 pass
 
+    def remove_childs(self, it):
+        child = self.treestore.iter_children(it)
+        while child:
+            next_ = self.treestore.iter_next(child)
+            self.treestore.remove(child)
+            child = next_
+
     def fill_tree(self):
         clear_source_formats(self.stand)
+        self.treestore.clear()
         frac = 1. / len(self.dirs)
         for n, dir_ in enumerate(self.dirs):
             self.progress.set_text("%s" % dir_)
-            self.fill_dir(dir_)
-            self.connect(dir_)
+            self.add_nodes(dir_)
+            if not (self.signals['stop'] or self.signals['break']):
+                self.connect(dir_)
+                self.fill_dir(dir_)
             self.progress.set_fraction(frac * (n + 1))
         self.progress.set_fraction(0)
         self.progress.set_text("")
+        self.signals['stop'] = False
+        self.signals['break'] = False
 
     def connect(self, dir_):
         root = self.split_path(dir_)[0]
-        it = self.get_iter_by_path(root)
-        self.treestore.set_value(it, 1, gtk.STOCK_CONNECT)
+        it_connect = self.find_root(root, True)
+        it_disconnect = self.find_root(root, False)
+        if it_disconnect:
+            if it_connect:
+                self.add_nodes(dir_, True)
+                self.treestore.remove(it_disconnect)
+            else:
+                self.treestore.set_value(it_disconnect, 1, gtk.STOCK_CONNECT)
 
-    def fill_node(self):
-        pass
+    def iter_to_os_path(self, it):
+        path = []
+        while it:
+            path.append(self.treestore.get_value(it, 0))
+            it = self.treestore.iter_parent(it)
+        return os.sep.join(path[::-1])
+
+    def get_root(self, iter_):
+        while self.treestore.get_value(iter_, 3) != 'n':
+            iter_ = self.treestore.iter_parent(iter_)
+        return iter_
+
+    def get_child_pathes(self, iter_):
+
+        def paths(it, acc=[]):
+            if not self.treestore.iter_has_child(it):
+                yield acc
+
+            it_ = self.treestore.iter_children(it)
+            while it_:
+                for path in paths(it_, [self.treestore.get_value(it_, 0)]+acc):
+                    yield path
+                it_ = self.treestore.iter_next(it_)
+
+        for p in paths(iter_):
+            yield os.sep.join(p[::-1])
+
+    def clear_node(self, iter_):
+        it = self.treestore.iter_children(iter_)
+        while it:
+            next_ = self.treestore.iter_next(it)
+            self.treestore.remove(it)
+            it = next_
+
+    def fill_node(self, path):
+        iter_ = self.treestore.get_iter(path)
+        os_path = self.iter_to_os_path(iter_)
+        root = self.get_root(iter_)
+        is_root = (self.treestore.get_value(iter_, 3) == 'n')
+        if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
+            if is_root:
+                dirs = self.get_child_pathes(iter_)
+                for dir_ in dirs:
+                    full_dir = os.path.join(os_path, dir_)
+                    self.connect(full_dir)
+                    self.fill_dir(full_dir)
+            else:
+                dirs = [os.path.join(os_path, dir_) for dir_ in self.get_child_pathes(iter_)]
+                root_name = self.treestore.get_value(root, 0)
+                other_dirs = [d for d in [os.path.join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
+                self.clear_node(root)
+                self.treestore.set_value(root, 1, gtk.STOCK_CONNECT)
+                for dir_ in dirs:
+                    self.add_nodes(dir_, True)
+                    self.fill_dir(dir_)
+                for dir_ in other_dirs:
+                    self.add_nodes(dir_)
+                disc_root = self.get_iter_by_path(root_name, False)
+                self.treestore.move_after(disc_root, root)
+        else:
+            if is_root:
+                dirs = list(self.get_child_pathes(iter_))
+                self.clear_node(iter_)
+                dirs_set = set()
+                for dir_ in dirs:
+                    full_dir = os.path.join(os_path, dir_)
+                    for s_dirs in self.dirs:
+                        if full_dir.startswith(s_dirs):
+                            dirs_set.add(s_dirs)
+                for d in dirs_set:
+                    self.add_nodes(d, True)
+                    self.fill_dir(d)
+            else:
+                dirs = list(self.get_child_pathes(iter_))
+                self.clear_node(iter_)
+                for d in dirs:
+                    self.add_nodes(d, True)
+                    self.fill_dir(d)
 
     def file_callback(self, name, parent, ext_parent):
+        parent_ = self.get_iter_by_path(ext_parent, True) or parent
+        self.add_file(name, parent_)
         while gtk.events_pending():
             gtk.main_iteration()
         self.check_break()
-        parent_ = self.get_iter_by_path(ext_parent) or parent
-        self.add_file(name, parent_)
 
     def fill_dir(self, path):
-        parent_ = self.get_iter_by_path(path)
+        parent_ = self.get_iter_by_path(path, True)
         dir_walker(path, self.new_dir_node, self.file_callback, parent_)
 
 
@@ -387,12 +500,12 @@ class DisplayServersModel:
         self.view.append_column(self.column2)
         self.view.connect("button-press-event", self.tree_actions)
 
-    def col1_toggled_cb(self, cell, path, model):
+    def col1_toggled_cb(self, cell, path):
         """
         Sets the toggled state on the toggle button to true or false.
         """
-        true_model = self.servers_model.get_model()
-        true_path = self.model.convert_path_to_child_path(path)
+        true_model = self.servers_model.treestore
+        true_path = self.servers_model.get_model().convert_path_to_child_path(path)
         state = true_model[true_path][2] = not true_model[true_path][2]
 
         def walk(child):
@@ -407,10 +520,9 @@ class DisplayServersModel:
         if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
             model = view.get_model()
-            true_model = model.get_model()
-            true_path = model.convert_path_to_child_path(path[0])
-            dirs = true_model[true_path][4]
-            self.servers_model.fill_node(dirs)
+            true_model = self.servers_model.treestore
+            true_path =  self.servers_model.get_model().convert_path_to_child_path(path[0])
+            self.servers_model.fill_node(true_path)
 
 def tree_model_iter_children(model, treeiter):
     it = model.iter_children(treeiter)
@@ -534,7 +646,7 @@ class ServersTree(gtk.Frame):
 
     def on_advanced_entry_changed(self, widget):
         self.filter_text = widget.get_text()
-        self.model.get_model().refilter()
+        self.view.servers_model.get_model().refilter()
         if not self.filter_text or not self.ft:
             self.view.view.collapse_all()
         else:
