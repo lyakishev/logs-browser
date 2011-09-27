@@ -810,8 +810,6 @@ class SourceManagerUI(gtk.VBox):
         self.stand_choice.set_active(active if active is not None else self.default)
 
     def get_log_sources(self):
-        import pdb
-        pdb.set_trace()
         flogs = pathes(self.trees.file_servers_tree.view.servers_model.get_active_servers(),
                         self.trees.file_servers_tree.view.servers_model.stand)
         if self.trees.evlogs_servers_tree:
