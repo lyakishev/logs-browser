@@ -244,7 +244,6 @@ class FileServersModel(ServersModel):
     def change_model(self, dirs):
         dirs_for_del = [d for d in self.dirs if d not in dirs]
         new_dirs = [d for d in dirs if d not in self.dirs]
-        dirs_for_del = [d for d in self.dirs if d not in dirs]
         self.remove_dirs(dirs_for_del)
         for dir_ in new_dirs:
             self.add_nodes(dir_)
@@ -337,14 +336,18 @@ class FileServersModel(ServersModel):
             rm_dir_set = set(self.pathes_from_path(rm_dir))
             if all_set & rm_dir_set:
                 for p in rm_dir_set.difference(all_set):
-                    iters_for_rm.append(self.treestore.get_path(self.get_iter_by_path(p)))
+                    iters_for_rm.append(p)
+            else:
+                for p in rm_dir_set:
+                    iters_for_rm.append(p)
 
-        iters = []
-        for it in iters_for_rm:
-            try:
-                self.treestore.remove(self.treestore.get_iter(it))
-            except ValueError:
-                pass
+        for p in iters_for_rm:
+            c_iter = self.get_iter_by_path(p, False)
+            d_iter = self.get_iter_by_path(p, True)
+            if c_iter:
+                self.treestore.remove(c_iter)
+            if d_iter:
+                self.treestore.remove(d_iter)
 
     def remove_childs(self, it):
         child = self.treestore.iter_children(it)
@@ -834,8 +837,9 @@ class SourceManagerUI(gtk.VBox):
 
     def change_stand(self, *args):
         stand = self.stand_choice.get_active_text()
-        self.trees.change_stand(stand, self.source_manager.get_filelog_sources(stand),
-                                    self.source_manager.get_evlog_sources(stand))
+        flogs = self.source_manager.get_filelog_sources(stand)
+        elogs = self.source_manager.get_evlog_sources(stand)
+        self.trees.change_stand(stand, flogs, elogs)
 
     def fill(self):
         stand = self.stand_choice.get_active_text()
