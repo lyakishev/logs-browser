@@ -222,7 +222,7 @@ class EventServersModel(ServersModel):
         for k, v in sources.iteritems():
             child = self.add_dir(k, None, k)
             for l in v:
-                self.add_file(l, child, os.path.join(k,l))
+                self.add_file(l, child)
 
 
 class FileServersModel(ServersModel):
@@ -395,7 +395,7 @@ class FileServersModel(ServersModel):
     def get_child_pathes(self, iter_):
 
         def paths(it, acc=[]):
-            if not self.treestore.iter_has_child(it):
+            if not self.treestore.iter_has_child(it) and self.treestore.get_value(it, 3) != 'f':
                 yield acc
 
             it_ = self.treestore.iter_children(it)
@@ -414,50 +414,79 @@ class FileServersModel(ServersModel):
             self.treestore.remove(it)
             it = next_
 
-    def fill_node(self, path):
+    def get_dirs_for_update(self, path):
         iter_ = self.treestore.get_iter(path)
         os_path = self.iter_to_os_path(iter_)
-        root = self.get_root(iter_)
-        is_root = (self.treestore.get_value(iter_, 3) == 'n')
-        if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
-            if is_root:
-                dirs = self.get_child_pathes(iter_)
-                for dir_ in dirs:
-                    full_dir = os.path.join(os_path, dir_)
-                    self.connect(full_dir)
-                    self.fill_dir(full_dir)
-            else:
-                dirs = [os.path.join(os_path, dir_) for dir_ in self.get_child_pathes(iter_)]
+        dirs = list(self.get_child_pathes(iter_))
+        dirs_set = set()
+        for dir_ in dirs:
+            full_dir = os.path.join(os_path, dir_)
+            for s_dirs in self.dirs:
+                if full_dir.startswith(s_dirs):
+                    dirs_set.add(s_dirs)
+        return dirs_set
+
+
+    def fill_node(self, path):
+        iter_ = self.treestore.get_iter(path)
+        if self.treestore.get_value(iter_, 3) != 'f':
+            os_path = self.iter_to_os_path(iter_)
+            root = self.get_root(iter_)
+            need_move = True
+            if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
+                dirs = []
+                for dir_ in self.get_child_pathes(iter_):
+                    if dir_:
+                        dirs.append(os.path.join(os_path, dir_))
+                    else:
+                        dirs.append(os_path)
                 root_name = self.treestore.get_value(root, 0)
                 other_dirs = [d for d in [os.path.join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
                 self.clear_node(root)
-                self.treestore.set_value(root, 1, gtk.STOCK_CONNECT)
+                pos = self.treestore.iter_next(root)
+                if not self.find_root(root_name, True):
+                    self.treestore.set_value(root, 1, gtk.STOCK_CONNECT)
+                else:
+                    self.treestore.remove(root)
+                    need_move = False
                 for dir_ in dirs:
                     self.add_nodes(dir_, True)
                     self.fill_dir(dir_)
                 for dir_ in other_dirs:
                     self.add_nodes(dir_)
                 disc_root = self.get_iter_by_path(root_name, False)
-                self.treestore.move_after(disc_root, root)
-        else:
-            if is_root:
-                dirs = list(self.get_child_pathes(iter_))
-                self.clear_node(iter_)
-                dirs_set = set()
-                for dir_ in dirs:
-                    full_dir = os.path.join(os_path, dir_)
-                    for s_dirs in self.dirs:
-                        if full_dir.startswith(s_dirs):
-                            dirs_set.add(s_dirs)
-                for d in dirs_set:
-                    self.add_nodes(d, True)
-                    self.fill_dir(d)
+                if disc_root:
+                    if need_move:
+                        root = self.get_iter_by_path(root_name, True)
+                        self.treestore.move_after(disc_root, root)
+                    else:
+                        self.treestore.move_before(disc_root, pos)
             else:
-                dirs = list(self.get_child_pathes(iter_))
-                self.clear_node(iter_)
-                for d in dirs:
-                    self.add_nodes(d, True)
-                    self.fill_dir(d)
+                is_root = (self.treestore.get_value(iter_, 3) == 'n')
+                if is_root:
+                    dirs = list(self.get_child_pathes(iter_))
+                    self.clear_node(iter_)
+                    dirs_set = set()
+                    for dir_ in dirs:
+                        full_dir = os.path.join(os_path, dir_)
+                        for s_dirs in self.dirs:
+                            if full_dir.startswith(s_dirs):
+                                dirs_set.add(s_dirs)
+                    for d in dirs_set:
+                        self.add_nodes(d, True)
+                        self.fill_dir(d)
+                else:
+                    dirs_to_update = set()
+                    for dir_ in self.dirs:
+                        if dir_.startswith(os_path) and self.get_iter_by_path(dir_, True):
+                            dirs_to_update.add(dir_)
+                    self.clear_node(iter_)
+                    if dirs_to_update:
+                        for d in dirs_to_update:
+                            self.add_nodes(d, True)
+                            self.fill_dir(d)
+                    else:
+                        self.fill_dir(os_path)
 
     def file_callback(self, name, parent, ext_parent):
         parent_ = self.get_iter_by_path(ext_parent, True) or parent
