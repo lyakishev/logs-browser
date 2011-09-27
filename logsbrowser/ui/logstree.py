@@ -15,6 +15,9 @@ from sourceactionsmanager import SourceActionsManagerUI
 from source.monitor import ConfigMonitor
 
 
+def os_join(p1, p2):
+    return os.sep.join([p1, p2])
+
 
 
 class ServersModel(object):
@@ -443,7 +446,7 @@ class FileServersModel(ServersModel):
         dirs = list(self.get_child_pathes(iter_))
         dirs_set = set()
         for dir_ in dirs:
-            full_dir = os.path.join(os_path, dir_)
+            full_dir = os_join(os_path, dir_)
             for s_dirs in self.dirs:
                 if full_dir.startswith(s_dirs):
                     dirs_set.add(s_dirs)
@@ -460,11 +463,11 @@ class FileServersModel(ServersModel):
                 dirs = []
                 for dir_ in self.get_child_pathes(iter_):
                     if dir_:
-                        dirs.append(os.path.join(os_path, dir_))
+                        dirs.append(os_join(os_path, dir_))
                     else:
                         dirs.append(os_path)
                 root_name = self.treestore.get_value(root, 0)
-                other_dirs = [d for d in [os.path.join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
+                other_dirs = [d for d in [os_join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
                 self.clear_node(root)
                 pos = self.treestore.iter_next(root)
                 if not self.find_root(root_name, True):
@@ -491,7 +494,7 @@ class FileServersModel(ServersModel):
                     self.clear_node(iter_)
                     dirs_set = set()
                     for dir_ in dirs:
-                        full_dir = os.path.join(os_path, dir_)
+                        full_dir = os_join(os_path, dir_)
                         for s_dirs in self.dirs:
                             if full_dir.startswith(s_dirs):
                                 dirs_set.add(s_dirs)
