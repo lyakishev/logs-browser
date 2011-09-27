@@ -59,7 +59,7 @@ def date_format(path):
     except IOError:
         return None
 
-def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
+def dir_walker(path, dir_callback, log_callback,  stand, parent=None):
     files = set()
     try:
         for f in os.listdir(path):
@@ -75,16 +75,16 @@ def dir_walker(path, dir_callback, log_callback, parent=None, prefix=""):
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:
-                            if (path, name) not in source_formats[prefix]:
-                                source_formats[prefix][(path, name)] = format_
+                            if (path, name) not in source_formats[stand]:
+                                source_formats[stand][(path, name)] = format_
                             log_callback(name, parent, ext_parent)
                             files.add(name)
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
                         node = dir_callback(f, parent, ext_parent, True)
-                        dir_walker(fullf, dir_callback, log_callback, node, prefix)
+                        dir_walker(fullf, dir_callback, log_callback, stand, node)
             else:
                 node = dir_callback(f, parent, ext_parent, True)
-                dir_walker(fullf, dir_callback, log_callback, node, prefix)
+                dir_walker(fullf, dir_callback, log_callback, stand, node)
     except OSError:
         pass

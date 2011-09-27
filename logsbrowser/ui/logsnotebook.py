@@ -32,7 +32,7 @@ class LogsNotebook(gtk.Notebook):
         self.labels = []
         self.counter = 1
         ll=self.add_new_page()
-        self.tree.save_state(ll)
+        #self.tree.save_state(ll)
         self.set_current_page(0)
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.set_scrollable(True)

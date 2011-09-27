@@ -101,8 +101,6 @@ class ServersModel(object):
                 cur_log = [getv(iters, 0)]
                 parent = self.treestore.iter_parent(iters)
                 while parent:
-                    if getv(parent, 3) == 'n':
-                        break
                     cur_log.append(getv(parent, 0))
                     parent = self.treestore.iter_parent(parent)
                 log_for_process.append(cur_log)
@@ -327,25 +325,47 @@ class FileServersModel(ServersModel):
             return None
 
     def remove_dirs(self, dirs):
-        iters_for_rm = []
-        all_set = set()
-        all_dirs = set(self.dirs).difference(set(dirs))
-        for all_dir in all_dirs:
-            all_set |= set(self.pathes_from_path(all_dir))
+        iters_for_rm_conn = []
+        iters_for_rm_disconn = []
+        all_conn = set()
+        all_disconn = set()
+        for d in self.dirs:
+            if self.get_iter_by_path(d, False):
+                all_disconn.add(d)
+            if self.get_iter_by_path(d, True):
+                all_conn.add(d)
+        all_disconn = all_disconn.difference(set(dirs))
+        all_conn = all_conn.difference(set(dirs))
+        all_disconn_set = set()
+        all_conn_set = set()
+        for dir_ in all_disconn:
+            for d in set(self.pathes_from_path(dir_)):
+                all_disconn_set.add(d)
+        for dir_ in all_conn:
+            for d in set(self.pathes_from_path(dir_)):
+                all_conn_set.add(d)
         for rm_dir in dirs:
             rm_dir_set = set(self.pathes_from_path(rm_dir))
-            if all_set & rm_dir_set:
-                for p in rm_dir_set.difference(all_set):
-                    iters_for_rm.append(p)
+            if all_conn_set & rm_dir_set:
+                for p in rm_dir_set.difference(all_conn_set):
+                    iters_for_rm_conn.append(p)
             else:
                 for p in rm_dir_set:
-                    iters_for_rm.append(p)
+                    iters_for_rm_conn.append(p)
+            if all_disconn_set & rm_dir_set:
+                for p in rm_dir_set.difference(all_disconn_set):
+                    iters_for_rm_disconn.append(p)
+            else:
+                for p in rm_dir_set:
+                    iters_for_rm_disconn.append(p)
 
-        for p in iters_for_rm:
-            c_iter = self.get_iter_by_path(p, False)
-            d_iter = self.get_iter_by_path(p, True)
+        for p in iters_for_rm_conn:
+            c_iter = self.get_iter_by_path(p, True)
             if c_iter:
                 self.treestore.remove(c_iter)
+
+        for p in iters_for_rm_disconn:
+            d_iter = self.get_iter_by_path(p, False)
             if d_iter:
                 self.treestore.remove(d_iter)
 
@@ -500,7 +520,7 @@ class FileServersModel(ServersModel):
 
     def fill_dir(self, path):
         parent_ = self.get_iter_by_path(path, True)
-        dir_walker(path, self.new_dir_node, self.file_callback, parent_)
+        dir_walker(path, self.new_dir_node, self.file_callback, self.stand, parent_)
 
 
 
@@ -790,11 +810,13 @@ class SourceManagerUI(gtk.VBox):
         self.stand_choice.set_active(active if active is not None else self.default)
 
     def get_log_sources(self):
-        flogs = pathes(self.trees.file_servers_tree.model.get_active_servers(),
-                        self.trees.file_servers_tree.model.stand)
+        import pdb
+        pdb.set_trace()
+        flogs = pathes(self.trees.file_servers_tree.view.servers_model.get_active_servers(),
+                        self.trees.file_servers_tree.view.servers_model.stand)
         if self.trees.evlogs_servers_tree:
             evlogs = ([(s[1], s[0], None) for s in
-                      self.trees.evlogs_servers_tree.model.get_active_servers()])
+                      self.trees.evlogs_servers_tree.view.servers_model.get_active_servers()])
         else:
             evlogs = []
         return (flogs, evlogs)
@@ -810,27 +832,26 @@ class SourceManagerUI(gtk.VBox):
                                                           [], ("", False),
                                                           self.default)
         self.stand_choice.set_active(stand)
-        ftree.model.set_active_from_paths(fpathslist)
+        ftree.view.servers_model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
         if etree:
-            etree.model.set_active_from_paths(epathslist)
+            etree.view.servers_model.set_active_from_paths(epathslist)
             etree.set_text(eentry)
 
 
     def save_state(self, page):
-        pass
-        #ftree = self.trees.file_servers_tree
-        #fpathslist = ftree.get_active_check_paths()
-        #fentry = ftree.filter_text, ftree.ft
-        #etree = self.trees.evlogs_servers_tree
-        #stand = self.stand_choice.get_active()
-        #if etree:
-        #    epathslist = etree.model.get_active_check_paths()
-        #    eentry = etree.filter_text, ftree.ft
-        #else:
-        #    epathslist = []
-        #    eentry = ()
-        #self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
+        ftree = self.trees.file_servers_tree
+        fpathslist = ftree.view.servers_model.get_active_check_paths()
+        fentry = ftree.filter_text, ftree.ft
+        etree = self.trees.evlogs_servers_tree
+        stand = self.stand_choice.get_active()
+        if etree:
+            epathslist = etree.view.servers_model.get_active_check_paths()
+            eentry = etree.filter_text, ftree.ft
+        else:
+            epathslist = []
+            eentry = ()
+        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
 
     def free_state(self, page):
         del self.state_[page]
