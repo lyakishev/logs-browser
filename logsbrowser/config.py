@@ -45,3 +45,8 @@ QUERIES_FILE = get_path(_config.get("config_files", 'queries'))
 
 HELP_INDEX = _config.get("docs", 'doc_index_file')
 MAX_LINES_FOR_DETECT_FORMAT = _config.getint('parse_files', 'max_lines_for_detect_format')
+
+WIDTH_MAIN_WINDOW = _config.getint('window_size', 'width_main_window')
+HEIGHT_MAIN_WINDOW = _config.getint('window_size', 'height_main_window')
+WIDTH_LOG_WINDOW = _config.getint('window_size', 'width_log_window')
+HEIGHT_LOG_WINDOW = _config.getint('window_size', 'height_log_window')
