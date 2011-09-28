@@ -278,7 +278,6 @@ class FileServersModel(ServersModel):
     def new_root_node(self, node_name, conn):
         while gtk.events_pending():
             gtk.main_iteration()
-        self.check_break()
         node = self.get_iter_by_path(node_name, conn)
         if not node:
             node = self.add_root(node_name, node_name)
@@ -287,7 +286,6 @@ class FileServersModel(ServersModel):
     def new_dir_node(self, node_name, parent, node_path, conn):
         while gtk.events_pending():
             gtk.main_iteration()
-        self.check_break()
         node = self.get_iter_by_path(node_path, conn)
         if not node:
             node = self.add_dir(node_name, parent, node_path)
@@ -388,7 +386,10 @@ class FileServersModel(ServersModel):
             self.add_nodes(dir_)
             if not (self.signals['stop'] or self.signals['break']):
                 self.connect(dir_)
-                self.fill_dir(dir_)
+                try:
+                    self.fill_dir(dir_)
+                except StopIteration:
+                    continue
             self.progress.set_fraction(frac * (n + 1))
         self.progress.set_fraction(0)
         self.progress.set_text("")
@@ -454,6 +455,8 @@ class FileServersModel(ServersModel):
 
 
     def fill_node(self, path):
+        self.progress.set_fraction(0)
+        self.progress.set_text("Fill node...")
         iter_ = self.treestore.get_iter(path)
         if self.treestore.get_value(iter_, 3) != 'f':
             os_path = self.iter_to_os_path(iter_)
@@ -513,6 +516,7 @@ class FileServersModel(ServersModel):
                             self.fill_dir(d)
                     else:
                         self.fill_dir(os_path)
+        self.progress.set_text("")
 
     def file_callback(self, name, parent, ext_parent):
         parent_ = self.get_iter_by_path(ext_parent, True) or parent
