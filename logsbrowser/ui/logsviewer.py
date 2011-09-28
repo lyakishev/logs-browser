@@ -17,6 +17,19 @@ from process import process, mp_process
 from db.engine import close_conn
 from operator import setitem
 import os
+import subprocess
+from utils.monitor import ConfigMonitor
+try:
+    from imp import reload
+except ImportError:
+    pass
+
+
+def reload_config():
+    reload(config)
+
+monitor = ConfigMonitor("config/logsbrowser.cfg")
+monitor.register_action(reload_config)
 
 
 class LogsViewer:
@@ -26,6 +39,14 @@ class LogsViewer:
           <menubar name="MenuBar">
             <menu action="File">
               <menuitem action="Quit"/>
+            </menu>
+            <menu action="Settings">
+                <menu action="Configuration">
+                  <menuitem action="Application"/>
+                  <menuitem action="Sources"/>
+                  <menuitem action="Queries"/>
+                  <menuitem action="Actions"/>
+                </menu>
             </menu>
             <menu action="?">
               <menuitem action="Help"/>
@@ -98,6 +119,17 @@ class LogsViewer:
                                   'Quit the Program', self.destroy_cb),
                                  ('File', None, '_File'),
                                  ('?', None, '_?'),
+                                ('Settings', None, '_Settings'),
+                                ('Configuration', None, '_Configuration'),
+                                  ("Application", None,
+                                      "_Application", None, None,
+                                      self.edit_config),
+                                  ("Sources", None, "_Sources", None, None,
+                                      self.edit_config),
+                                  ("Queries", None, "_Queries", None, None,
+                                      self.edit_config),
+                                  ("Actions", None, "_Actions", None, None,
+                                      self.edit_config),
                                 ('Help', gtk.STOCK_HELP, '_Help', None,
                                   'Manual', self.show_help),
                                   ('About', gtk.STOCK_ABOUT, '_About', None,
@@ -113,6 +145,20 @@ class LogsViewer:
         self.root.add(menu_box)
         self.root.show_all()
         #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
+
+    def edit_config(self, action):
+        name = action.get_name()
+        if name == "Application":
+            command = "%s %s" % (config.PROGRAM_CONFIG_EDITOR, "config/logsbrowser.cfg")
+        elif name == "Sources":
+            command = "%s %s" % (config.SOURCES_XML_EDITOR, config.SOURCES_XML)
+        elif name == "Queries":
+            command = "%s %s" % (config.QUERIES_FILE_EDITOR, config.QUERIES_FILE)
+        elif name == "Actions":
+            command = "%s %s" % (config.SELECTS_EDITOR, config.SELECTS)
+        subprocess.Popen(command)
+        #Process(target=subprocess.call, args=(command,)).start()
+
 
     def set_from_date(self):
         self.date_filter.fromto_option.from_date.set_now()
@@ -178,6 +224,8 @@ class LogsViewer:
 
     @profiler.time_it
     def show_logs(self, *args):
+        import pdb
+        pdb.set_trace()
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)
         self.browser.set_sens(False)

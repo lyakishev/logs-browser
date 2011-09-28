@@ -1,5 +1,5 @@
 <selects>
-    <select name="Select All"><actions><action operation="select" operator="glob" rule="*" type="all" /></actions></select><select name="Unselect All">
+    <select name="Select All"><actions><action operation="select" operator="glob" rule="*" type="file" /></actions></select><select name="Unselect All">
 	<actions>
 	    <action operation="unselect" operator="glob" rule="*" type="all" />
 	</actions>

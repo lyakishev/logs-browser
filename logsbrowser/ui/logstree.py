@@ -12,7 +12,7 @@ import config
 from utils.xmlmanagers import SourceManager, SelectManager
 from dialogs import save_dialog
 from sourceactionsmanager import SourceActionsManagerUI
-from source.monitor import ConfigMonitor
+from utils.monitor import ConfigMonitor
 
 
 def os_join(p1, p2):
