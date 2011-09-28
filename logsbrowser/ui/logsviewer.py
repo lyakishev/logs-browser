@@ -176,7 +176,7 @@ class LogsViewer:
         about.set_property('authors', ['Lyakishev Andrey <lyakav@gmail.com>',
                                        'Chizhikov Vladimir <vladimir.chizh@gmail.com>'])
         about.set_property('version', VERSION)
-        about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
+        about.set_property('website', 'http://bitbucket.org/lyakishev_a_v/logs-browser')
         about.set_name('LogsBrowser')
         about.run()
         about.destroy()
