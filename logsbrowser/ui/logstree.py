@@ -654,6 +654,7 @@ class ServersTree(gtk.Frame):
             self.view.servers_model = self.new_model(stand, logs)
             self.view.servers_model.get_model().set_visible_func(self.visible_func)
         self.view.view.set_model(self.view.servers_model.get_model())
+        self.set_text((self.filter_text, self.ft))
 
     def get_pathes(self):
         return self.view.servers_model.get_pathes()
@@ -701,12 +702,14 @@ class ServersTree(gtk.Frame):
 
     def on_advanced_entry_changed(self, widget):
         self.filter_text = widget.get_text()
-        self.view.servers_model.get_model().refilter()
-        if not self.filter_text or not self.ft:
-            self.view.view.collapse_all()
-        else:
-            self.ft = True
-            self.view.view.expand_all()
+        model = self.view.servers_model
+        if model:
+            model.get_model().refilter()
+            if not self.filter_text or not self.ft:
+                self.view.view.collapse_all()
+            else:
+                self.ft = True
+                self.view.view.expand_all()
 
     def visible_func(self, model, treeiter):
         if self.ft:
