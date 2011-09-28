@@ -8,7 +8,7 @@ import gio
 import re
 import xml.dom.minidom
 import os
-import threading
+import subprocess
 from colorparser import LogColorParser
 import pango
 import traceback
@@ -399,8 +399,7 @@ class LogWindow:
 
     def open_file(self, *args):
         for f in self.files:
-            threading.Thread(target=os.system,
-                             args=("%s %s" % (config.EXTERNAL_LOG_VIEWER, f),)).start()
+            subprocess.Popen("%s %s" % (config.EXTERNAL_LOG_VIEWER, f))
 
 
     def filling(self, date_, logname_, type_):

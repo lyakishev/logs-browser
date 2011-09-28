@@ -157,7 +157,6 @@ class LogsViewer:
         elif name == "Actions":
             command = "%s %s" % (config.SELECTS_EDITOR, config.SELECTS)
         subprocess.Popen(command)
-        #Process(target=subprocess.call, args=(command,)).start()
 
 
     def set_from_date(self):
@@ -167,7 +166,7 @@ class LogsViewer:
         self.date_filter.fromto_option.to_date.set_now()
 
     def show_help(self, *args):
-        os.system('start %s' % config.HELP_INDEX)
+        subprocess.Popen('start %s' % config.HELP_INDEX)
 
     def show_about(self, *args):
         about = gtk.AboutDialog()
