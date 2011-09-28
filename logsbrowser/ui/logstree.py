@@ -523,7 +523,7 @@ class FileServersModel(ServersModel):
         self.add_file(name, parent_)
         while gtk.events_pending():
             gtk.main_iteration()
-        self.check_break()
+        #self.check_break()
 
     def fill_dir(self, path):
         parent_ = self.get_iter_by_path(path, True)
