@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # vim: ts=4:sw=4:tw=78:nowrap
+
+VERSION = 'DEV'
+
 import pygtk
 pygtk.require("2.0")
 import gtk
@@ -172,7 +175,7 @@ class LogsViewer:
         about = gtk.AboutDialog()
         about.set_property('authors', ['Lyakishev Andrey <lyakav@gmail.com>',
                                        'Chizhikov Vladimir <vladimir.chizh@gmail.com>'])
-        about.set_property('version', '2.0a')
+        about.set_property('version', VERSION)
         about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         about.set_name('LogsBrowser')
         about.run()

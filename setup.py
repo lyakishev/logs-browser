@@ -5,7 +5,16 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '1.8'
+version = '2.0.9'
+
+import fileinput
+
+for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace=1)):
+    if line.startswith("VERSION = "):
+        print "VERSION = '%s'" % version
+    else:
+        print line,
+
 
 includefiles = [('logsbrowser/config', 'config'),
                 ('docs', 'docs'),
@@ -43,3 +52,10 @@ setup(name='logsbrowser',
                                 copyDependentFiles = True,
                               )]
       )
+
+
+for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace=1)):
+    if line.startswith("VERSION = "):
+        print "VERSION = 'DEV'"
+    else:
+        print line,
