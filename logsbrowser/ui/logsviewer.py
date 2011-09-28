@@ -226,8 +226,6 @@ class LogsViewer:
 
     @profiler.time_it
     def show_logs(self, *args):
-        import pdb
-        pdb.set_trace()
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)
         self.browser.set_sens(False)
