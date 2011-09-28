@@ -656,12 +656,12 @@ class ServersTree(gtk.Frame):
         self.view.view.set_model(self.view.servers_model.get_model())
 
     def get_pathes(self):
-        return self.model.get_pathes()
+        return self.view.servers_model.get_pathes()
 
     def apply_select(self, menuitem, select, manager):
         actions = manager.get_select_actions(select)
         for action in actions:
-            self.model.select_rows(action)
+            self.view.servers_model.select_rows(action)
 
     def select_popup(self, menu, event):
         if event.type == gtk.gdk.BUTTON_PRESS:

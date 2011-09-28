@@ -102,9 +102,10 @@ class SelectManager(object):
                     "iregexp": lambda name, pat: re.search(pat, name, re.I),
                     "icontains": lambda name, pat: pat.lower() in name.lower()}
 
-    type_map = {"file": ("f,"),
-                "dir": ("d, "),
-                "all": ("d", "f"),
+    type_map = {"file": ("f",),
+                "dir": ("d",),
+                "stand": ("n",),
+                "all": ("d", "f", "n"),
                 "path": ()}
     
     operation_map = {'select': 'select',
