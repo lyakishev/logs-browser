@@ -1,4 +1,4 @@
-queries:
+﻿queries:
     - name: 'Время, вызов, имя лога, тип'
       add_lid: 1
       default: 1
@@ -27,7 +27,7 @@ queries:
         regex(log, '  \[result\] <(\w+)>\s+outputs', 1) as result,
         logname, type from #this
         group by date, thr, level, call, result, logname
-        order by date desc
+        order by date desc, lid
 
     - name: 'Дата сообщения, имя лога, тип'
       add_lid: 1

@@ -50,6 +50,9 @@ class LogsViewer:
                   <menuitem action="Queries"/>
                   <menuitem action="Actions"/>
                 </menu>
+                <menu action="Full text search">
+                    <menuitem action="enable" />
+                </menu>
             </menu>
             <menu action="?">
               <menuitem action="Help"/>
@@ -67,12 +70,6 @@ class LogsViewer:
         self.root.set_default_size(config.WIDTH_MAIN_WINDOW, config.HEIGHT_MAIN_WINDOW)
 
         self.date_filter = DateFilter()
-
-        options_frame = gtk.Frame("Options")
-        self.index_t = gtk.CheckButton(
-                                "Full-text index (enables MATCH operator)")
-        self.index_t.set_active(config.FTSINDEX)
-        options_frame.add(self.index_t)
 
         self.status = StatusIcon(self.date_filter, self.root)
 
@@ -108,7 +105,6 @@ class LogsViewer:
         button_box.pack_start(self.break_btn)
         control_box.pack_start(self.source_tree, True, True)
         control_box.pack_start(self.date_filter, False, False)
-        control_box.pack_start(options_frame, False, False)
         control_box.pack_start(button_box, False, False, 5)
         control_box.pack_start(self.progressbar, False, False)
         main_box.pack1(control_box, False, False)
@@ -118,6 +114,8 @@ class LogsViewer:
         self.root.add_accel_group(accelgroup)
         actiongroup = gtk.ActionGroup('LogsBrowser')
         self.actiongroup = actiongroup
+        self.index_t = gtk.ToggleAction('enable', '_enable', 'Enable Full Text Search', None)
+        self.index_t.set_active(config.FTSINDEX)
         actiongroup.add_actions([('Quit', gtk.STOCK_QUIT, '_Quit', None,
                                   'Quit the Program', self.destroy_cb),
                                  ('File', None, '_File'),
@@ -133,10 +131,12 @@ class LogsViewer:
                                       self.edit_config),
                                   ("Actions", None, "_Actions", None, None,
                                       self.edit_config),
+                                ('Full text search', None, '_FTS'),
                                 ('Help', gtk.STOCK_HELP, '_Help', None,
                                   'Manual', self.show_help),
                                   ('About', gtk.STOCK_ABOUT, '_About', None,
                                   'About', self.show_about)])
+        actiongroup.add_action(self.index_t)
 
         uimanager.insert_action_group(actiongroup, 0)
         merge_id = uimanager.add_ui_from_string(self.ui)
@@ -147,7 +147,6 @@ class LogsViewer:
         menu_box.pack_start(main_box)
         self.root.add(menu_box)
         self.root.show_all()
-        #self.source_tree.fill(config.FILL_LOGSTREE_AT_START)
 
     def edit_config(self, action):
         name = action.get_name()
