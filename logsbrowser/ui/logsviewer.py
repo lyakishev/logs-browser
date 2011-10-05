@@ -50,9 +50,7 @@ class LogsViewer:
                   <menuitem action="Queries"/>
                   <menuitem action="Actions"/>
                 </menu>
-                <menu action="Full text search">
-                    <menuitem action="enable" />
-                </menu>
+                <menuitem action="fts" />
             </menu>
             <menu action="?">
               <menuitem action="Help"/>
@@ -114,7 +112,7 @@ class LogsViewer:
         self.root.add_accel_group(accelgroup)
         actiongroup = gtk.ActionGroup('LogsBrowser')
         self.actiongroup = actiongroup
-        self.index_t = gtk.ToggleAction('enable', '_enable', 'Enable Full Text Search', None)
+        self.index_t = gtk.ToggleAction('fts', '_Full Text Index', 'Enable Full Text Search', None)
         self.index_t.set_active(config.FTSINDEX)
         actiongroup.add_actions([('Quit', gtk.STOCK_QUIT, '_Quit', None,
                                   'Quit the Program', self.destroy_cb),
@@ -131,7 +129,6 @@ class LogsViewer:
                                       self.edit_config),
                                   ("Actions", None, "_Actions", None, None,
                                       self.edit_config),
-                                ('Full text search', None, '_FTS'),
                                 ('Help', gtk.STOCK_HELP, '_Help', None,
                                   'Manual', self.show_help),
                                   ('About', gtk.STOCK_ABOUT, '_About', None,
