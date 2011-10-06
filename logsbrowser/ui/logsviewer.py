@@ -34,6 +34,8 @@ def reload_config():
 monitor = ConfigMonitor("config/logsbrowser.cfg")
 monitor.register_action(reload_config)
 
+license = open("LICENSE").read()
+
 
 class LogsViewer:
     """ The GUI class is the controller for application """
@@ -174,6 +176,7 @@ class LogsViewer:
         about.set_property('version', VERSION)
         about.set_property('website', 'http://bitbucket.org/lyakishev_a_v/logs-browser')
         about.set_name('LogsBrowser')
+	about.set_license(license)
         about.run()
         about.destroy()
 
