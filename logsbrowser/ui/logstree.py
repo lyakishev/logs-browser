@@ -578,10 +578,11 @@ class DisplayServersModel:
     def tree_actions(self, view, event):
         if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            model = view.get_model()
-            true_model = self.servers_model.treestore
-            true_path =  self.servers_model.get_model().convert_path_to_child_path(path[0])
-            self.servers_model.fill_node(true_path)
+            if path:
+                model = view.get_model()
+                true_model = self.servers_model.treestore
+                true_path =  self.servers_model.get_model().convert_path_to_child_path(path[0])
+                self.servers_model.fill_node(true_path)
 
 def tree_model_iter_children(model, treeiter):
     it = model.iter_children(treeiter)
