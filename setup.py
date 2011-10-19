@@ -5,7 +5,7 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '2.0.9.3'
+version = '2.0.10.0'
 
 import fileinput
 
@@ -20,8 +20,7 @@ includefiles = [('logsbrowser/config', 'config'),
                 ('docs', 'docs'),
                 ('gtk_for_build/etc', 'etc'),
                 ('gtk_for_build/lib', 'lib'),
-                ('gtk_for_build/share', 'share')]
-
+                ('gtk_for_build/share', 'share'),
 buildOptions = dict(
             compressed = True,
             optimize = 2,

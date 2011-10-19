@@ -418,7 +418,7 @@ class LogWindow:
 
     def fill(self):
         rows = self.model.get_value(self.iter, self.loglist.rflw)
-        select = get_msg(rows, self.loglist.table)
+        select = get_msg(rows, self.loglist.from_)
         self.txt = "\n\n".join([s.rstrip() for s in select[4]])
         self.files = set(select[3])
         dates = set(select[0])
@@ -502,7 +502,7 @@ class SeveralLogsWindow(LogWindow):
         for p in reversed(pathlist):
             iter_ = model.get_iter(p)
             rows = self.model.get_value(iter_, self.loglist.rflw)
-            select = get_msg(rows, self.loglist.table)
+            select = get_msg(rows, self.loglist.from_)
             dates.extend(select[0])
             lognames.extend(select[1])
             types.extend(select[2])

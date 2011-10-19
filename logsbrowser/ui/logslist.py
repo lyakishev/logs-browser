@@ -49,6 +49,7 @@ class LogList(object):
         self.words_hl = ""
         self.name = ""
         self.table = ""
+        self.from_ = ""
         self.cached_queries = []
         self.view.connect("button-press-event", self.copy_cell)
 
@@ -86,7 +87,7 @@ class LogList(object):
             fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
-            sql, words_hl= process(fquery, context, auto_lid, self.fts)
+            sql, words_hl, self.from_ = process(fquery, context, auto_lid, self.fts)
         except Exception as e:
             merror(str(e))
             return

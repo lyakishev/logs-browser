@@ -59,6 +59,8 @@ def lw_hl_expr(lw_hl_clauses, quotes_dict):
 class Query(object):
 
     select_re = re.compile(r'(?i)\(\s*select\s')
+    query_re = re.compile(r'\(\$query\d+\)')
+
 
     def __init__(self, sql, fts, is_child=False):
         self.qdict = {}
@@ -113,7 +115,20 @@ class Query(object):
         for k,v in self.qdict.iteritems():
             colors.extend(v.get_colors())
         return colors
-        
+
+    def get_from_table(self):
+        def get_from(select_core):
+            from_ = select_core.from_
+            if len(from_) == 1:
+                if self.query_re.match(from_[0]):
+                    cores = self.qdict[from_[0].strip('($)')].query.qdict
+                    if len(cores) == 1:
+                        return get_from(cores['mquery1'])
+                else:
+                    return from_[0]
+            else:
+                return ""
+        return get_from(self.query.qdict['mquery1'])
 
     def add_lid(self, group=False):
         from_queries = self.query.add_lid(group)
@@ -426,6 +441,7 @@ def process(sql_t, context, autolid, fts):
     sql = ss.sub(' ', sql)
     sql_no_quotes, quotes_dict = cut_quotes(sql)
     query = Query(sql_no_quotes, fts)
+    from_ = query.get_from_table()
     lw_hl_clauses = log_color_clauses(query.get_colors())
     if autolid:
         query.add_lid()
@@ -433,7 +449,7 @@ def process(sql_t, context, autolid, fts):
     words_hl = lw_hl_expr(lw_hl_clauses, quotes_dict)
     query = Template(str(query)).safe_substitute({'time':
                                                   "strftime('%H:%M:%f',date)"})
-    return (query, words_hl)
+    return (query, words_hl, from_)
 
 and_ = re.compile(r'(?i)\sand\s')
 not_ = re.compile(r'(?i)\snot\s')
