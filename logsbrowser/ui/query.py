@@ -394,7 +394,10 @@ class FromCombo(gtk.ComboBox):
         self.names = names[:]
 
     def rename(self, names, current):
-        old_page = [n for n in self.names if n not in names][0]
+        try:
+            old_page = [n for n in self.names if n not in names][0]
+        except IndexError:
+            return
         new_page = [n for n in names if n not in self.names][0]
         self.model.append([new_page])
         if old_page == self.get_active_name():

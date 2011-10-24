@@ -82,11 +82,14 @@ class LogsNotebook(gtk.Notebook):
     def new_page_name(self, *args):
         old_name = args[-1]
         name = self.entry.get_text().replace(" ","_")
-        self.mem_tab.get_children()[0].get_children()[0].\
-                           set_text(name)
-        loader = self.loaders[old_name]
-        self.loaders[name] = loader
-        del self.loaders[old_name]
+        if name not in self.loaders:
+            self.mem_tab.get_children()[0].get_children()[0].\
+                               set_text(name)
+            loader = self.loaders[old_name]
+            self.loaders[name] = loader
+            del self.loaders[old_name]
+        else:
+            name = old_name
         self.page.set_name(name)
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
