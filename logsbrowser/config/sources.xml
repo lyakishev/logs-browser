@@ -208,7 +208,7 @@
             <folder>\\00-dmz\c$\forislog</folder>
         </filelogs>
         <evlogs>
-            <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
+	   <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
             <source server="00-bill">Application,CRM.Gateway,FORIS.Billing,Foris.Catalogues,FORIS.Common,FORIS.DataBus,FORIS.UPRSGateway,System</source>
             <source server="00-bms">Application,FORIS.Common,System</source>
             <source server="00-cash-spa">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.SPA.BPM,Foris.SPA.Disp,Foris.SPA.Monitor,Foris.SPA.Sync,SPA.HTTPGateway,SPA.Monitor,System</source> 
@@ -227,11 +227,9 @@
     </stand>
     <stand name="TEST">
         <filelogs>
-        <!--<folder>/home/user/sharew7/logs/log</folder>-->
-        <folder>C:\Users\ALyakishev\logs2</folder>
-	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>
-	    <folder>C:\Users\ALyakishev\logs\forislog</folder>
-	    <folder>C:\Users\ALyakishev\share</folder>-->
+	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>-->
+	    <folder>C:\Users\ALyakishev\logs\ocat</folder>
+	    <!--<folder>C:\Users\ALyakishev\share</folder>-->
         </filelogs>
         <evlogs />
     </stand>

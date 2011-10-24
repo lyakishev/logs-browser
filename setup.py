@@ -5,7 +5,7 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '2.0.10.0'
+version = '2.0.11.0'
 
 import fileinput
 

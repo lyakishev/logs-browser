@@ -81,13 +81,22 @@
         group by logname_group
         order by logname_group desc
 
-    - name: 'Количество сообщений по именам лога'
+    - name: 'Группировка по именам лога'
       add_lid: 1
       default: 0
       sql: |
         select logname, computer, count(log) as c, error(type)
         from #this
         group by logname, computer
+        order by c desc
+
+    - name: 'Группировка по файлам-источникам'
+      add_lid: 1
+      default: 0
+      sql: |
+        select source, count(log) as c, error(type)
+        from #this
+        group by source
         order by c desc
 
     - name: 'Количество сообщений'
