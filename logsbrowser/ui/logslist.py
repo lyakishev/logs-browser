@@ -78,13 +78,16 @@ class LogList(object):
             self.name = name
             self.sql_context[self.name] = self.table
 
-    def execute(self, sql_templ, auto_lid):
+    def execute(self, sql_templ, from_constr, auto_lid):
         query = sql_templ[0]
         filter_ = sql_templ[1]
         context = self.get_context()
         fcontext = {}
         for k in context:
-            fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
+            if k == 'this':
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+from_constr})
+            else:
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
             sql, words_hl, self.from_ = process(fquery, context, auto_lid, self.fts)
@@ -331,7 +334,7 @@ class LogsListWindow(gtk.Frame):
 
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
-        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_filters)
+        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_loaders)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 
@@ -349,7 +352,7 @@ class LogsListWindow(gtk.Frame):
             grid_btn.set_active(True)
             self.show_gridlines(grid_btn)
 
-    def get_filter(self):
+    def get_loader(self):
         return self.loader
 
     def csv_export(self, *args):
@@ -373,6 +376,7 @@ class LogsListWindow(gtk.Frame):
         self.exec_sens(True)
         self.filter_logs.unselect()
         self.log_list.execute(self.loader.get_query(),
+                              self.loader.get_from(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
 
