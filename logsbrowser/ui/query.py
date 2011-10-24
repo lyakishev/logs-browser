@@ -471,6 +471,8 @@ class QueryLoader(gtk.VBox):
         self.pack_start(self.query_constructor, True, True)
         self.show_all()
 
+    def get_from(self):
+        return self.froms_combo.get_active_name()
 
     def show_advanced(self, btn):
         if btn.get_active():

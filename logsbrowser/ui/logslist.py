@@ -78,13 +78,16 @@ class LogList(object):
             self.name = name
             self.sql_context[self.name] = self.table
 
-    def execute(self, sql_templ, auto_lid):
+    def execute(self, sql_templ, from_constr, auto_lid):
         query = sql_templ[0]
         filter_ = sql_templ[1]
         context = self.get_context()
         fcontext = {}
         for k in context:
-            fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
+            if k == 'this':
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+from_constr})
+            else:
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
             sql, words_hl= process(fquery, context, auto_lid, self.fts)
@@ -374,6 +377,7 @@ class LogsListWindow(gtk.Frame):
         self.exec_sens(True)
         self.filter_logs.unselect()
         self.log_list.execute(self.loader.get_query(),
+                              self.loader.get_from(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
 
