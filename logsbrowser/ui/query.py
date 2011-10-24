@@ -309,6 +309,11 @@ class Query(gtk.Notebook):
         scroll_query = gtk.ScrolledWindow()
         scroll_query.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 
+        self.only_colors = gtk.CheckButton('only colors')
+        self.only_colors.set_active(False)
+        self.only_colors.show()
+
+
         self.plain = Plain()
         plain_query_label = gtk.Label("Query")
 
@@ -321,10 +326,12 @@ class Query(gtk.Notebook):
         self.append_page(self.plain, plain_query_label)
 
         self.sens_list = [self.plain, self.query.view]
-
+        self.set_action_widget(self.only_colors, gtk.PACK_END)
         self.show_all()
-
         self.set_current_page(0)
+
+    def get_only_colors(self):
+        return self.only_colors.get_active()
 
     def unselect(self):
         self.query.unselect()
@@ -345,20 +352,82 @@ class Query(gtk.Notebook):
         return (self.get_query(), self.get_filter(only_colors))
 
 
+class FromCombo(gtk.ComboBox):
+    def __init__(self):
+        super(FromCombo, self).__init__()
+        self.names = []
+        self.model = gtk.ListStore(str)
+        self.set_model(self.model)
+        cell = gtk.CellRendererText()
+        self.pack_start(cell, True)
+        self.add_attribute(cell, 'text', 0)
+        self.show_all()
+
+    def update(self, operation, names, current):
+        if operation == 'add':
+            self.add(names, current)
+        elif operation == 'rename':
+            self.rename(names, current)
+        elif operation == 'delete':
+            self.delete(names, current)
+
+    def get_active_name(self):
+        iter_ = self.get_active_iter()
+        if not iter_:
+            return None
+        return self.model.get_value(iter_, 0)
+
+    def set_active_name(self, name):
+        iter_ = self.model.get_iter_first()
+        while iter_:
+            if self.model.get_value(iter_, 0) == name:
+                self.set_active_iter(iter_)
+                return
+            iter_ = self.model.iter_next(iter_)
+
+
+    def add(self, names, current):
+        for new_page in [n for n in names if n not in self.names]:
+            self.model.append([new_page])
+        if not self.get_active_name():
+            self.set_active_name(current)
+        self.names = names[:]
+
+    def rename(self, names, current):
+        old_page = [n for n in self.names if n not in names][0]
+        new_page = [n for n in names if n not in self.names][0]
+        self.model.append([new_page])
+        if old_page == self.get_active_name():
+            self.set_active_name(new_page)
+        self.model.remove(self.get_iter_by_text(old_page))
+        self.names = names[:]
+
+    def delete(self, names, current):
+        deleted_page = [n for n in self.names if n not in names][0]
+        if deleted_page == self.get_active_name():
+            self.set_active_name(current)
+        self.model.remove(self.get_iter_by_text(deleted_page))
+        self.names = names[:]
+    
+    def get_iter_by_text(self, name):
+        iter_ = self.model.get_iter_first()
+        while iter_:
+            if self.model.get_value(iter_, 0) == name:
+                return iter_
+            iter_ = self.model.iter_next(iter_)
+
 class QueryLoader(gtk.VBox):
     def __init__(self, query_constructor, qmanager, notify_func):
         gtk.VBox.__init__(self)
+        self.current = None
+        self.froms = []
         self.notify_all = notify_func
         self.query_constructor = query_constructor
         self.query_constructor.query.default_operator = qmanager.default_operator
         self.tools = gtk.HBox()
-        self.add_lid = gtk.CheckButton('auto__lid')
-        self.add_lid.set_active(True)
         self.queries_combo = gtk.HBox()
         self.filters_label = gtk.Label()
         self.filters_label.set_markup('<b>Filter</b>')
-        self.only_colors = gtk.CheckButton('only colors')
-        self.only_colors.set_active(False)
         self.filters = gtk.combo_box_new_text()
         self.queries_label = gtk.Label()
         self.queries_label.set_markup('<b>Query</b>')
@@ -369,15 +438,45 @@ class QueryLoader(gtk.VBox):
         self.update_queries_combo()
         self.update_filters_combo()
         self.filters.connect("notify::popup-shown", self._update_fcombo)
+
+        advanced_btn = gtk.ToggleButton()
+        advanced_btn.set_relief(gtk.RELIEF_NONE)
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        advanced_btn.add(image)
+        advanced_btn.connect('toggled', self.show_advanced)
+
+        self.froms_combo = FromCombo()
+        self.from_ = gtk.Label()
+        self.from_.set_markup("<b>From</b>")
+        self.froms_box = gtk.HBox()
+        self.froms_box.pack_start(self.from_, False, False, 5)
+        self.froms_box.pack_start(self.froms_combo, False, False)
+
+        self.add_lid = gtk.CheckButton('auto__lid')
+        self.add_lid.set_active(True)
+
+        self.advanced_box = gtk.HButtonBox()
+        self.advanced_box.set_layout(gtk.BUTTONBOX_EDGE)
+        self.advanced_box.pack_start(self.froms_box)
+        self.advanced_box.pack_start(self.add_lid)
+
         self.queries_combo.pack_start(self.filters_label, False, False, 5)
-        self.queries_combo.pack_start(self.filters, True, True)
-        self.queries_combo.pack_start(self.only_colors, False, False)
+        self.queries_combo.pack_start(self.filters, False, True)
         self.queries_combo.pack_start(self.queries_label, False, False, 5)
         self.queries_combo.pack_start(self.queries, True, True)
+        self.queries_combo.pack_start(advanced_btn, False, False)
         self.tools.pack_start(self.queries_combo)
-        self.tools.pack_start(self.add_lid, False,False, 10)
         self.pack_start(self.tools, False, False)
-        self.pack_start(self.query_constructor)
+        self.pack_start(self.query_constructor, True, True)
+        self.show_all()
+
+
+    def show_advanced(self, btn):
+        if btn.get_active():
+            self.pack_start(self.advanced_box, False, False, 1)
+        else:
+            self.remove(self.advanced_box)
         self.show_all()
 
     def update_queries_combo(self, set_def=True):
@@ -410,17 +509,23 @@ class QueryLoader(gtk.VBox):
             self.filters.prepend_text("###Current###")
             self.filters.set_active(0)
 
-    def update_filters(self, filters):
+    def update_combos(self, filters, operation):
         self.query_manager.get_filters_from_pages([(k,v.query_constructor.query.get_filter_table())
                                                     for k,v in filters.items()
                                                         if v != self])
+
+        if operation == 'rename' or not self.current:
+            self.current = [n for n,f in filters.iteritems() if f==self][0]
+
+        if operation:
+            self.froms_combo.update(operation, filters.keys(), self.current)
 
     def set_query(self, *args):
         query = self.queries.get_active_text().decode('utf8')
         self.query_constructor.set_query(self.query_manager.queries[query].strip())
 
     def set_filter(self, *args):
-        self.notify_all()
+        self.notify_all(None)
         try:
             query = self.filters.get_active_text().decode('utf8')
             if query == "###Current###":
@@ -437,14 +542,4 @@ class QueryLoader(gtk.VBox):
         return self.add_lid.get_active()
 
     def get_only_colors(self):
-        return self.only_colors.get_active()
-
-        
-
-
-
-       
-
-       
-    
-
+        return self.query_constructor.get_only_colors()

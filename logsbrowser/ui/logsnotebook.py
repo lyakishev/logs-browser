@@ -9,7 +9,7 @@ from logslist import LogsListWindow
 class LogsNotebook(gtk.Notebook):
     def __init__(self, tree, btn):
         super(LogsNotebook, self).__init__()
-        self.filters = {}
+        self.loaders = {}
         self.tree = tree
         act_box = gtk.HBox()
         add_btn = gtk.Button()
@@ -84,13 +84,13 @@ class LogsNotebook(gtk.Notebook):
         name = self.entry.get_text().replace(" ","_")
         self.mem_tab.get_children()[0].get_children()[0].\
                            set_text(name)
-        filter_ = self.filters[old_name]
-        self.filters[name] = filter_
-        del self.filters[old_name]
+        loader = self.loaders[old_name]
+        self.loaders[name] = loader
+        del self.loaders[old_name]
         self.page.set_name(name)
         self.mem_tab.show_all()
         self.set_tab_label(self.page, tab_label=self.mem_tab)
-        self.notify_filters()
+        self.notify_loaders('rename')
 
     def add_new_page(self):
         tab_lab = gtk.HBox()
@@ -119,8 +119,8 @@ class LogsNotebook(gtk.Notebook):
         num = self.append_page(l_list, tab_lab)
         self.show_all()
         self.counter += 1
-        self.filters[name] = l_list.get_filter()
-        self.notify_filters()
+        self.loaders[name] = l_list.get_loader()
+        self.notify_loaders('add')
         return l_list
 
     def add_new(self, *args):
@@ -170,9 +170,9 @@ class LogsNotebook(gtk.Notebook):
     def get_logs_list_window(self):
         return self.get_nth_page(self.get_current_page())
 
-    def notify_filters(self):
-        for page, filter_ in self.filters.iteritems():
-            filter_.update_filters(self.filters)
+    def notify_loaders(self, operation):
+        for page, loader in self.loaders.iteritems():
+            loader.update_combos(self.loaders, operation)
 
     def close_tab(self, args):
         child = self.btns.index(args)
@@ -182,10 +182,10 @@ class LogsNotebook(gtk.Notebook):
         self.tree.free_state(page)
         self.btns.pop(child)
         self.labels.pop(child)
-        self.filters.pop(txt)
+        self.loaders.pop(txt)
         page.log_list.clear()
         self.remove_page(child)
+        self.notify_loaders('delete')
         if len(self.get_children()) == 0:
             self.counter = 1
             self.add_new_page()
-        self.notify_filters()
