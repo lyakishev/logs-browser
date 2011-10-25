@@ -863,7 +863,10 @@ class SourceManagerUI(gtk.VBox):
         self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
 
     def free_state(self, page):
-        del self.state_[page]
+        try:
+            del self.state_[page]
+        except KeyError:
+            pass
 
     def change_stand(self, *args):
         stand = self.stand_choice.get_active_text()
