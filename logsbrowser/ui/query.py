@@ -134,38 +134,43 @@ class Filter():
     def activate_cell(self, view, event):
         if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            if path[1] == self.not_column:
-                row = view.get_model()[path[0]]
-                operator = row[self.fields['OPERATOR']]
-                if operator == ">":
-                    view.get_model()[path[0]][self.fields['OPERATOR']] = '<'
-                elif operator == "<":
-                    view.get_model()[path[0]][self.fields['OPERATOR']] = '>'
-                no = self.operators[operator]
-                val = row[self.fields['NOT']]
-                if val == no:
-                    row[self.fields['NOT']] = ' '
-                else:
-                    row[self.fields['NOT']] = no
-                return
-            if path[1] == self.color_column:
-                colordlg = gtk.ColorSelectionDialog("Select color")
-                colorsel = colordlg.colorsel
-                colorsel.set_has_palette(True)
-                response = colordlg.run()
-                if response == gtk.RESPONSE_OK:
-                    col = colorsel.get_current_color()
-                    view.get_model()[path[0]][self.fields['HCOLORV']]=col
-                colordlg.destroy()
-            view.set_cursor(path[0], focus_column = path[1], start_editing=True)
-            if path[1] == self.up_column:
-                self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
-            elif path[1] == self.down_column:
-                self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+            if path:
+                if path[1] == self.not_column:
+                    row = view.get_model()[path[0]]
+                    operator = row[self.fields['OPERATOR']]
+                    if operator == ">":
+                        view.get_model()[path[0]][self.fields['OPERATOR']] = '<'
+                    elif operator == "<":
+                        view.get_model()[path[0]][self.fields['OPERATOR']] = '>'
+                    try:
+                        no = self.operators[operator]
+                    except KeyError:
+                        return
+                    val = row[self.fields['NOT']]
+                    if val == no:
+                        row[self.fields['NOT']] = ' '
+                    else:
+                        row[self.fields['NOT']] = no
+                    return
+                if path[1] == self.color_column:
+                    colordlg = gtk.ColorSelectionDialog("Select color")
+                    colorsel = colordlg.colorsel
+                    colorsel.set_has_palette(True)
+                    response = colordlg.run()
+                    if response == gtk.RESPONSE_OK:
+                        col = colorsel.get_current_color()
+                        view.get_model()[path[0]][self.fields['HCOLORV']]=col
+                    colordlg.destroy()
+                view.set_cursor(path[0], focus_column = path[1], start_editing=True)
+                if path[1] == self.up_column:
+                    self.loglist.up_color(view.get_model()[path[0]][self.fields['HCOLORV']])
+                elif path[1] == self.down_column:
+                    self.loglist.down_color(view.get_model()[path[0]][self.fields['HCOLORV']])
         elif event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
-            if path[1] == self.color_column:
-                view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
+            if path:
+                if path[1] == self.color_column:
+                    view.get_model()[path[0]][self.fields['HCOLORV']] = '#fff'
 
     def change_func(self, combo, path, iter_, col):
         new_value = combo.get_property("model").get_value(iter_,0)
