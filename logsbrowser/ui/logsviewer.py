@@ -15,7 +15,7 @@ from logsnotebook import LogsNotebook
 import sys
 from statusicon import StatusIcon
 import config
-import utils.profiler as profiler
+#import utils.profiler as profiler
 from process import process, mp_process
 from db.engine import close_conn
 from operator import setitem
@@ -223,7 +223,7 @@ class LogsViewer:
             e_stop.set()
 
 
-    @profiler.time_it
+    #@profiler.time_it
     def show_logs(self, *args):
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)

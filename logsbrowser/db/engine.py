@@ -2,7 +2,7 @@ import sqlite3
 import config
 import functions
 from datetime import datetime
-from utils.profiler import time_it
+#from utils.profiler import time_it
 from utils.ranges import ranges
 
 
@@ -86,7 +86,7 @@ def get_msg(rows, table):
     msg = [r[4] for r in result]
     return (dates, lognames, types, sources, msg)
 
-@time_it
+#@time_it
 def execute(sql):
     functions.group_logname.clear()
     cur = _dbconn.cursor()

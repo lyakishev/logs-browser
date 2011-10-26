@@ -3,7 +3,7 @@ from lparser.files.worker import filelogworker as fworker
 import sys
 if sys.platform == 'win32':
     from lparser.events.worker import evlogworker as eworker
-from utils.profiler import time_it, profile
+#from utils.profiler import time_it, profile
 from multiprocessing import Event, Process, Queue, JoinableQueue, Value, cpu_count
 from itertools import chain
 from threading import Thread
@@ -12,7 +12,7 @@ from Queue import Empty as qEmpty
 
 PROCESSES = cpu_count()
 
-@time_it
+#@time_it
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):
@@ -101,7 +101,7 @@ def _mp_process(table, sources, dates, stop, val, callback):
     sources_for_worker.close()
     insert_queue.close()
 
-@time_it
+#@time_it
 def mp_process(table, sources, dates, callback):
     _e_stop = Event()
     val = Value('i', 0)

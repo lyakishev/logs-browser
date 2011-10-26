@@ -148,7 +148,7 @@ class FromToOption(gtk.HBox):
                     date_times = self.datetimes_re.search(text)
                     if date_times:
                         params = date_times.groups()
-                        print params
+                        #print params
                         from_ = map(int, params[:6])
                         to_ = map(int, params[6:])
                         self.from_date.set_datetime(*from_)

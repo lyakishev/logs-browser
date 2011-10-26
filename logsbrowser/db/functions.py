@@ -170,10 +170,3 @@ class GroupLogname:
         self.__init__()
 
 group_logname = GroupLogname()
-
-
-if __name__ == '__main__':
-    s1 = '''2010-12-05 14:36:05,153 [1] DEBUG OrderManagement.Utils.Logging.LoggerFactory
-=======================================
-<CreateRequestParameters xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><TariffPlanIdNew>11</TariffPlanIdNew><Msisdn>79167677425</Msisdn><TerminalDeviceId>5980</TerminalDeviceId><IsFreePrice>false</IsFreePrice><IsMakeInvoice>false</IsMakeInvoice><IpAddress>172.20.64.254</IpAddress><SalePointCode /><Comment>test</Comment><IsSplitPersonalAccount>true</IsSplitPersonalAccount><PaymentAmount>0</PaymentAmount><MoveAmount>352.56984</MoveAmount><CustomerProcessId xsi:nil="true" /></CreateRequestParameters>''' 
-    print pretty_xml(s1)

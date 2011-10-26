@@ -8,7 +8,7 @@ import re
 import config
 import pango
 import db
-from utils.profiler import profile
+#from utils.profiler import profile
 
 
 class Filter():

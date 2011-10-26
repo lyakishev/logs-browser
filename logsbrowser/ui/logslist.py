@@ -21,7 +21,7 @@ from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
 from string import Template
-from utils.profiler import time_it, profile
+#from utils.profiler import time_it, profile
 from utils.colors import ColorError
 
 def callback():
