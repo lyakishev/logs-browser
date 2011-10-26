@@ -5,7 +5,7 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-version = '2.0.11.0'
+version = '2.0'
 
 import fileinput
 
@@ -20,7 +20,8 @@ includefiles = [('logsbrowser/config', 'config'),
                 ('docs', 'docs'),
                 ('gtk_for_build/etc', 'etc'),
                 ('gtk_for_build/lib', 'lib'),
-                ('gtk_for_build/share', 'share'),
+                ('gtk_for_build/share', 'share')]
+
 buildOptions = dict(
             compressed = True,
             optimize = 2,
@@ -58,3 +59,6 @@ for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace
         print "VERSION = 'DEV'"
     else:
         print line,
+
+import shutil
+shutil.copy("logsbrowser/LICENSE", "build/exe.win32-2.7/LICENSE")
