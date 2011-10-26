@@ -1,0 +1,245 @@
+<stands>
+    <stand name="MSK-DEV" default="1">
+        <filelogs>
+            <folder>\\msk-dev-01\c$\forislog</folder>
+	    <folder>\\msk-dev-01\c$\foris\Marti\OrderStorage\Logs</folder>
+            <folder>\\msk-dev-02\c$\forislog</folder>
+            <folder>\\msk-dev-03\c$\forislog</folder>
+            <folder>\\msk-dev-04\c$\forislog</folder>
+            <folder>\\msk-dev-05\c$\forislog</folder>
+            <folder>\\msk-dev-06\c$\forislog</folder>
+            <folder>\\msk-dev-08\c$\forislog</folder>
+            <folder>\\msk-dev-09\c$\forislog</folder>
+            <folder>\\msk-dev-10\c$\forislog</folder>
+            <folder>\\msk-dev-11\c$\forislog</folder>
+            <folder>\\msk-dev-12\c$\forislog</folder>
+	    <folder>\\msk-dev-01\c$\foris\Marti\OrderCatalogue\Logs\PAM</folder>
+	    <folder>\\msk-dev-01\c$\foris\TelCRM\WindowsServices\True</folder>
+	    <folder>\\msk-dev-02\c$\foris\Billing\BillingManagementConsole\log</folder>
+	    <folder>\\msk-dev-02\c$\foris\Billing\Server\AccountsReceivableWCF\Log</folder>
+	    <folder>\\msk-dev-04\c$\foris\Report\log</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\CollectionPaymentExport</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\EventProcessor</folder>
+	    <folder>\\msk-dev-07\c$\foris\BonusSystem\Services</folder>
+	    <folder>\\msk-dev-08\c$\foris\MARTI\Workflow\Addons\Logs</folder>
+	    <folder>\\msk-dev-08\c$\foris\MARTI\Workflow\Logs</folder>
+    </filelogs>
+        <evlogs />
+    </stand>
+    <stand name="NAG-TC">
+        <filelogs>
+            <folder>\\nag-tc-01\c$\forislog</folder>
+            <folder>\\nag-tc-01\c$\forislog</folder>
+            <folder>\\nag-tc-02\c$\forislog</folder>
+            <folder>\\nag-tc-03\c$\forislog</folder>
+            <folder>\\nag-tc-04\c$\forislog</folder>
+            <folder>\\nag-tc-05\c$\forislog</folder>
+            <folder>\\nag-tc-06\c$\forislog</folder>
+            <folder>\\nag-tc-07\c$\forislog</folder>
+            <folder>\\nag-tc-08\c$\forislog</folder>
+            <folder>\\nag-tc-09\c$\forislog</folder>
+            <folder>\\nag-tc-10\c$\forislog</folder>
+            <folder>\\nag-tc-11\c$\forislog</folder>
+            <folder>\\nag-tc-12\c$\forislog</folder>
+        </filelogs>
+        <evlogs>
+            <source server="nag-tc-01">Application,CRM.Gateway, CRM_Errors, CRM_Interfaces, Foris.Catalogues, FORIS.Common, FORIS.Production, FORIS.ResourceLocking, FORIS.Sales, FORIS.ScratchCards, FORIS.ScratchCards.Activation, Foris.SelfCare, FORIS.TelCRM.GUI, Foris.TelCRM.Marketing, Foris.TelCrm.RequestManagement, FORIS.TelCRM.Sales, FORIS.Workflow, Marti.CommunityManagementUI, Marti.OrderCatalogueUI, System, TelCRM.Marketing, TelCRM.Production, TelCRM.WindowsServices</source>
+            <source server="nag-tc-02">Application,CAFToolCollection, CRM.Gateway, FinFraud, FORIS.Billing, FORIS.Catalogues, FORIS.Common, FORIS.DataBus, FORIS.PerformanceInstaller, FORIS.SUPS.OTSP, FORIS.SUPS.PSP.INTimer, FORIS.SUPS.PSP.TelCRMInteraction, FORIS.SUPS.PSP.Timer, FORIS.SUPS.SPF.ProcUnit, FORIS.SUPS.SPFMonitoring, FORIS.SUPS.SPFServer, FORIS.SUPS.StateIn, FORIS.SUPS.StateIn.BonusSystem, FORIS.UPRSGateway, FORIS_Security, IModeRouter.Log, Operations Manager, ParentApp, SessionSecurityManagement, System</source>
+            <source server="nag-tc-03">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, Foris.RDExtension, Foris.REService, Foris.ServiceRDExtension, FORIS.StateIn.SQR, FORIS.SUPS.OTSP, FORIS.SUPS.PSP.INTimer, FORIS.SUPS.PSP.TelCRMInteraction, FORIS.SUPS.PSP.Timer, FORIS.SUPS.SPF.ProcUnit, FORIS.SUPS.SPFMonitoring, FORIS.SUPS.SPFServer, FORIS.SUPS.StateIn, FORIS.SUPS.StateIn.BonusSystem, FORIS.UMRS.CRM, FORIS.UMRS.DataLoaderFailover, FORIS.UMRS.DOC, Intercept, System</source>
+            <source server="nag-tc-04">Application,CRM.Gateway, FORIS.Catalogues, FORIS.Common, Foris.ODS, Foris.RDExtension, FORIS.RI, FORIS.Stock, FORIS_Scheduler, FORIS_Security, Operations Manager, RDExtensionLog,Services, System, Windows PowerShell</source>
+            <source server="nag-tc-05">Application,FORIS.Common, FORIS.MessagingGateway, System</source>
+            <source server="nag-tc-06">Application,BPMLog, bpm_02_20080611_N34.mdb, CRM.Gateway, FORIS.Catalogues, FORIS.Common, FORIS.PerformanceInstaller, FORIS.Sales, Foris.SPA.BPM, Foris.SPA.Disp, Foris.SPA.Monitor, Foris.SPA.ScenarioEditor, Foris.SPA.Sync, FORIS_Security, Operations Manager, SelfCare, SPA.BPM.01, SPA.Disp, SPA.Emulator, SPA.Monitor.New, SPA.MsgDisp, SPA.SA.DMS, SPA.SA.FMC.01, SPA.SA.HLR.Siemens.SR10.01, SPA.SA.IMODE.NEC, SPA.SA.MMSC.LogicaCMG, SPA.SA.RBT.NEC, SPA.SA.Siemens.SR10, SPA.SA.VM.Comverse, System, TelCRM.RemoteDealer, TelCRM.Sales</source>
+            <source server="nag-tc-07">Application,CRM.Gateway, FORIS Rating Engine, FORIS.Common, Foris.PasswordSecurity, Foris.TelCrm.RequestManagement, FORIS_Security, System</source>
+            <source server="nag-tc-08">Application,FORIS.Billing, FORIS.Catalogues, FORIS.Common, Foris.ODS, FORIS.RI, Foris.TelCrm.RequestManagement, System</source>
+            <source server="nag-tc-09">Application,FORIS.Common, FORIS.ResourceLocking, FORIS.ServiceRegistry, FORIS.Workflow, System</source> 
+            <source server="nag-tc-10">Application,Foris.Catalogues, FORIS.Common, Foris.SPA.SA, Foris.SPA.ScenarioEditor, Foris.SPA.Sync, System</source>
+            <source server="nag-tc-11">Application,BPMLog, bpm_02_20080611_N34.mdb, CRM.Gateway, CRM_Interfaces, FORIS.Billing, FORIS.Catalogues, FORIS.Common, Foris.ODS, FORIS.RI, FORIS.Sales, FORIS.SUPS.OTSP, FORIS.SUPS.PSP.INTimer, FORIS.SUPS.PSP.TelCRMInteraction, FORIS.SUPS.PSP.Timer, FORIS.SUPS.SPF.ProcUnit, FORIS.SUPS.SPFMonitoring, FORIS.SUPS.SPFServer, FORIS.SUPS.StateIn, FORIS.SUPS.StateIn.BonusSystem, FORIS.TelBill.DOC, FORIS.TelCRM.GUI, Foris.TelCrm.RequestManagement, FORIS_Security, Operations Manager, PLUGINS, SelfCare, SPA.BPM.01, SPA.Monitor.New, SPA.MsgDisp, SPA.SA.DMS, SPA.SA.FMC.01, SPA.SA.HLR.Siemens.SR10.01, SPA.SA.IMODE.NEC, SPA.SA.MMSC.LogicaCMG, SPA.SA.RBT.NEC, SPA.SA.Siemens.SR10, SPA.SA.VM.Comverse, System, TelCRM.RemoteDealer, TelCRM.Sales</source>
+            <source server="nag-tc-12">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, Foris.PasswordSecurity, FORIS.TelBill.DOC, Syste</source>
+        </evlogs>
+    </stand>
+    <stand name="KOG-TF4">
+        <filelogs>
+            <folder>\\kog-tf4-01\c$\forislog</folder>
+            <folder>\\kog-tf4-02\c$\forislog</folder>
+            <folder>\\kog-tf4-03\c$\forislog</folder>
+            <folder>\\kog-tf4-04\c$\forislog</folder>
+            <folder>\\kog-tf4-05\c$\forislog</folder>
+            <folder>\\kog-tf4-06\c$\forislog</folder>
+            <folder>\\kog-tf4-07\c$\forislog</folder>
+            <folder>\\kog-tf4-08\c$\forislog</folder>
+            <folder>\\kog-tf4-09\c$\forislog</folder>
+            <folder>\\kog-tf4-10\c$\forislog</folder>
+            <folder>\\kog-tf4-11\c$\forislog</folder>
+            <folder>\\kog-tf4-12\c$\forislog</folder>
+        </filelogs>
+        <evlogs>
+            <source server="kog-tf4-01">Application, CRM.Gateway, CRM_Interfaces, Foris.Catalogues, FORIS.Common, FORIS.Production, FORIS.RemoteDealer, FORIS.Sales, FORIS.ScratchCards, FORIS.ScratchCards.Activation, Foris.SelfCare, FORIS.TelCRM.GUI, Foris.TelCRM.Marketing, Foris.TelCrm.RequestManagement, FORIS.TelCRM.Sales, ForwardedEvents, Marti.CommunityManagementUI, Marti.OrderCatalogueUI, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, SPF.ProcUnit, System, TelCRM.Marketing, TelCRM.Production, TelCRM.Sales, Windows PowerShell</source>
+        </evlogs>
+    </stand>
+    <stand name="MSK-BER">
+        <filelogs>
+            <folder>\\msk-ber-01\forislog</folder>
+            <folder>\\msk-ber-02\forislog</folder>
+            <folder>\\msk-ber-03\forislog</folder>
+            <folder>\\msk-ber-04\forislog</folder>
+            <folder>\\msk-ber-05\forislog</folder>
+            <folder>\\msk-ber-06\forislog</folder>
+            <folder>\\msk-ber-07\forislog</folder>
+            <folder>\\msk-ber-08\forislog</folder>
+            <folder>\\msk-ber-09\forislog</folder>
+            <folder>\\msk-ber-10\forislog</folder>
+            <folder>\\msk-ber-11\forislog</folder>
+            <folder>\\msk-ber-12\forislog</folder>
+            <folder>\\msk-ber-dmz\forislog</folder>
+        </filelogs>
+        <evlogs>
+            <source server="msk-ber-01">CRM.Gateway, CRM_Errors, CRM_Interfaces, Foris.Catalogues, FORIS.Common, FORIS.Production, FORIS.RemoteDealer, FORIS.Sales, FORIS.ScratchCards, FORIS.ScratchCards.Activation, Foris.SelfCare, FORIS.TelCRM.GUI, Foris.TelCRM.Marketing, Foris.TelCrm.RequestManagement, FORIS.TelCRM.Sales, Marti.OrderCatalogueUI, Production, System, TelCRM.Marketing, TelCRM.Production </source>
+        </evlogs>
+    </stand>
+    <stand name="MSK-FUNC">
+        <filelogs>
+            <folder>\\msk-func-01\c$\forislog</folder>
+            <folder>\\msk-func-02\c$\forislog</folder>
+            <folder>\\msk-func-03\c$\forislog</folder>
+            <folder>\\msk-func-04\c$\forislog</folder>
+            <folder>\\msk-func-05\c$\forislog</folder>
+            <folder>\\msk-func-06\c$\forislog</folder>
+            <folder>\\msk-func-07\c$\forislog</folder>
+            <folder>\\msk-func-08\c$\forislog</folder>
+            <folder>\\msk-func-09\c$\forislog</folder>
+            <folder>\\msk-func-10\c$\forislog</folder>
+            <folder>\\msk-func-11\c$\forislog</folder>
+            <folder>\\msk-func-12\c$\forislog</folder>
+            <folder>\\msk-func-dmz\c$\forislog</folder>
+	    <folder>\\msk-func-01\c$\foris\MARTI\OrderStorage\Logs</folder>
+	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow</folder>
+	    <folder>\\msk-func-01\c$\foris\TelCRM\CRM.Workflow\Logs</folder>
+	    <folder>\\msk-func-04\c$\foris\ForisLog\Security</folder>
+	    <folder>\\msk-func-04\c$\foris\Report\log</folder>
+	    <folder>\\msk-func-04\c$\foris\TaskScheduler\WebUI</folder>
+	    <folder>\\msk-func-05\c$\foris\TelBill\DOC\log</folder>
+	    <folder>\\msk-func-08\c$\foris\Billing\Client\BillingManagementConsole\log</folder>
+	    <folder>\\msk-func-09\c$\foris\MARTI\Workflow\Addons\Logs</folder>
+	    <folder>\\msk-func-09\c$\foris\MARTI\Workflow\Logs</folder>
+	    <folder>\\msk-func-11\c$\foris\Billing\Client\BillingManagementConsole\log</folder>
+	    <folder>\\msk-func-11\c$\foris\ResourceInventory\Client\logs</folder>
+        </filelogs>
+        <evlogs>
+            <source server="msk-func-01">Application, CRM.Gateway, CRM_Errors CRM_Interfaces,  Foris.Catalogues,  FORIS.Common,  FORIS.Production, FORIS.RemoteDealer,  FORIS.Sales,  FORIS.ScratchCards, FORIS.ScratchCards.Activation,  Foris.SelfCare,  FORIS.TelCRM.GUI, Foris.TelCRM.Marketing,  Foris.TelCrm.RequestManagement,  FORIS.TelCRM.Sales, ForwardedEvents,  Marti.CommunityManagementUI,  Marti.OrderCatalogueUI, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational,  System,  TelCRM.Marketing, TelCRM.Production,  Windows PowerShell</source>
+            <source server="msk-func-02">Application,CRM.Gateway, FORIS.Billing, Foris.Catalogues, FORIS.Common, FORIS.TelCRM.Sales, FORIS.UPRSGateway, System</source>
+            <source server="msk-func-03">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, Foris.RDExtension, Foris.REService, Foris.ServiceRDExtension, FORIS.StateIn.SQR, FORIS.SUPS.OTSP, FORIS.SUPS.PSP.INTimer, FORIS.SUPS.PSP.TelCRMInteraction, FORIS.SUPS.PSP.Timer, FORIS.SUPS.SPF.ProcUnit, FORIS.SUPS.SPFMonitoring, FORIS.SUPS.SPFServer, FORIS.SUPS.StateIn, FORIS.SUPS.StateIn.BonusSystem, FORIS.UMRS.CRM, FORIS.UMRS.DataLoaderFailover, FORIS.UMRS.DOC, Intercept, System</source>
+            <source server="msk-func-04">Application,Foris.Catalogues, FORIS.Common, Foris.ODS, Foris.RDExtension, FORIS.RI, Foris.SelfCare, FORIS.Stock, FORIS_Scheduler, FORIS_Security, Intercept, System</source> 
+            <source server="msk-func-05">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, FORIS.DataBus, FORIS.MessagingGateway, FORIS.TelBill.DOC, System</source>
+            <source server="msk-func-06">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, Foris.SPA.BPM, Foris.SPA.Disp, Foris.SPA.Monitor, Foris.SPA.SA, Foris.SPA.ScenarioEditor, Foris.SPA.Sync, SPA.Disp, System</source>
+            <source server="msk-func-07">Application,FORIS.Billing, Foris.Catalogues, FORIS.Common, Foris.ODS, FORIS.ResourceLocking, FORIS.RI, FORIS.ServiceRegistry, FORIS.Workflow, System</source>
+            <source server="msk-func-08">Application,FORIS.Billing, Foris.Catalogue FORIS.Common, Foris.ODS, FORIS.ResourceLocking, FORIS.RI, FORIS.ServiceRegistry, FORIS.Workflow, System</source>
+            <source server="msk-func-09">Application,FORIS.Common, FORIS.ResourceLocking, FORIS.ServiceRegistry, FORIS.Workflow, Intercept, Security, System</source><source server="msk-func-10">Application,FORIS.Common, Foris.SelfCare, System</source>
+            <source server="msk-func-11">Application,FORIS.Billing, Foris.Catalogues, FORIS.Common, Foris.ODS, Foris.REService, FORIS.RI, System</source>
+            <source server="msk-func-12">Application,CRM.Gateway, Foris.Catalogues, FORIS.Common, Foris.PasswordSecurity, FORIS.TelBill.DOC, System</source>
+        </evlogs>
+    </stand>
+    <stand name="KOG-APP">
+        <filelogs>
+             <folder>\\kog-app-01\c$\forislog</folder>
+             <folder>\\kog-app-02\c$\forislog</folder>
+             <folder>\\kog-app-03\c$\forislog</folder>
+             <folder>\\kog-app-04\c$\forislog</folder>
+             <folder>\\kog-app-05\c$\forislog</folder>
+             <folder>\\kog-app-06\c$\forislog</folder>
+             <folder>\\kog-app-07\c$\forislog</folder>
+             <folder>\\kog-app-08\c$\forislog</folder>
+             <folder>\\kog-app-09\c$\forislog</folder>
+             <folder>\\kog-app-10\c$\forislog</folder>
+             <folder>\\kog-app-11\c$\forislog</folder>
+             <folder>\\kog-app-12\c$\forislog</folder>
+        </filelogs>
+        <evlogs>
+            <source server="kog-app-01">Application, CRM.Gateway, CRM_Interfaces, FORIS.Catalogues, FORIS.Common, Foris.PasswordSecurity, FORIS.Production, FORIS.Sales, FORIS.ScratchCards, FORIS.ScratchCards.Activation, Foris.SelfCare, FORIS.TelCRM.GUI, Foris.TelCRM.Marketing, Foris.TelCrm.RequestManagement, FORIS.TelCRM.Sales, ForwardedEvents, Marti.CommunityManagementUI, Marti.OrderCatalogueUI, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, PLUGINS, Production, System, TelCRM.Amd, TelCRM.Marketing, TelCRM.Production, TelCRM.WindowsServices, Windows PowerShel</source> 
+        </evlogs>
+    </stand>
+    <stand name="UMC-TEST-2">
+        <filelogs>
+            <folder>\\msk-app-v0190\c$\forislog</folder>
+            <folder>\\msk-app-v0191\c$\forislog</folder>
+            <folder>\\msk-app-v0192\c$\forislog</folder>
+            <folder>\\msk-app-v0193\c$\forislog</folder>
+            <folder>\\msk-app-v0194\c$\forislog</folder>
+            <folder>\\msk-app-v0195\c$\forislog</folder>
+            <folder>\\msk-app-v0196\c$\forislog</folder>
+            <folder>\\msk-app-v0203\c$\forislog</folder>
+            <folder>\\msk-app-v0221\c$\forislog</folder>
+            <folder>\\msk-app-v0222\c$\forislog</folder>
+            <folder>\\msk-app-v0222\c$\FORIS\TelCRM\CRM.Workflow\Logs</folder>
+            <folder>\\msk-app-v0223\c$\forislog</folder>
+            <folder>\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs</folder>
+            <folder>\\msk-app-v0194\c$\FORIS\Messaging Gateway\log</folder>
+            <folder>\\msk-app-v0195\c$\MedioRTS\RTS_3.03.02.36160_SCP140_SP2_P1\LogFile</folder>
+            <folder>\\msk-app-v0223\c$\FORIS\MARTI\Workflow\Logs</folder>
+        </filelogs>
+        <evlogs>
+            <source server="msk-app-v0190">Application,CRM.Gateway,CRM_Interfaces,FirscallVCardServiceLog,FORIS.Catalogues,FORIS.Common,FORIS.Production,FORIS.Sales,FORIS.ScratchCards,FORIS.ScratchCards.Activation,Foris.SelfCare,FORIS.TelCRM.GUI,Foris.TelCRM.Marketing,FORIS.TelCRM.RequestManagement,FORIS.TelCRM.Sales,FORIS_Security,Marti.CommunityManagementUI,Marti.OrderCatalogueUI,MGALog,PackageUI,PLUGINS,PrepMntr,PrepServ,Production,System,TelCRM.CustomerManagement,TelCRM.Production,TelCRM.WindowsServices</source>
+            <source server="msk-app-v0191">Application,CAFToolCollection,CRM.Gateway,FORIS.Billing,FORIS.Catalogues,FORIS.Common,FORIS.RI,FORIS.TelBill.DOC,Foris.TelCrm.RequestManagement,Internet,Operations,SessionSecurityManagement,System</source>
+            <source server="msk-app-v0192">Account,Application,Counter,CRM.Gateway,F.TelCharge,File,FORIS.Catalogues,FORIS.Common,FORIS.DataLoaderFailover,FORIS.Logging,Foris.RDExtension,Foris.REService,FORIS.RI,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.INTimer,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.PSP.Timer,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,Foris.TelCrm.RequestManagement,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,FORIS_Security,Monitoring,Operations,RDExtensionLog,Services,SPF.ProcUnit,SPFServer!!!,SPFTest!!!,StateInServiceLog,System</source>
+            <source server="msk-app-v0193">Application,FORIS.Catalogues,FORIS.Common,FORIS.DataBus,FORIS.RI,FORIS.Stock,FORIS_Scheduler,FORIS_Security,Operations,System</source>
+            <source server="msk-app-v0194">Application,CRM.Gateway,F.TelBill,Foris.Catalogues,FORIS.Common,FORIS.MessagingGateway,FORIS.RI,Foris.SPA.BPM,Foris.SPA.Disp,Foris.SPA.Monitor,Foris.SPA.SA,Foris.SPA.ScenarioEditor,Foris.SPA.Sync,FORIS.UPRSGateway,FORIS_Security,Internet,NewBPMLog,Operations,SPA.BPM.01,SPA.MsgDisp,SPA.SA.DMS,SPA.SA.HLR.Siemens.SR10.01,SPA.SA.IMODE.NEC,SPA.SA.MMSC.LogicaCMG,SPA.SA.RBT.NEC,SPA.SA.SMSC.SoftPro,SPA.SA.VM.Comverse,System</source>
+            <source server="msk-app-v0195">Application,Counter,FORIS.Common,Foris.RDExtension,Foris.REService,FORIS_Security,Operations,RDExtensionLog,Services,System</source>
+            <source server="msk-app-v0203">Application,FORIS.CampaignManagement,Foris.Catalogues,FORIS.Common,Foris.ODS,Operations,System</source>
+            <source server="msk-app-v0221">Application,FORIS,FORIS.Common,FORIS_Security,Operations,System</source>
+            <source server="msk-app-v0222">Application,CRM.Gateway,CRM_Interfaces,FORIS.Catalogues,FORIS.Common,FORIS.ResourceLocking,FORIS.ServiceRegistry,Foris.TelCrm.RequestManagement,FORIS.TelCRM.Sales,FORIS.Workflow,Internet,System</source>
+            <source server="msk-app-v0223">Application,FORIS.Common,FORIS.ResourceLocking,FORIS.ServiceRegistry,FORIS.Workflow,Intercept,System</source>
+        </evlogs>
+    </stand>
+    <stand name="MAIN-FORIS" default="1">
+        <filelogs>
+            <folder>\\00-crm-gui\c$\forislog</folder>
+            <folder>\\00-crm-otr\c$\forislog</folder>
+            <folder>\\00-crm-wf\c$\forislog</folder>
+            <folder>\\00-bill\c$\forislog</folder>
+            <folder>\\00-am-otsp\c$\forislog</folder>
+            <folder>\\00-spa-sa\c$\forislog</folder>
+            <folder>\\00-nsp\c$\forislog</folder>
+            <folder>\\00-bms\c$\forislog</folder>
+            <folder>\\00-term\c$\forislog</folder>
+            <folder>\\00-wfm\c$\forislog</folder>
+            <folder>\\00-mg\c$\forislog</folder>
+            <folder>\\00-ri\c$\forislog</folder>
+            <folder>\\00-report\c$\forislog</folder>
+            <folder>\\00-doc\c$\forislog</folder>
+            <folder>\\00-dmz\c$\forislog</folder>
+        </filelogs>
+        <evlogs>
+	   <source server="00-am-otsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.StateIn.SQR,FORIS.SUPS.OTSP,FORIS.SUPS.PSP.TelCRMInteraction,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,FORIS.SUPS.StateIn,FORIS.SUPS.StateIn.BonusSystem,FORIS.UMRS.CRM,FORIS.UMRS.DataLoaderFailover,FORIS.UMRS.DOC,System</source>
+            <source server="00-bill">Application,CRM.Gateway,FORIS.Billing,Foris.Catalogues,FORIS.Common,FORIS.DataBus,FORIS.UPRSGateway,System</source>
+            <source server="00-bms">Application,FORIS.Common,System</source>
+            <source server="00-cash-spa">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.SPA.BPM,Foris.SPA.Disp,Foris.SPA.Monitor,Foris.SPA.Sync,SPA.HTTPGateway,SPA.Monitor,System</source> 
+            <source server="00-crm-gui">Application,CRM.Gateway,CRM_Interfaces,Foris.Catalogues,FORIS.Common,FORIS.Production,FORIS.RemoteDealer,FORIS.Sales,FORIS.ScratchCards,FORIS.ScratchCards.Activation,Foris.SelfCare,FORIS.TelCRM.GUI,Foris.TelCRM.Marketing,Foris.TelCrm.RequestManagement,FORIS.TelCRM.Sales,Marti.CommunityManagementUI,Production,System,TelCRM.CustomerManagement,TelCRM.Production</source> 
+            <source server="00-crm-otr">Application,CRM.Gateway,CRM_Interfaces,Foris.Catalogues,FORIS.Common,FORIS.Production,FORIS.ScratchCards,FORIS.ScratchCards.Activation,Foris.SelfCare,FORIS.TelCRM.GUI,Foris.TelCRM.Marketing,Foris.TelCrm.RequestManagement,FORIS.TelCRM.Sales,Marti.OrderCatalogueUI,Production,System,TelCRM.Marketing,TelCRM.Production</source> 
+            <source server="00-crm-wf">Application,CRM.Gateway,CRM_Interfaces,File,Foris.Catalogues,FORIS.Common,FORIS.Production,FORIS.RemoteDealer,FORIS.ScratchCards,FORIS.ScratchCards.Activation,Foris.SelfCare,Foris.TelCrm.RequestManagement,FORIS.TelCRM.Sales,Production,System</source>
+            <source server="00-doc">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,FORIS.TelBill.DOC,Foris.UnitedDocument,System</source>
+            <source server="00-mg">Application,FORIS.Common,FORIS.MessagingGateway,System</source>
+            <source server="00-nsp">Application,CRM.Gateway,Foris.Catalogues,FORIS.Common,Foris.RDExtension,Foris.REService,Foris.ServiceRDExtension,FORIS.SUPS.SPF.ProcUnit,FORIS.SUPS.SPFMonitoring,FORIS.SUPS.SPFServer,System</source>
+            <source server="00-report">Application,Foris.Catalogues,FORIS.Common,Foris.ODS,ForwardedEvents,Microsoft-Windows-EventCollector/Operational,Microsoft-Windows-Forwarding/Operational,System,Windows</source>
+            <source server="00-ri">Application,Foris.Catalogues,FORIS.Common,Foris.PasswordSecurity,Foris.RDExtension,FORIS.RI,FORIS.Stock,FORIS_Security,System</source>
+            <source server="00-spa-sa">Application,Foris.Catalogues,FORIS.Common,Foris.SPA.SA,Foris.SPA.ScenarioEditor,Foris.SPA.Sync,System</source>
+            <source server="00-term">Application,FORIS.Billing,Foris.Catalogues,FORIS.Common,Foris.ODS,Foris.REService,FORIS.RI,FORIS.SUPS.SPFServer,Internet,System</source> 
+            <source server="00-wfm">Application,FORIS.Common,FORIS.ResourceLocking,FORIS.ServiceRegistry,FORIS.Workflow,System</source>
+        </evlogs>
+    </stand>
+    <stand name="TEST">
+        <filelogs>
+	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>-->
+	    <folder>C:\Users\ALyakishev\logs\ocat</folder>
+	    <!--<folder>C:\Users\ALyakishev\share</folder>-->
+        </filelogs>
+        <evlogs />
+    </stand>
+    <stand name="AutoBuild">
+        <filelogs>
+            <folder>\\msk-tfs-lab01\c$\forislog</folder>
+            <folder>\\msk-tfs-lab01\c$\WINDOWS\system32\LogFiles</folder>
+        </filelogs>
+        <evlogs>
+		<source server="msk-tfs-lab01"> Application, CRM.Gateway, FORIS.Common, Foris.SelfCare, Foris.TelCrm.RequestManagement, ForwardedEvents, Microsoft-Windows-EventCollector/Operational, Microsoft-Windows-Forwarding/Operational, System</source>
+	</evlogs>
+    </stand>
+</stands>
