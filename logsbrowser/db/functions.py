@@ -134,7 +134,7 @@ class RowIDsList:
         self.rowids = []
 
     def step(self, value):
-        self.rowids.append(str(value))
+        self.rowids.append('%s' % value)
 
     def finalize(self):
         return ','.join(self.rowids)
@@ -144,7 +144,7 @@ class ColorAgg:
         self.colors = set()
 
     def step(self, value):
-        self.colors.add(str(value))
+        self.colors.add('%s' % value)
 
     def finalize(self):
         return " ".join(self.colors)
