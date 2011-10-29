@@ -20,14 +20,14 @@
       add_lid: 1
       default: 0
       sql: |
-        select strftime('%H:%M:%f',date) as time, 
-        regex(log, '\]\[(\d+)\] \([A-Z ]+\)',1) as thr,
-        regex(log, '\]\[\d+\] \(([A-Z]+)\)',1) as level,
-        regex(log, '  \[call\] <(\w+)>\s+call', 1) as call,
-        regex(log, '  \[result\] <(\w+)>\s+outputs', 1) as result,
-        logname, type from #this
-        group by date, thr, level, call, result, logname
-        order by date desc, lid
+	select strftime('%H:%M:%f',date) as time, 
+	regex(log, '\]\[(\d+)\] \(([A-Z]+)\)',1) as thr,
+	regex(log, '\]\[(\d+)\] \(([A-Z]+)\)',2) as level,
+	regex(log, '  \[call\] <(\w+)>\s+call', 1) as call,
+	regex(log, '  \[result\] <(\w+)>\s+outputs', 1) as result,
+	logname, type from #this
+	group by date, thr, level, call, result, logname
+	order by date desc, lid
 
     - name: 'Дата сообщения, имя лога, тип'
       add_lid: 1

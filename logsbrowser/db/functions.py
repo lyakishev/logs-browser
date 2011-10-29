@@ -52,8 +52,6 @@ def parse_bad_xml(m):
 def parse_good_xml(m):
     return '\n'+xml_pretty(m.group())
     
-
-
 def pretty_xml(t):
     if xml_bad.search(t):
         text = xml_new.sub(parse_good_xml, t)
@@ -65,17 +63,32 @@ def pretty_xml(t):
 def pretty(t):
     return pretty_xml(convert_line_ends(t))
 
+re_cache = {}
+i_re_cache = {}
+
 
 def regexp(pattern, field):
-    ret = re.compile(pattern).search(field)
+    re_obj = re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def iregexp(field, pattern):
-    ret = re.compile(pattern, re.I).search(field)
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def not_iregexp(field, pattern):
-    ret = re.compile(pattern, re.I).search(field)
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return False if ret else True
 
 def icontains(field, text):
@@ -91,15 +104,23 @@ def not_contains(field, text):
     return text not in field
 
 def regex(t, pattern, gr):
-    ret = re.compile(pattern).search(t)
+    re_obj = re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(t)
     if ret:
         return ret.group(gr)
     else:
         return ""
 
 def rmatch(pattern, field):
-    pattern = re.escape(pattern).replace('\*', '\w*')
-    ret = re.compile('(\W|^)'+pattern+'(\W|$)', re.I).search(field)
+    pattern = '(\W|^)' + re.escape(pattern).replace('\*', '\w*') + '(\W|$)'
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def intersct(lids1, lids2):
@@ -131,13 +152,13 @@ class AggError:
 
 class RowIDsList:
     def __init__(self):
-        self.rowids = []
+        self.rowids = ""
 
     def step(self, value):
-        self.rowids.append('%s' % value)
+        self.rowids += ',%s' % value
 
     def finalize(self):
-        return ','.join(self.rowids)
+        return self.rowids[1:]
 
 class ColorAgg:
     def __init__(self):
