@@ -1,5 +1,10 @@
 import unittest
-from logbrowser.source.cleaner import clear
+import sys
+import os
+
+sys.path.append(os.path.abspath('../logsbrowser'))
+
+from source.cleaner import clear
 
 
 log_names = (
@@ -33,7 +38,7 @@ log_names = (
         ("psp_timer_20110114_14.log", "psp_timer", "log"),
         ("SQR_PC.log", "SQR_PC", "log"),
 	("Foris.ResourceInventory.GUI-1101.log", "Foris.ResourceInventory.GUI", "log"),
-	("14012011150352-EMAILCON_EMAILCON_01_activity.log", "EMAILCON_EMAILCON_activity", "log"),
+	("14012011150352-EMAILCON_EMAILCON_01_activity.log", "EMAILCON_EMAILCON_01_activity", "log"),
         ("CollectionPaymentMM4.log", "CollectionPaymentMM4", "log"),
         ("CollectionPaymentMM4.log20110113", "CollectionPaymentMM4", "log"),
         ("0_1659702_0.000001.log", "", "log"),
@@ -53,7 +58,7 @@ log_names = (
         ("DEEngine-14012011-full.0", "DEEngine-full", "log"),
         ("UnitedBillInvoice-14012011-full.0", "UnitedBillInvoice-full", "log"),
 	("Foris.ResourceInventory.Services-1101.log", "Foris.ResourceInventory.Services", "log"),
-	("14012011061258-SMSCON_USSDCON_01_error.log", "SMSCON_USSDCON_error", "log"),
+	("14012011061258-SMSCON_USSDCON_01_error.log", "SMSCON_USSDCON_01_error", "log"),
         ("DE_Proxy_Info-14012011-ERROR.0", "DE_Proxy_Info-ERROR", "log"),
         ("10080_(null).log", "", "log"),
         ("10080_PSPSecond.log", "PSPSecond", "log"),
@@ -106,7 +111,9 @@ log_names = (
         ("Marti.PAM.BL.log.2010-11-03", "Marti.PAM.BL", "log"),
         ("txt", "", "txt"),
         ("1.txt", "", "txt"),
-        ("SPA.BM.01", "SPA", "bm")
+        ("SPA.BM.01", "SPA", "bm"),
+        ("01112011000000-SMSCON_USLTCON_01_activity.log", "SMSCON_USLTCON_01_activity", "log"),
+        ("01112011071008-SMSCON_USSDCON_04_error.log", "SMSCON_USSDCON_04_error", "log")
 )
 
 class TestParseFileName(unittest.TestCase):

@@ -3,7 +3,7 @@
 import re
 import os
 
-_digits = re.compile(r"(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[A-Za-z._-]")
+_digits = re.compile(r"(?<=[a-zA-Z])_\d{1,2}_(?=[a-zA-Z])|(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[-A-Za-z._]")
 _t = re.compile(r"(?<=\d)T(?=\d)")
 _start_end_literals = re.compile("^[._-]+|[._-]+$")
 _repeated_literals = re.compile(r"([._-]){2,}")
@@ -22,3 +22,10 @@ def clear(path):
     name = _repeated_literals.sub(r'\1', name)
     name = _null.sub("", name)
     return (name, ext[1:].lower())
+
+
+if __name__ == "__main__":
+    name = "DEEngine-14012011-full.0.log.log.log"
+    import pdb
+    pdb.set_trace()
+    print clear(name)
