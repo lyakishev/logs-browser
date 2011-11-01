@@ -422,7 +422,7 @@ class FileServersModel(ServersModel):
     def get_child_pathes(self, iter_):
 
         def paths(it, acc=[]):
-            if not self.treestore.iter_has_child(it) and self.treestore.get_value(it, 3) != 'f':
+            if not self.treestore.iter_has_child(it):
                 yield acc
 
             it_ = self.treestore.iter_children(it)
