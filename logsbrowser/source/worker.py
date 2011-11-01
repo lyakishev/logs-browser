@@ -21,7 +21,7 @@ def file_preparator(folders, stand):
             fullf = os.path.join(raw_key, file_)
             pfn, ext = clear(file_)
             if not pfn:
-                pfn = "undefined"
+                pfn = os.path.join(raw_key, "undefined")
             if ext in ('txt', 'log') and pfn in value:
                 flf.append([fullf, pfn, source_formats[stand][raw_key, pfn]])
     return sorted(flf, key=itemgetter(1))
@@ -71,7 +71,7 @@ def dir_walker(path, dir_callback, log_callback,  stand, parent=None):
                 name, ext = clear(f)
                 if ext in ('txt', 'log'):
                     if not name:
-                        name = "undefined"
+                        name = os.path.join(path, "undefined")
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:
