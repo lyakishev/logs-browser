@@ -52,8 +52,8 @@ class CellRendererColors(gtk.CellRendererText):
                 layout.set_text(self.get_property('text'))
                 layout.set_font_description(pango.FontDescription("bold"))
                 widget.style.paint_layout(window, gtk.STATE_NORMAL, True,
-                                        background_area, widget, '',
-                                        background_area.x, background_area.y,
+                                        None, widget, '',
+                                        background_area.x, background_area.y+h/4-1,
                                         layout)
                 return
         gtk.CellRendererText.do_render(self, window, widget, background_area, cell_area,
