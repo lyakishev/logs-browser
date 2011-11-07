@@ -1,5 +1,7 @@
 import ConfigParser
 import os
+from urlparse import urlunparse
+import sys
 
 _config_dir = "config"
 
@@ -8,6 +10,8 @@ def get_path(path):
         return os.path.abspath(os.path.join(_config_dir, path))
     else:
         return os.path.abspath(path)
+
+app_path = os.path.dirname(os.path.abspath(__file__))
 
 _config = ConfigParser.RawConfigParser()
 _config.read(os.path.join(_config_dir, "logsbrowser.cfg"))
@@ -39,7 +43,8 @@ GRID_LINES = _config.getboolean('table', 'grid_default')
 
 EXTERNAL_LOG_VIEWER = _config.get('logwindow', 'external_log_viewer')
 
-HELP_INDEX = _config.get("docs", 'doc_index_file')
+HELP_INDEX = os.path.realpath(_config.get("docs", 'doc_index_file'))
+
 MAX_LINES_FOR_DETECT_FORMAT = _config.getint('parse_files', 'max_lines_for_detect_format')
 
 WIDTH_MAIN_WINDOW = _config.getint('window_size', 'width_main_window')

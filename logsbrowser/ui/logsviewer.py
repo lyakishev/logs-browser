@@ -22,6 +22,7 @@ from operator import setitem
 import os
 import subprocess
 from utils.monitor import ConfigMonitor
+import webbrowser
 try:
     from imp import reload
 except ImportError:
@@ -167,7 +168,7 @@ class LogsViewer:
         self.date_filter.fromto_option.to_date.set_now()
 
     def show_help(self, *args):
-        subprocess.Popen('start %s' % config.HELP_INDEX)
+        return webbrowser.open(config.HELP_INDEX)
 
     def show_about(self, *args):
         about = gtk.AboutDialog()
@@ -176,7 +177,7 @@ class LogsViewer:
         about.set_property('version', VERSION)
         about.set_property('website', 'http://bitbucket.org/lyakishev_a_v/logs-browser')
         about.set_name('LogsBrowser')
-	about.set_license(license)
+        about.set_license(license)
         about.run()
         about.destroy()
 
