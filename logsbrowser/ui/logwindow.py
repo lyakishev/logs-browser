@@ -70,9 +70,9 @@ class LogWindow:
         self.log_text.set_editable(False)
         self.log_text.set_wrap_mode(gtk.WRAP_WORD)
         self.log_text.add_events(gtk.gdk.MOTION_NOTIFY | gtk.gdk.BUTTON_PRESS)
-        self.log_text.connect("motion_notify_event", self.motion_notify)
+        #self.log_text.connect("motion_notify_event", self.motion_notify)
         self.log_text.add_events(gtk.gdk.BUTTON_PRESS_MASK)
-        self.log_text.connect("button-press-event", self.show_body)
+        #self.log_text.connect("button-press-event", self.show_body)
         self.scr.add(self.log_text)
         self.popup.add(self.box)
 
