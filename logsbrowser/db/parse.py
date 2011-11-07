@@ -117,18 +117,19 @@ class Query(object):
         return colors
 
     def get_from_table(self):
-        def get_from(select_core):
+        def get_from(select_core, query):
             from_ = select_core.from_
             if len(from_) == 1:
                 if self.query_re.match(from_[0]):
-                    cores = self.qdict[from_[0].strip('($)')].query.qdict
+                    query_ = from_[0].strip('($)')
+                    cores = query.qdict[query_].query.qdict
                     if len(cores) == 1:
-                        return get_from(cores['mquery1'])
+                        return get_from(cores['mquery1'], query.qdict[query_])
                 else:
                     return from_[0]
             else:
                 return ""
-        return get_from(self.query.qdict['mquery1'])
+        return get_from(self.query.qdict['mquery1'], self)
 
     def add_lid(self, group=False):
         from_queries = self.query.add_lid(group)
