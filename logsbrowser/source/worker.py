@@ -43,10 +43,7 @@ def file_preparator(folders, stand):
                 flf.append([fullf, pfn, source_formats[stand][raw_key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
-def lists_to_pathes(lists):
-    pathes = []
-    for i in lists:
-        pathes.append([os.sep.join(reversed(i[1:])), i[0]])
+def lists_to_pathes(pathes):
     folders = {}
     dirs = set([p[0] for p in pathes])
     for dir_ in dirs:

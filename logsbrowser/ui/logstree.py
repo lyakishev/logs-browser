@@ -30,6 +30,8 @@ from utils.xmlmanagers import SourceManager, SelectManager
 from dialogs import save_dialog
 from sourceactionsmanager import SourceActionsManagerUI
 from utils.monitor import ConfigMonitor
+from functools import partial
+from itertools import ifilter, imap
 
 
 def os_join(p1, p2):
@@ -54,167 +56,96 @@ class ServersModel(object):
         else:
             return None
 
+    def enumerate(self, iter_, child_iter_func, next_iter_func):
+        if iter_:
+            yield iter_
+        it = child_iter_func(iter_)
+        while it:
+            for i in self.enumerate(it, child_iter_func, next_iter_func):
+                yield i
+            if next_iter_func:
+                it = next_iter_func(it)
+            else:
+                break
+
+    def enumerate_childs(self, iter_):
+        for i in self.enumerate(iter_, self.treestore.iter_children,
+                                       self.treestore.iter_next):
+            yield i
+    
+    def enumerate_all_iters(self):
+        for i in self.enumerate_childs(None):
+            yield i
+
+    def foreach(self, action, iters):
+        for it in iters:
+            action(it)
+
+    def get_name(self, it):
+        return self.treestore.get_value(it, 0)
+
     def do_actions(self, action, iter_):
         getv = self.treestore.get_value
-        name = getv(iter_, 0)
+        name = self.get_name(iter_)
         type_ = getv(iter_, 3)
         path_ = self.get_path(iter_)
         action(type_, path_, name, self.select_action(iter_),
                                    self.unselect_action(iter_))
 
-    def get_path(self, node):
-        getv = self.treestore.get_value
-        path = []
-        path.append(getv(node, 0))
-        parent = self.treestore.iter_parent(node)
-        while parent:
-            path.append(getv(parent, 0))
-            parent = self.treestore.iter_parent(parent)
+    def get_path_list(self, node):
+        path = map(self.get_name,
+                   self.enumerate(node, self.treestore.iter_parent, None))
         path.reverse()
-        return os.sep.join(path)
+        return path
 
-    def select_recursively(self, iter_, val):
-        getv = self.treestore.get_value
-        setv = self.treestore.set_value
-        def walk(it):
-            setv(it, 2, val)
-            it_ = self.treestore.iter_children(it)
-            while it_:
-                walk(it_)
-                it_ = self.treestore.iter_next(it_)
-
-        if getv(iter_, 3) in ("d", "n"):
-            walk(iter_)
-        else:
-            setv(iter_, 2, val)
+    def get_path(self, node):
+        return os.sep.join(self.get_path_list(node))
 
     def select_action(self, iter_):
+        setv = self.treestore.set_value
         def select():
-            self.select_recursively(iter_, 1)
+            self.foreach(lambda it: setv(it, 2, 1), self.enumerate_childs(iter_))
         return select
 
     def unselect_action(self, iter_):
+        setv = self.treestore.set_value
         def unselect():
-            self.select_recursively(iter_, 0)
+            self.foreach(lambda it: setv(it, 2, 0), self.enumerate_childs(iter_))
         return unselect
 
-
     def select_rows(self, action):
-        def treewalk(iter_):
-            self.do_actions(action, iter_)
-            it = self.treestore.iter_children(iter_)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
+        self.foreach(partial(self.do_actions, action), self.enumerate_all_iters())
 
+    def is_toggled_f(self, it):
+        return self.is_f(it) and self.is_toggled(it)
+
+    def is_toggled(self, it):
+        return self.treestore.get_value(it, 2)
+
+    def is_f(self, it):
+        return self.treestore.get_value(it, 3) == 'f'
 
     def get_active_servers(self):
-        log_for_process = []
-        getv = self.treestore.get_value
-
-        def treewalk(iters):
-            if getv(iters, 3) == 'f' and getv(iters, 2):
-                cur_log = [getv(iters, 0)]
-                parent = self.treestore.iter_parent(iters)
-                while parent:
-                    cur_log.append(getv(parent, 0))
-                    parent = self.treestore.iter_parent(parent)
-                log_for_process.append(cur_log)
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return log_for_process
+        return map(lambda l: (os.sep.join(l[:-1]), l[-1]),
+                   imap(self.get_path_list,
+                        ifilter(self.is_toggled_f,
+                                self.enumerate_all_iters())))
 
     def get_pathes(self):
-        pathes = []
-        getv = self.treestore.get_value
-
-        def treewalk(iter_):
-            if getv(iter_, 3) == 'f' and getv(iter_, 2):
-                pathes.append(self.get_path(iter_))
-                return
-            it = self.treestore.iter_children(iter_)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return pathes
+        return map(self.get_path,
+                   ifilter(self.is_toggled_f,
+                          self.enumerate_all_iters()))
     
     def get_active_check_paths(self):
-        pathslist = []
-        getv = self.treestore.get_value
-
-        def treewalk(iters):
-            if getv(iters, 3) == 'f' and getv(iters, 2):
-                pathslist.append(self.treestore.get_string_from_iter(iters))
-                return
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return pathslist
+        return map(self.treestore.get_string_from_iter,
+                   ifilter(self.is_toggled,
+                          self.enumerate_all_iters()))
 
     def set_active_from_paths(self, pathslist):
-        def treewalk(iters):
-            self.treestore.set_value(iters, 2, 0)
-            if self.treestore.get_value(iters, 3) == 'f':
-                path = self.treestore.get_string_from_iter(iters)
-                if path in pathslist:
-                    self.treestore.set_value(iters, 2, 1)
-                return
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-
-    def remove_empty_dirs(self):
-        def walker(it):
-            files = 0
-            dirs = 0
-            chit = self.treestore.iter_children(it)
-            while chit:
-                n_chit = self.treestore.iter_next(chit)
-                if self.treestore.get_value(chit, 3) == 'd':
-                    dirs += 1
-                    walker(chit)
-                else:
-                    files += 1
-                chit = n_chit
-            if not files and not dirs:
-                par = self.treestore.iter_parent(it)
-                if self.treestore.get_value(it, 3) != 'n':
-                    self.treestore.remove(it)
-                    if par:
-                        walker(par)
-
-        it = self.treestore.iter_children(None)
-        while it:
-            walker(it)
-            it = self.treestore.iter_next(it)
-
+        act = lambda it: self.treestore.set_value(it, 2,
+                           self.treestore.get_string_from_iter(it) in pathslist)
+        self.foreach(act, self.enumerate_all_iters())
+        
     def add_root(self, name, path):
         return self.treestore.append(None, [name,
                                             gtk.STOCK_DISCONNECT,
