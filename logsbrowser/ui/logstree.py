@@ -68,6 +68,13 @@ class ServersModel(object):
             else:
                 break
 
+    def enumerate_childs_flat(self, iter_):
+        it = self.treestore.iter_children(iter_)
+        while it:
+            next_ = self.treestore.iter_next(it) 
+            yield it
+            it = next_
+
     def enumerate_childs(self, iter_):
         for i in self.enumerate(iter_, self.treestore.iter_children,
                                        self.treestore.iter_next):
@@ -80,6 +87,11 @@ class ServersModel(object):
     def foreach(self, action, iters):
         for it in iters:
             action(it)
+
+    def takefirst(self, predict, iters):
+        for it in iters:
+            if predict(it):
+                return it
 
     def get_name(self, it):
         return self.treestore.get_value(it, 0)
@@ -135,7 +147,7 @@ class ServersModel(object):
         return map(self.get_path,
                    ifilter(self.is_toggled_f,
                           self.enumerate_all_iters()))
-    
+
     def get_active_check_paths(self):
         return map(self.treestore.get_string_from_iter,
                    ifilter(self.is_toggled,
@@ -143,7 +155,7 @@ class ServersModel(object):
 
     def set_active_from_paths(self, pathslist):
         act = lambda it: self.treestore.set_value(it, 2,
-                           self.treestore.get_string_from_iter(it) in pathslist)
+                         self.treestore.get_string_from_iter(it) in pathslist)
         self.foreach(act, self.enumerate_all_iters())
         
     def add_root(self, name, path):
@@ -240,25 +252,15 @@ class FileServersModel(ServersModel):
         return node
 
     def find_iter_in_childs_by_name(self, iter_, val):
-        getv = self.treestore.get_value
-        it = self.treestore.iter_children(iter_)
-        while it:
-            if getv(it, 0) == val:
-                return it
-            it = self.treestore.iter_next(it)
-        return None
+        return self.takefirst(lambda it: self.get_name(it) == val,
+                              self.enumerate_childs_flat(iter_))
 
     def find_root(self, name, conn):
         getv = self.treestore.get_value
-        it = self.treestore.iter_children(None)
-        while it:
-            if getv(it, 0) == name and getv(it, 1) == (gtk.STOCK_CONNECT if
-                                                        conn else gtk.STOCK_DISCONNECT):
-                return it
-            it = self.treestore.iter_next(it)
-            while gtk.events_pending():
-                gtk.main_iteration()
-        return None
+        predict = lambda it: (getv(it, 0) == name and 
+                              getv(it, 1) == (gtk.STOCK_CONNECT if conn
+                                             else gtk.STOCK_DISCONNECT))
+        return self.takefirst(predict, self.enumerate_childs_flat(None))
 
     def get_iter_by_path(self, path, conn=False):
         getv = self.treestore.get_value
@@ -318,13 +320,6 @@ class FileServersModel(ServersModel):
             if d_iter:
                 self.treestore.remove(d_iter)
 
-    def remove_childs(self, it):
-        child = self.treestore.iter_children(it)
-        while child:
-            next_ = self.treestore.iter_next(child)
-            self.treestore.remove(child)
-            child = next_
-
     def fill_tree(self):
         clear_source_formats(self.stand)
         self.treestore.clear()
@@ -355,70 +350,31 @@ class FileServersModel(ServersModel):
             else:
                 self.treestore.set_value(it_disconnect, 1, gtk.STOCK_CONNECT)
 
-    def iter_to_os_path(self, it):
-        path = []
-        while it:
-            path.append(self.treestore.get_value(it, 0))
-            it = self.treestore.iter_parent(it)
-        return os.sep.join(path[::-1])
-
     def get_root(self, iter_):
         while self.treestore.get_value(iter_, 3) != 'n':
             iter_ = self.treestore.iter_parent(iter_)
         return iter_
 
     def get_child_pathes(self, iter_):
-
-        def paths(it, acc=[]):
-            if not self.treestore.iter_has_child(it):
-                yield acc
-
-            it_ = self.treestore.iter_children(it)
-            while it_:
-                for path in paths(it_, [self.treestore.get_value(it_, 0)]+acc):
-                    yield path
-                it_ = self.treestore.iter_next(it_)
-
-        for p in paths(iter_):
-            yield os.sep.join(p[::-1])
+        return map(self.get_path,
+            ifilter(lambda it: not self.treestore.iter_has_child(it),
+                   self.enumerate_childs(iter_)))
 
     def clear_node(self, iter_):
-        it = self.treestore.iter_children(iter_)
-        while it:
-            next_ = self.treestore.iter_next(it)
-            self.treestore.remove(it)
-            it = next_
-
-    def get_dirs_for_update(self, path):
-        iter_ = self.treestore.get_iter(path)
-        os_path = self.iter_to_os_path(iter_)
-        dirs = list(self.get_child_pathes(iter_))
-        dirs_set = set()
-        for dir_ in dirs:
-            full_dir = os_join(os_path, dir_)
-            for s_dirs in self.dirs:
-                if full_dir.startswith(s_dirs):
-                    dirs_set.add(s_dirs)
-        return dirs_set
-
+        self.foreach(lambda it: self.treestore.remove(it),
+                     self.enumerate_childs_flat(iter_))
 
     def fill_node(self, path):
         self.progress.set_fraction(0)
         self.progress.set_text("Fill node...")
         iter_ = self.treestore.get_iter(path)
         if self.treestore.get_value(iter_, 3) != 'f':
-            os_path = self.iter_to_os_path(iter_)
             root = self.get_root(iter_)
             need_move = True
             if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
-                dirs = []
-                for dir_ in self.get_child_pathes(iter_):
-                    if dir_:
-                        dirs.append(os_join(os_path, dir_))
-                    else:
-                        dirs.append(os_path)
+                dirs = self.get_child_pathes(iter_)
                 root_name = self.treestore.get_value(root, 0)
-                other_dirs = [d for d in [os_join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
+                other_dirs = [d for d in self.get_child_pathes(root) if d not in dirs]
                 self.clear_node(root)
                 pos = self.treestore.iter_next(root)
                 if not self.find_root(root_name, True):
@@ -441,11 +397,10 @@ class FileServersModel(ServersModel):
             else:
                 is_root = (self.treestore.get_value(iter_, 3) == 'n')
                 if is_root:
-                    dirs = list(self.get_child_pathes(iter_))
+                    dirs = self.get_child_pathes(iter_)
                     self.clear_node(iter_)
                     dirs_set = set()
-                    for dir_ in dirs:
-                        full_dir = os_join(os_path, dir_)
+                    for full_dir in dirs:
                         for s_dirs in self.dirs:
                             if full_dir.startswith(s_dirs):
                                 dirs_set.add(s_dirs)
@@ -453,9 +408,10 @@ class FileServersModel(ServersModel):
                         self.add_nodes(d, True)
                         self.fill_dir(d)
                 else:
+                    it_path = self.get_path(iter_)
                     dirs_to_update = set()
                     for dir_ in self.dirs:
-                        if dir_.startswith(os_path) and self.get_iter_by_path(dir_, True):
+                        if dir_.startswith(it_path) and self.get_iter_by_path(dir_, True):
                             dirs_to_update.add(dir_)
                     self.clear_node(iter_)
                     if dirs_to_update:
@@ -463,7 +419,7 @@ class FileServersModel(ServersModel):
                             self.add_nodes(d, True)
                             self.fill_dir(d)
                     else:
-                        self.fill_dir(os_path)
+                        self.fill_dir(it_path)
         self.progress.set_text("")
 
     def file_callback(self, name, parent, ext_parent):
