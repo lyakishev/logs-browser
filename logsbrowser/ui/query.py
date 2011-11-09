@@ -25,7 +25,6 @@ import re
 import config
 import pango
 import db
-#from utils.profiler import profile
 
 
 class Filter():
@@ -230,15 +229,21 @@ class Filter():
     def get_filter_table(self):
         rows = []
         for row in list(self.query_model)[:-1]:
-            rows.append((row[self.fields['FIELD']], row[self.fields['HCOLORV']],
-                        row[self.fields['WHERE']]))
+            rows.append((row[self.fields['FIELD']],
+                        row[self.fields['HCOLORV']],
+                        row[self.fields['WHERE']],
+                        row[self.fields['NOT']]))
         return rows
 
     def set_filter(self, rows):
         self.query_model.clear()
         for row in rows:
+            try:
+                not_ = row[3]
+            except IndexError:
+                not_ = ' '
             self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN,
-                        '',row[0], ' ', self.default_operator(row[0]) or '---', row[2], row[1]])
+                        '',row[0], not_, self.default_operator(row[0]) or '---', row[2], row[1]])
         self.query_model.append([gtk.STOCK_GO_UP, gtk.STOCK_GO_DOWN, '','', ' ','','', '#fff'])
 
     def get_filter(self, only_colors):
