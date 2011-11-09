@@ -517,6 +517,15 @@ class DisplayServersModel:
         self.servers_model.set_inconsistent(it)
         return
 
+    def get_expanded_rows(self):
+        return filter(self.view.row_expanded,
+                      map(self.servers_model.treestore.get_path,
+                          self.servers_model.enumerate_all_iters()))
+
+    def expand_rows(self, rows):
+        for row in rows:
+            self.view.expand_row(row, False)
+
     def tree_actions(self, view, event):
         if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
             path = view.get_path_at_pos(int(event.x), int(event.y))
@@ -777,17 +786,25 @@ class SourceManagerUI(gtk.VBox):
         etree = self.trees.evlogs_servers_tree
         state = self.state_.get(page)
         if state:
-            fpathslist, fentry, epathslist, eentry, stand = state
+            fpathslist, fentry, epathslist, eentry,\
+                    stand, f_expanded_rows, e_expanded_rows = state
         else:
-            fpathslist, fentry, epathslist, eentry, stand = ([], ("", False),
-                                                          [], ("", False),
-                                                          self.default)
+            fpathslist, fentry, epathslist, eentry,\
+                    stand, f_expanded_rows, e_expanded_rows = ([],
+                                                        ("", False),
+                                                        [],
+                                                        ("", False),
+                                                        self.default,
+                                                        [],
+                                                        [])
         self.stand_choice.set_active(stand)
         ftree.view.servers_model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
+        ftree.view.expand_rows(f_expanded_rows)
         if etree:
-            etree.view.servers_model.set_active_from_paths(epathslist)
+            etree.view.expand_rows(e_expanded_rows)
             etree.set_text(eentry)
+            etree.view.servers_model.set_active_from_paths(epathslist)
 
 
     def save_state(self, page):
@@ -796,13 +813,17 @@ class SourceManagerUI(gtk.VBox):
         fentry = ftree.filter_text, ftree.ft
         etree = self.trees.evlogs_servers_tree
         stand = self.stand_choice.get_active()
+        f_expanded_rows = ftree.view.get_expanded_rows()
         if etree:
             epathslist = etree.view.servers_model.get_active_check_paths()
             eentry = etree.filter_text, ftree.ft
+            e_expanded_rows = etree.view.get_expanded_rows()
         else:
             epathslist = []
             eentry = ()
-        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
+            e_expanded_rows = []
+        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand,
+                             f_expanded_rows, e_expanded_rows)
 
     def free_state(self, page):
         try:
