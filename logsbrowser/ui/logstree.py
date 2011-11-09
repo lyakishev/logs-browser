@@ -31,7 +31,8 @@ from dialogs import save_dialog
 from sourceactionsmanager import SourceActionsManagerUI
 from utils.monitor import ConfigMonitor
 from functools import partial
-from itertools import ifilter, imap
+from itertools import ifilter, imap, starmap
+from operator import or_, and_
 
 
 def os_join(p1, p2):
@@ -45,7 +46,9 @@ class ServersModel(object):
         self.treestore = gtk.TreeStore(gobject.TYPE_STRING,
                                        gobject.TYPE_STRING,
                                        gobject.TYPE_BOOLEAN,
-                                       gobject.TYPE_STRING)
+                                       gobject.TYPE_STRING,
+                                       gobject.TYPE_BOOLEAN
+                                       )
 
         self.model_filter = self.treestore.filter_new()
 
@@ -68,25 +71,27 @@ class ServersModel(object):
             else:
                 break
 
-    def enumerate_childs_flat(self, iter_):
+    def enumerate_parents(self, iter_):
+        it = self.treestore.iter_parent(iter_)
+        while it:
+            yield it
+            it = self.treestore.iter_parent(it)
+
+    def enumerate_childs(self, iter_):
         it = self.treestore.iter_children(iter_)
         while it:
-            next_ = self.treestore.iter_next(it) 
+            next_ = self.treestore.iter_next(it)
             yield it
             it = next_
 
-    def enumerate_childs(self, iter_):
+    def enumerate_descendants(self, iter_):
         for i in self.enumerate(iter_, self.treestore.iter_children,
                                        self.treestore.iter_next):
             yield i
     
     def enumerate_all_iters(self):
-        for i in self.enumerate_childs(None):
+        for i in self.enumerate_descendants(None):
             yield i
-
-    def foreach(self, action, iters):
-        for it in iters:
-            action(it)
 
     def takefirst(self, predict, iters):
         for it in iters:
@@ -104,6 +109,26 @@ class ServersModel(object):
         action(type_, path_, name, self.select_action(iter_),
                                    self.unselect_action(iter_))
 
+    def set_inconsistent_iter(self, iter_, inc, toggle):
+        if toggle:
+            self.treestore.set_value(iter_, 4, 0)
+            self.treestore.set_value(iter_, 2, 1)
+        else:
+            self.treestore.set_value(iter_, 4, inc)
+            self.treestore.set_value(iter_, 2, 0)
+
+    def set_inconsistent(self, iter_):
+        self.treestore.set_value(iter_, 4, 0)
+        for it in self.enumerate_parents(iter_):
+            childs = list(self.enumerate_childs(it))
+            toggle = all(map(self.is_toggled, childs))
+            inc = any(map(self.is_toggled_or_inconsistent, childs))
+            self.set_inconsistent_iter(it, inc, toggle)
+
+    def is_toggled_or_inconsistent(self, it):
+        return (self.treestore.get_value(it, 2) or
+                self.treestore.get_value(it, 4))
+
     def get_path_list(self, node):
         path = map(self.get_name,
                    self.enumerate(node, self.treestore.iter_parent, None))
@@ -116,17 +141,22 @@ class ServersModel(object):
     def select_action(self, iter_):
         setv = self.treestore.set_value
         def select():
-            self.foreach(lambda it: setv(it, 2, 1), self.enumerate_childs(iter_))
+            for it in self.enumerate_descendants(iter_):
+                setv(it, 2, 1)
+            self.set_inconsistent(iter_)
         return select
 
     def unselect_action(self, iter_):
         setv = self.treestore.set_value
         def unselect():
-            self.foreach(lambda it: setv(it, 2, 0), self.enumerate_childs(iter_))
+            for it in self.enumerate_descendants(iter_):
+                setv(it, 2, 0)
+            self.set_inconsistent(iter_)
         return unselect
 
     def select_rows(self, action):
-        self.foreach(partial(self.do_actions, action), self.enumerate_all_iters())
+        for it in self.enumerate_all_iters():
+            self.do_actions(action, it)
 
     def is_toggled_f(self, it):
         return self.is_f(it) and self.is_toggled(it)
@@ -154,24 +184,24 @@ class ServersModel(object):
                           self.enumerate_all_iters()))
 
     def set_active_from_paths(self, pathslist):
-        act = lambda it: self.treestore.set_value(it, 2,
-                         self.treestore.get_string_from_iter(it) in pathslist)
-        self.foreach(act, self.enumerate_all_iters())
+        for it in self.enumerate_all_iters():
+            self.treestore.set_value(it, 2,
+                    self.treestore.get_string_from_iter(it) in pathslist)
         
     def add_root(self, name, path):
         return self.treestore.append(None, [name,
                                             gtk.STOCK_DISCONNECT,
-                                            None, 'n'])
+                                            None, 'n', False])
 
     def add_dir(self, name, parent, path):
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_DIRECTORY,
-                                            None, 'd'])
+                                            None, 'd', False])
 
     def add_file(self, name, parent):
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_FILE,
-                                            None, 'f'])
+                                            None, 'f', False])
 
 class EventServersModel(ServersModel):
     def __init__(self, stand, logs):
@@ -253,14 +283,14 @@ class FileServersModel(ServersModel):
 
     def find_iter_in_childs_by_name(self, iter_, val):
         return self.takefirst(lambda it: self.get_name(it) == val,
-                              self.enumerate_childs_flat(iter_))
+                              self.enumerate_childs(iter_))
 
     def find_root(self, name, conn):
         getv = self.treestore.get_value
         predict = lambda it: (getv(it, 0) == name and 
                               getv(it, 1) == (gtk.STOCK_CONNECT if conn
                                              else gtk.STOCK_DISCONNECT))
-        return self.takefirst(predict, self.enumerate_childs_flat(None))
+        return self.takefirst(predict, self.enumerate_childs(None))
 
     def get_iter_by_path(self, path, conn=False):
         getv = self.treestore.get_value
@@ -358,11 +388,11 @@ class FileServersModel(ServersModel):
     def get_child_pathes(self, iter_):
         return map(self.get_path,
             ifilter(lambda it: not self.treestore.iter_has_child(it),
-                   self.enumerate_childs(iter_)))
+                   self.enumerate_descendants(iter_)))
 
     def clear_node(self, iter_):
-        self.foreach(lambda it: self.treestore.remove(it),
-                     self.enumerate_childs_flat(iter_))
+        for it in self.enumerate_childs(iter_):
+            self.treestore.remove(it)
 
     def fill_node(self, path):
         self.progress.set_fraction(0)
@@ -455,12 +485,17 @@ class DisplayServersModel:
         self.column0.pack_start(self.stockrenderer, False)
         self.column0.pack_start(self.renderer, True)
         self.column0.add_attribute(self.renderer1, 'active', 2)
+        self.column0.add_attribute(self.renderer1, 'inconsistent', 4)
         self.column0.set_attributes(self.stockrenderer, stock_id=1)
         self.column0.set_attributes(self.renderer, text=0)
         self.column2 = gtk.TreeViewColumn("Type", self.renderer2)
         self.column2.set_visible(False)
+        self.renderer3 = gtk.CellRendererToggle()
+        self.column3 = gtk.TreeViewColumn("Inconsistent", self.renderer3)
+        self.column3.set_visible(False)
         self.view.append_column(self.column0)
         self.view.append_column(self.column2)
+        self.view.append_column(self.column3)
         self.view.connect("button-press-event", self.tree_actions)
 
     def col1_toggled_cb(self, cell, path):
@@ -474,9 +509,12 @@ class DisplayServersModel:
         def walk(child):
             for ch in child.iterchildren():
                 ch[2] = state
+                ch[4] = False
                 walk(ch)
 
         walk(true_model[true_path])
+        it = true_model.get_iter(true_path)
+        self.servers_model.set_inconsistent(it)
         return
 
     def tree_actions(self, view, event):
