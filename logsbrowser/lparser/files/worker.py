@@ -21,7 +21,7 @@ import os
 import time
 from readers import mmap_block_read, seek_block_read, mmap_block_read2
 from operator import itemgetter
-from utils.common import to_unicode, isoformat
+from utils.common import to_unicode, isoformat, strip_non_printable
 import config
 from collections import deque
 
@@ -105,7 +105,7 @@ def filelogworker(dates, path, log, funcs):
                                        else "?"),
                                path,
                                0,
-                               to_unicode(msg)), chars
+                               to_unicode(strip_non_printable(msg))), chars
                     else:
                         reader.send(0)
     except IOError:

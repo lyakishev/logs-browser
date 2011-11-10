@@ -17,6 +17,11 @@
 
 import time
 
+NON_PRINTABLE = "".join(chr(i) for i in range(32))
+
+def strip_non_printable(msg):
+    return msg.translate(None, NON_PRINTABLE)
+    
 def isoformat(t):
     return time.strftime('%Y-%m-%d %H:%M:%S', t)
 
