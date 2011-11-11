@@ -67,7 +67,7 @@ def lw_hl_expr(lw_hl_clauses, quotes_dict):
     hls = []
     for op, val, color in lw_hl_clauses:
         val = Template(val).substitute(quotes_dict).strip("'")
-        cval = op_to_re[op.upper()](val)
+        cval = op_to_re[op.upper()](val.strip())
         fcolor = c_to_string(color)
         hls.append('f%s,s#14b: %s' % (fcolor, cval))
     return '\n'.join(hls)

@@ -293,7 +293,10 @@ class LogWindow:
         text = self.get_text().decode('utf8')
         string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
-            re_string = re.compile(string_to_search)
+            try:
+                re_string = re.compile(string_to_search)
+            except re.error:
+                return (-1, -1)
             searched = re_string.search(text[start_pos:])
             if searched:
                 s_pos = searched.start() + start_pos
@@ -311,7 +314,10 @@ class LogWindow:
         text = self.get_text().decode('utf8')
         string_to_search = self.find_entry.get_text().decode('utf8')
         if string_to_search:
-            re_string = re.compile(string_to_search)
+            try:
+                re_string = re.compile(string_to_search)
+            except re.error:
+                return (-1,-1)
             searched = list(re_string.finditer(text[:start_pos]))
             if searched:
                 s_pos = searched[-1].start()
