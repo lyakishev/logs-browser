@@ -17,7 +17,7 @@
 
 import time
 
-NON_PRINTABLE = "".join(chr(i) for i in range(32))
+NON_PRINTABLE = "\x00"#.join(chr(i) for i in range(8))
 
 def strip_non_printable(msg):
     return msg.translate(None, NON_PRINTABLE)
