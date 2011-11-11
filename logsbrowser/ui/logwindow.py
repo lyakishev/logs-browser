@@ -54,7 +54,6 @@ class LogWindow:
         self.sens_func = sens_func
         self.iter = iter
         self.popup = gtk.Window()
-        self.popup.set_title("Log")
         self.popup.set_default_size(config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
         self.box = gtk.VBox()
         self.open_info_box = gtk.VBox()
@@ -184,26 +183,26 @@ class LogWindow:
                     PLSQL_Analyzer(proc)
                     break
 
-    def motion_notify(self, widget, event):
-        iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
-        child_win = self.log_text.get_window(gtk.TEXT_WINDOW_TEXT)
-        in_f = False
-        for s, e in self.procs:
-            if s.get_offset() <= iter_.get_offset() <= e.get_offset():
-                in_f = True
-        if in_f:
-            child_win.set_cursor(self.p_cursor)
-        else:
-            child_win.set_cursor(None)
+    #def motion_notify(self, widget, event):
+    #    iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
+    #    child_win = self.log_text.get_window(gtk.TEXT_WINDOW_TEXT)
+    #    in_f = False
+    #    for s, e in self.procs:
+    #        if s.get_offset() <= iter_.get_offset() <= e.get_offset():
+    #            in_f = True
+    #    if in_f:
+    #        child_win.set_cursor(self.p_cursor)
+    #    else:
+    #        child_win.set_cursor(None)
 
-    def motion_text(self, txt):
-        m_iters = []
-        procs = plsql_re.finditer(txt)
-        for m in procs:
-            start_iter = self.txt_buff.get_iter_at_offset(m.start())
-            end_iter = self.txt_buff.get_iter_at_offset(m.end())
-            m_iters.append((start_iter, end_iter))
-        return m_iters
+    #def motion_text(self, txt):
+    #    m_iters = []
+    #    procs = plsql_re.finditer(txt)
+    #    for m in procs:
+    #        start_iter = self.txt_buff.get_iter_at_offset(m.start())
+    #        end_iter = self.txt_buff.get_iter_at_offset(m.end())
+    #        m_iters.append((start_iter, end_iter))
+    #    return m_iters
 
     def read_config(self):
         self.conf_dir = os.sep.join(os.path.dirname(__file__).\
@@ -436,7 +435,9 @@ class LogWindow:
         self.s = 0
         self.e = len(self.txt)
         self.insert_search(None)
-        self.procs = self.motion_text(self.txt)
+        self.popup.set_title("Log: %s %s" % (logname_.replace('\n', ','),
+                                             date_))
+        #self.procs = self.motion_text(self.txt)
         
 
     def fill(self):
