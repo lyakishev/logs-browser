@@ -192,7 +192,7 @@ class LogsViewer:
         about.set_property('authors', ['Original Author: Lyakishev Andrey <lyakav@gmail.com>',
                                        'Contributor: Chizhikov Vladimir <vladimir.chizh@gmail.com>'])
         about.set_property('version', VERSION)
-        about.set_property('website', 'http://bitbucket.org/lyakishev_a_v/logs-browser')
+        about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
         copyright = """LogsBrowser version 2.0, Copyright (C) 2010-2011 Lyakishev Andrey.
     LogsBrowser comes with ABSOLUTELY NO WARRANTY.
     This is free software, and you are welcome to redistribute it
