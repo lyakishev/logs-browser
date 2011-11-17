@@ -4,6 +4,7 @@ import functions
 from datetime import datetime
 from utils.profiler import time_it
 from utils.ranges import ranges
+import time
 
 
 _dbconn = sqlite3.connect(config.SQL_URI)
@@ -68,23 +69,43 @@ def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
-    core = """select date, logname, type, source, pretty(log), lid 
+    core = """select date, logname, type, source, pretty(log)
                  from %s where %s"""
+    t = time.time()
     msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
     msg_sql += ' order by date asc, %s desc' % 'lid'
     #print msg_sql
     cur = _dbconn.cursor()
     cur.execute(msg_sql)
     result = cur.fetchall()
-    try:
-        dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
-    except ValueError:
-        dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S") for r in result]
-    lognames = [r[1] for r in result]
-    types = [r[2] for r in result]
-    sources = [r[3] for r in result]
-    msg = [r[4] for r in result]
+    dates = [r[0] for r in result]
+    lognames = (r[1] for r in result)
+    types = (r[2] for r in result)
+    sources = (r[3] for r in result)
+    msg = (r[4] for r in result)
     return (dates, lognames, types, sources, msg)
+
+def get_msg_info(rows, table):
+    core = """select min(date), max(date), logname, source
+                 from %s where %s
+                 group by source"""
+    msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
+    msg_sql += ' order by date asc, %s desc' % 'lid'
+    cur = _dbconn.cursor()
+    cur.execute(msg_sql)
+    result = cur.fetchall()
+    try:
+        min_dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
+    except ValueError:
+        min_dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S") for r in result]
+    try:
+        max_dates = [datetime.strptime(r[1],"%Y-%m-%d %H:%M:%S.%f") for r in result]
+    except ValueError:
+        max_dates = [datetime.strptime(r[1],"%Y-%m-%d %H:%M:%S") for r in result]
+    lognames = [r[2] for r in result]
+    sources = [r[3] for r in result]
+    return (min_dates, max_dates, lognames, sources)
+
 
 @time_it
 def execute(sql):

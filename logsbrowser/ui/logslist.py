@@ -23,6 +23,8 @@ from cellrenderercolors import CellRendererColors
 from string import Template
 from utils.profiler import time_it, profile
 from utils.colors import ColorError
+from panedbox import PanedBox
+from toolbar import Toolbar
 
 def callback():
     while gtk.events_pending():
@@ -33,6 +35,23 @@ db.set_callback(callback)
 
 class FTemplate(Template):
     delimiter = '#'
+
+class Row(object):
+    def __init__(self, name, lids, from_):
+        self.lids = lids
+        self.from_ = from_
+
+    @property
+    def name(self):
+        min_dates, max_dates, lognames, sources = db.get_msg_info(self.lids, self.from_)
+        name = []
+        for n in xrange(len(min_dates)):
+            name.append("_".join([min_dates[n].strftime("%Y%m%d%H%M%S"), os.path.basename(sources[n])]))
+        return "__".join(name)
+
+    @property
+    def text(self):
+        return "\n\n".join([m.strip() for m in db.get_msg(self.lids, self.from_)[4]])
 
 class LogList(object):
     
@@ -51,6 +70,7 @@ class LogList(object):
         self.table = ""
         self.from_ = ""
         self.cached_queries = []
+        self.bgcolorsn = []
         self.view.connect("button-press-event", self.copy_cell)
 
     def copy_cell(self, view, event):
@@ -136,13 +156,18 @@ class LogList(object):
                                 self.model.set_value(row.iter, bgcolor, wowhite.pop())
                         else:
                             self.model.set_value(row.iter, bgcolor, "#fff")
-                            
                 self._cache[sql_hash] = (self.model, self.headers, words_hl)
                 self.cached_queries.append(sql_hash)
                 self.view.set_model(self.model)
             self.view.thaw_child_notify()
 
+    def get_row(self, path):
+        row = self.model[path]
+        return Row('_'.join([r for n,r in enumerate(row) if n!=self.rflw and n not in self.bgcolorsn]),
+                                row[self.rflw], self.from_)
+
     def build_view(self, args):
+        self.bgcolorsn = []
         for col in self.columns:
             self.view.remove_column(col)
         self.columns = []
@@ -167,6 +192,7 @@ class LogList(object):
                 self.rflw = number
                 col.set_visible(False)
             if header.startswith('bgcolor'):
+                self.bgcolorsn.append(number)
                 col.set_visible(False)
 
     def clear(self):
@@ -267,82 +293,49 @@ class LogsListWindow(gtk.Frame):
         self.logs_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.logs_window.add(self.log_list.view)
 
-        toolbar = gtk.Toolbar()
+        toolbar = Toolbar()
         toolbar.set_style(gtk.TOOLBAR_ICONS)
-        exec_btn = gtk.ToolButton(gtk.STOCK_EXECUTE)
-        exec_btn.connect("clicked", self.fill)
-
-        self.break_btn = gtk.ToolButton(gtk.STOCK_CANCEL)
-        self.break_btn.connect("clicked", self.cancel)
-
-        sep1 = gtk.SeparatorToolItem()
-
-        query_btn = gtk.ToggleToolButton(gtk.STOCK_PAGE_SETUP)
-        query_btn.connect("clicked", self.show_query)
-        query_btn.set_is_important(True)
-        query_btn.set_label("Edit Query")
-
-
-        sep2 = gtk.SeparatorToolItem()
-
-        lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
-        lwin_btn.connect("clicked", self.show_log_window)
-        lwin_btn.set_is_important(True)
-        lwin_btn.set_label("Show Log(s)")
-
-        sep3 = gtk.SeparatorToolItem()
-        grid_btn = gtk.ToggleToolButton(gtk.STOCK_UNDERLINE)
-        grid_btn.connect("clicked", self.show_gridlines)
-        grid_btn.set_is_important(True)
-        grid_btn.set_label("Grid Lines")
-
-        sep4 = gtk.SeparatorToolItem()
-
-        up_btn = gtk.ToolButton(gtk.STOCK_GO_UP)
-        up_btn.connect("clicked", lambda btn: self.log_list.up_color())
-
-        down_btn = gtk.ToolButton(gtk.STOCK_GO_DOWN)
-        down_btn.connect("clicked", lambda btn: self.log_list.down_color())
-
-        sep5 = gtk.SeparatorToolItem()
-
-        export_btn = gtk.ToolButton(gtk.STOCK_COPY)
-        export_btn.set_is_important(True)
-        export_btn.connect("clicked", self.csv_export)
-        export_btn.set_label("Export...")
-
-        
-        toolbar.insert(exec_btn, 0)
-        toolbar.insert(self.break_btn, 1)
-        toolbar.insert(sep1, 2)
-        toolbar.insert(query_btn, 3)
-        toolbar.insert(sep2, 4)
-        toolbar.insert(lwin_btn, 5)
-        toolbar.insert(sep3, 6)
-        toolbar.insert(grid_btn, 7)
-        toolbar.insert(sep4, 8)
-        toolbar.insert(up_btn, 9)
-        toolbar.insert(down_btn, 10)
-        toolbar.insert(sep5, 11)
-        toolbar.insert(export_btn, 12)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
+        
+        exec_btn = toolbar.append_button(gtk.STOCK_EXECUTE, self.fill)
 
+        self.break_btn = toolbar.append_button(gtk.STOCK_CANCEL, self.cancel)
+
+        toolbar.append_sep()
+        toolbar.append_togglebutton(gtk.STOCK_PAGE_SETUP, self.show_query,
+                                    "Edit Query")
+        toolbar.append_sep()
+        lwin_btn = toolbar.append_button(gtk.STOCK_FILE, self.show_log_window,
+                              "Show Log(s)")
+        toolbar.append_button(gtk.STOCK_SAVE, self.save_logs,
+                              "Save Log(s)")
+        toolbar.append_sep()
+        grid_btn = toolbar.append_togglebutton(gtk.STOCK_UNDERLINE, self.show_gridlines,
+                                    "Grid Lines")
+
+        toolbar.append_sep()
+        toolbar.append_button(gtk.STOCK_GO_UP, lambda btn: self.log_list.up_color())
+        toolbar.append_button(gtk.STOCK_GO_DOWN, lambda btn: self.log_list.down_color())
+        toolbar.append_sep()
+
+        toolbar.append_button(gtk.STOCK_COPY, self.csv_export,
+                              "Export...")
 
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
         self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_filters)
-        self.paned = gtk.VPaned()
-        self.box = gtk.VBox()
 
+        self.box = PanedBox(self.show_all, 500)
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.logs_window, True, True)
+        self.box.paned_pack(self.loader)
 
         self.add(self.box)
         self.show_all()
         self.break_btn.set_sensitive(False)
 
-        self.sens_list = [exec_btn,lwin_btn]+self.filter_logs.sens_list
+        self.sens_list = [exec_btn, lwin_btn] + self.filter_logs.sens_list
         self.ntb = ntb
 
         if config.GRID_LINES:
@@ -351,6 +344,33 @@ class LogsListWindow(gtk.Frame):
 
     def get_filter(self):
         return self.loader
+
+    def save_logs(self, *args):
+        selected = self.get_selected()
+        if len(selected) > 1:
+            fchooser = gtk.FileChooserDialog("Save logs...", None,
+                gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
+                gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+            response = fchooser.run()
+            if response == gtk.RESPONSE_OK:
+                path = fchooser.get_filename()
+                for l in selected:
+                    with open(os.path.join(path, l.name), 'w') as f:
+                        f.write(l.text)
+            fchooser.destroy()
+        else:
+            log = selected[0]
+            print log.name
+            fchooser = gtk.FileChooserDialog("Save logs...", None,
+                gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
+                gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+            fchooser.set_current_name(log.name)
+            response = fchooser.run()
+            if response == gtk.RESPONSE_OK:
+                path = fchooser.get_filename()
+                with open(path, 'w') as f:
+                    f.write(log.text)
+            fchooser.destroy()
 
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,
@@ -380,24 +400,25 @@ class LogsListWindow(gtk.Frame):
         db.interrupt()
 
     def show_query(self, button):
-        if button.get_active():
-            self.box.remove(self.logs_window)
-            self.paned.pack1(self.logs_window, True, False)
-            self.paned.pack2(self.loader, False, False)
-            self.paned.set_position(500)
-            self.box.pack_end(self.paned)
-        else:
-            self.paned.remove(self.logs_window)
-            self.paned.remove(self.loader)
-            self.box.remove(self.paned)
-            self.box.pack_end(self.logs_window)
-        self.show_all()
+        self.box.change_box(button.get_active())
 
     def show_gridlines(self, button):
         if button.get_active():
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
         else:
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
+
+    def get_selected(self):
+        view = self.log_list.view
+        selection = view.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        selected = []
+        for p in pathlist:
+            selected.append(self.log_list.get_row(p))
+        #if not selected:
+        #    for p in all:
+        #        selected.append
+        return selected
 
     def show_log_window(self, *args):
         if self.log_list.model:
