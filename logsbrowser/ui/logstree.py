@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import pygtk
 pygtk.require("2.0")
 import gtk
@@ -13,6 +30,9 @@ from utils.xmlmanagers import SourceManager, SelectManager
 from dialogs import save_dialog
 from sourceactionsmanager import SourceActionsManagerUI
 from utils.monitor import ConfigMonitor
+from functools import partial
+from itertools import ifilter, imap, starmap
+from operator import or_, and_
 
 
 def os_join(p1, p2):
@@ -26,7 +46,9 @@ class ServersModel(object):
         self.treestore = gtk.TreeStore(gobject.TYPE_STRING,
                                        gobject.TYPE_STRING,
                                        gobject.TYPE_BOOLEAN,
-                                       gobject.TYPE_STRING)
+                                       gobject.TYPE_STRING,
+                                       gobject.TYPE_BOOLEAN
+                                       )
 
         self.model_filter = self.treestore.filter_new()
 
@@ -37,181 +59,149 @@ class ServersModel(object):
         else:
             return None
 
+    def enumerate(self, iter_, child_iter_func, next_iter_func):
+        if iter_:
+            yield iter_
+        it = child_iter_func(iter_)
+        while it:
+            for i in self.enumerate(it, child_iter_func, next_iter_func):
+                yield i
+            if next_iter_func:
+                it = next_iter_func(it)
+            else:
+                break
+
+    def enumerate_parents(self, iter_):
+        it = self.treestore.iter_parent(iter_)
+        while it:
+            yield it
+            it = self.treestore.iter_parent(it)
+
+    def enumerate_childs(self, iter_):
+        it = self.treestore.iter_children(iter_)
+        while it:
+            next_ = self.treestore.iter_next(it)
+            yield it
+            it = next_
+
+    def enumerate_descendants(self, iter_):
+        for i in self.enumerate(iter_, self.treestore.iter_children,
+                                       self.treestore.iter_next):
+            yield i
+    
+    def enumerate_all_iters(self):
+        for i in self.enumerate_descendants(None):
+            yield i
+
+    def takefirst(self, predict, iters):
+        for it in iters:
+            if predict(it):
+                return it
+
+    def get_name(self, it):
+        return self.treestore.get_value(it, 0)
+
     def do_actions(self, action, iter_):
         getv = self.treestore.get_value
-        name = getv(iter_, 0)
+        name = self.get_name(iter_)
         type_ = getv(iter_, 3)
         path_ = self.get_path(iter_)
         action(type_, path_, name, self.select_action(iter_),
                                    self.unselect_action(iter_))
 
-    def get_path(self, node):
-        getv = self.treestore.get_value
-        path = []
-        path.append(getv(node, 0))
-        parent = self.treestore.iter_parent(node)
-        while parent:
-            path.append(getv(parent, 0))
-            parent = self.treestore.iter_parent(parent)
-        path.reverse()
-        return os.sep.join(path)
-
-    def select_recursively(self, iter_, val):
-        getv = self.treestore.get_value
-        setv = self.treestore.set_value
-        def walk(it):
-            setv(it, 2, val)
-            it_ = self.treestore.iter_children(it)
-            while it_:
-                walk(it_)
-                it_ = self.treestore.iter_next(it_)
-
-        if getv(iter_, 3) in ("d", "n"):
-            walk(iter_)
+    def set_inconsistent_iter(self, iter_, inc, toggle):
+        if toggle:
+            self.treestore.set_value(iter_, 4, 0)
+            self.treestore.set_value(iter_, 2, 1)
         else:
-            setv(iter_, 2, val)
+            self.treestore.set_value(iter_, 4, inc)
+            self.treestore.set_value(iter_, 2, 0)
+
+    def set_inconsistent(self, iter_):
+        self.treestore.set_value(iter_, 4, 0)
+        for it in self.enumerate_parents(iter_):
+            childs = list(self.enumerate_childs(it))
+            toggle = all(map(self.is_toggled, childs))
+            inc = any(map(self.is_toggled_or_inconsistent, childs))
+            self.set_inconsistent_iter(it, inc, toggle)
+
+    def is_toggled_or_inconsistent(self, it):
+        return (self.treestore.get_value(it, 2) or
+                self.treestore.get_value(it, 4))
+
+    def get_path_list(self, node):
+        path = map(self.get_name,
+                   self.enumerate(node, self.treestore.iter_parent, None))
+        path.reverse()
+        return path
+
+    def get_path(self, node):
+        return os.sep.join(self.get_path_list(node))
 
     def select_action(self, iter_):
+        setv = self.treestore.set_value
         def select():
-            self.select_recursively(iter_, 1)
+            for it in self.enumerate_descendants(iter_):
+                setv(it, 2, 1)
+            self.set_inconsistent(iter_)
         return select
 
     def unselect_action(self, iter_):
+        setv = self.treestore.set_value
         def unselect():
-            self.select_recursively(iter_, 0)
+            for it in self.enumerate_descendants(iter_):
+                setv(it, 2, 0)
+            self.set_inconsistent(iter_)
         return unselect
 
-
     def select_rows(self, action):
-        def treewalk(iter_):
-            self.do_actions(action, iter_)
-            it = self.treestore.iter_children(iter_)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
+        for it in self.enumerate_all_iters():
+            self.do_actions(action, it)
 
+    def is_toggled_f(self, it):
+        return self.is_f(it) and self.is_toggled(it)
+
+    def is_toggled(self, it):
+        return self.treestore.get_value(it, 2)
+
+    def is_f(self, it):
+        return self.treestore.get_value(it, 3) == 'f'
 
     def get_active_servers(self):
-        log_for_process = []
-        getv = self.treestore.get_value
-
-        def treewalk(iters):
-            if getv(iters, 3) == 'f' and getv(iters, 2):
-                cur_log = [getv(iters, 0)]
-                parent = self.treestore.iter_parent(iters)
-                while parent:
-                    cur_log.append(getv(parent, 0))
-                    parent = self.treestore.iter_parent(parent)
-                log_for_process.append(cur_log)
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return log_for_process
+        return map(lambda l: (os.sep.join(l[:-1]), l[-1]),
+                   imap(self.get_path_list,
+                        ifilter(self.is_toggled_f,
+                                self.enumerate_all_iters())))
 
     def get_pathes(self):
-        pathes = []
-        getv = self.treestore.get_value
+        return map(self.get_path,
+                   ifilter(self.is_toggled_f,
+                          self.enumerate_all_iters()))
 
-        def treewalk(iter_):
-            if getv(iter_, 3) == 'f' and getv(iter_, 2):
-                pathes.append(self.get_path(iter_))
-                return
-            it = self.treestore.iter_children(iter_)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return pathes
-    
     def get_active_check_paths(self):
-        pathslist = []
-        getv = self.treestore.get_value
-
-        def treewalk(iters):
-            if getv(iters, 3) == 'f' and getv(iters, 2):
-                pathslist.append(self.treestore.get_string_from_iter(iters))
-                return
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-        return pathslist
+        return map(self.treestore.get_string_from_iter,
+                   ifilter(self.is_toggled,
+                          self.enumerate_all_iters()))
 
     def set_active_from_paths(self, pathslist):
-        def treewalk(iters):
-            self.treestore.set_value(iters, 2, 0)
-            if self.treestore.get_value(iters, 3) == 'f':
-                path = self.treestore.get_string_from_iter(iters)
-                if path in pathslist:
-                    self.treestore.set_value(iters, 2, 1)
-                return
-            it = self.treestore.iter_children(iters)
-            while it:
-                treewalk(it)
-                it = self.treestore.iter_next(it)
-        root = self.treestore.iter_children(None)
-        while root:
-            treewalk(root)
-            root = self.treestore.iter_next(root)
-
-    def remove_empty_dirs(self):
-        def walker(it):
-            files = 0
-            dirs = 0
-            chit = self.treestore.iter_children(it)
-            while chit:
-                n_chit = self.treestore.iter_next(chit)
-                if self.treestore.get_value(chit, 3) == 'd':
-                    dirs += 1
-                    walker(chit)
-                else:
-                    files += 1
-                chit = n_chit
-            if not files and not dirs:
-                par = self.treestore.iter_parent(it)
-                if self.treestore.get_value(it, 3) != 'n':
-                    self.treestore.remove(it)
-                    if par:
-                        walker(par)
-
-        it = self.treestore.iter_children(None)
-        while it:
-            walker(it)
-            it = self.treestore.iter_next(it)
-
+        for it in self.enumerate_all_iters():
+            self.treestore.set_value(it, 2,
+                    self.treestore.get_string_from_iter(it) in pathslist)
+        
     def add_root(self, name, path):
         return self.treestore.append(None, [name,
                                             gtk.STOCK_DISCONNECT,
-                                            None, 'n'])
+                                            None, 'n', False])
 
     def add_dir(self, name, parent, path):
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_DIRECTORY,
-                                            None, 'd'])
+                                            None, 'd', False])
 
     def add_file(self, name, parent):
         return self.treestore.append(parent, [name,
                                             gtk.STOCK_FILE,
-                                            None, 'f'])
+                                            None, 'f', False])
 
 class EventServersModel(ServersModel):
     def __init__(self, stand, logs):
@@ -292,25 +282,15 @@ class FileServersModel(ServersModel):
         return node
 
     def find_iter_in_childs_by_name(self, iter_, val):
-        getv = self.treestore.get_value
-        it = self.treestore.iter_children(iter_)
-        while it:
-            if getv(it, 0) == val:
-                return it
-            it = self.treestore.iter_next(it)
-        return None
+        return self.takefirst(lambda it: self.get_name(it) == val,
+                              self.enumerate_childs(iter_))
 
     def find_root(self, name, conn):
         getv = self.treestore.get_value
-        it = self.treestore.iter_children(None)
-        while it:
-            if getv(it, 0) == name and getv(it, 1) == (gtk.STOCK_CONNECT if
-                                                        conn else gtk.STOCK_DISCONNECT):
-                return it
-            it = self.treestore.iter_next(it)
-            while gtk.events_pending():
-                gtk.main_iteration()
-        return None
+        predict = lambda it: (getv(it, 0) == name and 
+                              getv(it, 1) == (gtk.STOCK_CONNECT if conn
+                                             else gtk.STOCK_DISCONNECT))
+        return self.takefirst(predict, self.enumerate_childs(None))
 
     def get_iter_by_path(self, path, conn=False):
         getv = self.treestore.get_value
@@ -370,13 +350,6 @@ class FileServersModel(ServersModel):
             if d_iter:
                 self.treestore.remove(d_iter)
 
-    def remove_childs(self, it):
-        child = self.treestore.iter_children(it)
-        while child:
-            next_ = self.treestore.iter_next(child)
-            self.treestore.remove(child)
-            child = next_
-
     def fill_tree(self):
         clear_source_formats(self.stand)
         self.treestore.clear()
@@ -407,70 +380,31 @@ class FileServersModel(ServersModel):
             else:
                 self.treestore.set_value(it_disconnect, 1, gtk.STOCK_CONNECT)
 
-    def iter_to_os_path(self, it):
-        path = []
-        while it:
-            path.append(self.treestore.get_value(it, 0))
-            it = self.treestore.iter_parent(it)
-        return os.sep.join(path[::-1])
-
     def get_root(self, iter_):
         while self.treestore.get_value(iter_, 3) != 'n':
             iter_ = self.treestore.iter_parent(iter_)
         return iter_
 
     def get_child_pathes(self, iter_):
-
-        def paths(it, acc=[]):
-            if not self.treestore.iter_has_child(it) and self.treestore.get_value(it, 3) != 'f':
-                yield acc
-
-            it_ = self.treestore.iter_children(it)
-            while it_:
-                for path in paths(it_, [self.treestore.get_value(it_, 0)]+acc):
-                    yield path
-                it_ = self.treestore.iter_next(it_)
-
-        for p in paths(iter_):
-            yield os.sep.join(p[::-1])
+        return map(self.get_path,
+            ifilter(lambda it: not self.treestore.iter_has_child(it),
+                   self.enumerate_descendants(iter_)))
 
     def clear_node(self, iter_):
-        it = self.treestore.iter_children(iter_)
-        while it:
-            next_ = self.treestore.iter_next(it)
+        for it in self.enumerate_childs(iter_):
             self.treestore.remove(it)
-            it = next_
-
-    def get_dirs_for_update(self, path):
-        iter_ = self.treestore.get_iter(path)
-        os_path = self.iter_to_os_path(iter_)
-        dirs = list(self.get_child_pathes(iter_))
-        dirs_set = set()
-        for dir_ in dirs:
-            full_dir = os_join(os_path, dir_)
-            for s_dirs in self.dirs:
-                if full_dir.startswith(s_dirs):
-                    dirs_set.add(s_dirs)
-        return dirs_set
-
 
     def fill_node(self, path):
         self.progress.set_fraction(0)
         self.progress.set_text("Fill node...")
         iter_ = self.treestore.get_iter(path)
         if self.treestore.get_value(iter_, 3) != 'f':
-            os_path = self.iter_to_os_path(iter_)
             root = self.get_root(iter_)
             need_move = True
             if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
-                dirs = []
-                for dir_ in self.get_child_pathes(iter_):
-                    if dir_:
-                        dirs.append(os_join(os_path, dir_))
-                    else:
-                        dirs.append(os_path)
+                dirs = self.get_child_pathes(iter_)
                 root_name = self.treestore.get_value(root, 0)
-                other_dirs = [d for d in [os_join(root_name, dir_) for dir_ in self.get_child_pathes(root)] if d not in dirs]
+                other_dirs = [d for d in self.get_child_pathes(root) if d not in dirs]
                 self.clear_node(root)
                 pos = self.treestore.iter_next(root)
                 if not self.find_root(root_name, True):
@@ -493,11 +427,10 @@ class FileServersModel(ServersModel):
             else:
                 is_root = (self.treestore.get_value(iter_, 3) == 'n')
                 if is_root:
-                    dirs = list(self.get_child_pathes(iter_))
+                    dirs = self.get_child_pathes(iter_)
                     self.clear_node(iter_)
                     dirs_set = set()
-                    for dir_ in dirs:
-                        full_dir = os_join(os_path, dir_)
+                    for full_dir in dirs:
                         for s_dirs in self.dirs:
                             if full_dir.startswith(s_dirs):
                                 dirs_set.add(s_dirs)
@@ -505,9 +438,10 @@ class FileServersModel(ServersModel):
                         self.add_nodes(d, True)
                         self.fill_dir(d)
                 else:
+                    it_path = self.get_path(iter_)
                     dirs_to_update = set()
                     for dir_ in self.dirs:
-                        if dir_.startswith(os_path) and self.get_iter_by_path(dir_, True):
+                        if dir_.startswith(it_path) and self.get_iter_by_path(dir_, True):
                             dirs_to_update.add(dir_)
                     self.clear_node(iter_)
                     if dirs_to_update:
@@ -515,7 +449,7 @@ class FileServersModel(ServersModel):
                             self.add_nodes(d, True)
                             self.fill_dir(d)
                     else:
-                        self.fill_dir(os_path)
+                        self.fill_dir(it_path)
         self.progress.set_text("")
 
     def file_callback(self, name, parent, ext_parent):
@@ -551,12 +485,17 @@ class DisplayServersModel:
         self.column0.pack_start(self.stockrenderer, False)
         self.column0.pack_start(self.renderer, True)
         self.column0.add_attribute(self.renderer1, 'active', 2)
+        self.column0.add_attribute(self.renderer1, 'inconsistent', 4)
         self.column0.set_attributes(self.stockrenderer, stock_id=1)
         self.column0.set_attributes(self.renderer, text=0)
         self.column2 = gtk.TreeViewColumn("Type", self.renderer2)
         self.column2.set_visible(False)
+        self.renderer3 = gtk.CellRendererToggle()
+        self.column3 = gtk.TreeViewColumn("Inconsistent", self.renderer3)
+        self.column3.set_visible(False)
         self.view.append_column(self.column0)
         self.view.append_column(self.column2)
+        self.view.append_column(self.column3)
         self.view.connect("button-press-event", self.tree_actions)
 
     def col1_toggled_cb(self, cell, path):
@@ -570,10 +509,22 @@ class DisplayServersModel:
         def walk(child):
             for ch in child.iterchildren():
                 ch[2] = state
+                ch[4] = False
                 walk(ch)
 
         walk(true_model[true_path])
+        it = true_model.get_iter(true_path)
+        self.servers_model.set_inconsistent(it)
         return
+
+    def get_expanded_rows(self):
+        return filter(self.view.row_expanded,
+                      map(self.servers_model.treestore.get_path,
+                          self.servers_model.enumerate_all_iters()))
+
+    def expand_rows(self, rows):
+        for row in rows:
+            self.view.expand_row(row, False)
 
     def tree_actions(self, view, event):
         if event.button == 3 and event.type == gtk.gdk.BUTTON_PRESS:
@@ -835,17 +786,25 @@ class SourceManagerUI(gtk.VBox):
         etree = self.trees.evlogs_servers_tree
         state = self.state_.get(page)
         if state:
-            fpathslist, fentry, epathslist, eentry, stand = state
+            fpathslist, fentry, epathslist, eentry,\
+                    stand, f_expanded_rows, e_expanded_rows = state
         else:
-            fpathslist, fentry, epathslist, eentry, stand = ([], ("", False),
-                                                          [], ("", False),
-                                                          self.default)
+            fpathslist, fentry, epathslist, eentry,\
+                    stand, f_expanded_rows, e_expanded_rows = ([],
+                                                        ("", False),
+                                                        [],
+                                                        ("", False),
+                                                        self.default,
+                                                        [],
+                                                        [])
         self.stand_choice.set_active(stand)
         ftree.view.servers_model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
+        ftree.view.expand_rows(f_expanded_rows)
         if etree:
-            etree.view.servers_model.set_active_from_paths(epathslist)
+            etree.view.expand_rows(e_expanded_rows)
             etree.set_text(eentry)
+            etree.view.servers_model.set_active_from_paths(epathslist)
 
 
     def save_state(self, page):
@@ -854,16 +813,23 @@ class SourceManagerUI(gtk.VBox):
         fentry = ftree.filter_text, ftree.ft
         etree = self.trees.evlogs_servers_tree
         stand = self.stand_choice.get_active()
+        f_expanded_rows = ftree.view.get_expanded_rows()
         if etree:
             epathslist = etree.view.servers_model.get_active_check_paths()
             eentry = etree.filter_text, ftree.ft
+            e_expanded_rows = etree.view.get_expanded_rows()
         else:
             epathslist = []
             eentry = ()
-        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand)
+            e_expanded_rows = []
+        self.state_[page] = (fpathslist, fentry, epathslist, eentry, stand,
+                             f_expanded_rows, e_expanded_rows)
 
     def free_state(self, page):
-        del self.state_[page]
+        try:
+            del self.state_[page]
+        except KeyError:
+            pass
 
     def change_stand(self, *args):
         stand = self.stand_choice.get_active_text()

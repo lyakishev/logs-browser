@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 # -*- coding: utf8 -*-
 
 import pygtk
@@ -21,7 +38,7 @@ from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
 from string import Template
-from utils.profiler import time_it, profile
+#from utils.profiler import time_it, profile
 from utils.colors import ColorError
 from panedbox import PanedBox
 from toolbar import Toolbar
@@ -98,13 +115,16 @@ class LogList(object):
             self.name = name
             self.sql_context[self.name] = self.table
 
-    def execute(self, sql_templ, auto_lid):
+    def execute(self, sql_templ, from_constr, auto_lid):
         query = sql_templ[0]
         filter_ = sql_templ[1]
         context = self.get_context()
         fcontext = {}
         for k in context:
-            fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
+            if k == 'this':
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+from_constr})
+            else:
+                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
             sql, words_hl, self.from_ = process(fquery, context, auto_lid, self.fts)
@@ -324,7 +344,7 @@ class LogsListWindow(gtk.Frame):
 
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
-        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_filters)
+        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_loaders)
 
         self.box = PanedBox(self.show_all, 500)
         self.box.pack_start(toolbar, False, False)
@@ -342,7 +362,7 @@ class LogsListWindow(gtk.Frame):
             grid_btn.set_active(True)
             self.show_gridlines(grid_btn)
 
-    def get_filter(self):
+    def get_loader(self):
         return self.loader
 
     def save_logs(self, *args):
@@ -393,6 +413,7 @@ class LogsListWindow(gtk.Frame):
         self.exec_sens(True)
         self.filter_logs.unselect()
         self.log_list.execute(self.loader.get_query(),
+                              self.loader.get_from(),
                               self.loader.get_auto_lid())
         self.exec_sens(False)
 

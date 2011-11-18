@@ -1,5 +1,24 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import ConfigParser
 import os
+from urlparse import urlunparse
+import sys
 
 _config_dir = "config"
 
@@ -8,6 +27,8 @@ def get_path(path):
         return os.path.abspath(os.path.join(_config_dir, path))
     else:
         return os.path.abspath(path)
+
+app_path = os.path.dirname(os.path.abspath(__file__))
 
 _config = ConfigParser.RawConfigParser()
 _config.read(os.path.join(_config_dir, "logsbrowser.cfg"))
@@ -39,7 +60,8 @@ GRID_LINES = _config.getboolean('table', 'grid_default')
 
 EXTERNAL_LOG_VIEWER = _config.get('logwindow', 'external_log_viewer')
 
-HELP_INDEX = _config.get("docs", 'doc_index_file')
+HELP_INDEX = os.path.realpath(_config.get("docs", 'doc_index_file'))
+
 MAX_LINES_FOR_DETECT_FORMAT = _config.getint('parse_files', 'max_lines_for_detect_format')
 
 WIDTH_MAIN_WINDOW = _config.getint('window_size', 'width_main_window')

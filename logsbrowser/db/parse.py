@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import re
 from itertools import count
 from string import Template
@@ -50,7 +67,7 @@ def lw_hl_expr(lw_hl_clauses, quotes_dict):
     hls = []
     for op, val, color in lw_hl_clauses:
         val = Template(val).substitute(quotes_dict).strip("'")
-        cval = op_to_re[op.upper()](val)
+        cval = op_to_re[op.upper()](val.strip())
         fcolor = c_to_string(color)
         hls.append('f%s,s#14b: %s' % (fcolor, cval))
     return '\n'.join(hls)
@@ -117,18 +134,19 @@ class Query(object):
         return colors
 
     def get_from_table(self):
-        def get_from(select_core):
+        def get_from(select_core, query):
             from_ = select_core.from_
             if len(from_) == 1:
                 if self.query_re.match(from_[0]):
-                    cores = self.qdict[from_[0].strip('($)')].query.qdict
+                    query_ = from_[0].strip('($)')
+                    cores = query.qdict[query_].query.qdict
                     if len(cores) == 1:
-                        return get_from(cores['mquery1'])
+                        return get_from(cores['mquery1'], query.qdict[query_])
                 else:
                     return from_[0]
             else:
                 return ""
-        return get_from(self.query.qdict['mquery1'])
+        return get_from(self.query.qdict['mquery1'], self)
 
     def add_lid(self, group=False):
         from_queries = self.query.add_lid(group)

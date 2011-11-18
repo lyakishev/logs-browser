@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 #!/usr/bin/env python
 # vim: ts=4:sw=4:tw=78:nowrap
 
@@ -15,13 +32,14 @@ from logsnotebook import LogsNotebook
 import sys
 from statusicon import StatusIcon
 import config
-import utils.profiler as profiler
+#import utils.profiler as profiler
 from process import process, mp_process
 from db.engine import close_conn
 from operator import setitem
 import os
 import subprocess
 from utils.monitor import ConfigMonitor
+import webbrowser
 try:
     from imp import reload
 except ImportError:
@@ -167,16 +185,21 @@ class LogsViewer:
         self.date_filter.fromto_option.to_date.set_now()
 
     def show_help(self, *args):
-        subprocess.Popen('start %s' % config.HELP_INDEX)
+        return webbrowser.open(config.HELP_INDEX)
 
     def show_about(self, *args):
         about = gtk.AboutDialog()
-        about.set_property('authors', ['Lyakishev Andrey <lyakav@gmail.com>',
-                                       'Chizhikov Vladimir <vladimir.chizh@gmail.com>'])
+        about.set_property('authors', ['Original Author: Lyakishev Andrey <lyakav@gmail.com>',
+                                       'Contributor: Chizhikov Vladimir <vladimir.chizh@gmail.com>'])
         about.set_property('version', VERSION)
-        about.set_property('website', 'http://bitbucket.org/lyakishev_a_v/logs-browser')
+        about.set_property('website', 'http://bitbucket.org/andy87/logs-browser')
+        copyright = """LogsBrowser version 2.0, Copyright (C) 2010-2011 Lyakishev Andrey.
+    LogsBrowser comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions. See LICENSE for details."""
+        about.set_copyright(copyright)
         about.set_name('LogsBrowser')
-	about.set_license(license)
+        about.set_license(license)
         about.run()
         about.destroy()
 
@@ -223,7 +246,7 @@ class LogsViewer:
             e_stop.set()
 
 
-    @profiler.time_it
+    #@profiler.time_it
     def show_logs(self, *args):
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)

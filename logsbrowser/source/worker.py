@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 #! -*- coding: utf-8 -*-
 from cleaner import clear
 import os
@@ -21,15 +38,12 @@ def file_preparator(folders, stand):
             fullf = os.path.join(raw_key, file_)
             pfn, ext = clear(file_)
             if not pfn:
-                pfn = "undefined"
+                pfn = os.path.join(raw_key, "undefined")
             if ext in ('txt', 'log') and pfn in value:
                 flf.append([fullf, pfn, source_formats[stand][raw_key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
-def lists_to_pathes(lists):
-    pathes = []
-    for i in lists:
-        pathes.append([os.sep.join(reversed(i[1:])), i[0]])
+def lists_to_pathes(pathes):
     folders = {}
     dirs = set([p[0] for p in pathes])
     for dir_ in dirs:
@@ -71,7 +85,7 @@ def dir_walker(path, dir_callback, log_callback,  stand, parent=None):
                 name, ext = clear(f)
                 if ext in ('txt', 'log'):
                     if not name:
-                        name = "undefined"
+                        name = os.path.join(path, "undefined")
                     if name not in files:
                         format_ = date_format(fullf)
                         if format_:

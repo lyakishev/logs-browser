@@ -1,9 +1,26 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 from db.engine import insert_many
 from lparser.files.worker import filelogworker as fworker
 import sys
 if sys.platform == 'win32':
     from lparser.events.worker import evlogworker as eworker
-from utils.profiler import time_it, profile
+#from utils.profiler import time_it, profile
 from multiprocessing import Event, Process, Queue, JoinableQueue, Value, cpu_count
 from itertools import chain
 from threading import Thread
@@ -12,7 +29,7 @@ from Queue import Empty as qEmpty
 
 PROCESSES = cpu_count()
 
-@time_it
+#@time_it
 def process(table, sources, dates, callback):
 
     def _process(worker, logs):
@@ -101,7 +118,7 @@ def _mp_process(table, sources, dates, stop, val, callback):
     sources_for_worker.close()
     insert_queue.close()
 
-@time_it
+#@time_it
 def mp_process(table, sources, dates, callback):
     _e_stop = Event()
     val = Value('i', 0)

@@ -6,7 +6,7 @@
          select strftime('%H:%M:%f',date) as time,
          regex(log, '(?im)call(?:(?:\W*\s+<)|(?:\s+method\s+)|(?:ing:\s+method\s)|(\s))([A-Za-z_.]+)(?(1)(\sargs\[))', 2) as call, 
          logname, type from #this
-         order by date desc
+         order by date desc, lid
 
     - name: 'SelfCare calls'
       add_lid: 1
@@ -14,15 +14,15 @@
       sql: |
         select strftime('%H:%M:%f',date) as time, regex(log, '(?m)^([A-Za-z_<>.]+) \[\d{4}.\d{2}.\d{2} \d{2}:\d{2}\]', 1) as call, logname, type
         from #this
-        order by date desc
+        order by date desc, lid
 
     - name: 'OCAT'
       add_lid: 1
       default: 0
       sql: |
         select strftime('%H:%M:%f',date) as time, 
-        regex(log, '\]\[(\d+)\] \([A-Z ]+\)',1) as thr,
-        regex(log, '\]\[\d+\] \(([A-Z]+)\)',1) as level,
+        regex(log, '\]\[(\d+)\] \(([A-Z ]+)\)',1) as thr,
+        regex(log, '\]\[(\d+)\] \(([A-Z ]+)\)',2) as level,
         regex(log, '  \[call\] <(\w+)>\s+call', 1) as call,
         regex(log, '  \[result\] <(\w+)>\s+outputs', 1) as result,
         logname, type from #this
@@ -34,7 +34,7 @@
       default: 0
       sql: |
         select date, logname, type from #this
-        order by date desc
+        order by date desc, lid
 
 
     - name: 'Дата сообщения, имя лога, тип'
@@ -42,14 +42,14 @@
       default: 0
       sql: |
         select date, logname, type from #this
-        order by date desc
+        order by date desc, lid
 
     - name: 'Время сообщения, имя лога, тип'
       add_lid: 1
       default: 0
       sql: |
         select strftime('%H:%M:%f',date) as time, logname, type from #this
-        order by date desc
+        order by date desc, lid
 
     - name: 'Дата сообщения, имя лога, тип; группировка по дате, логу, типу'
       add_lid: 1
@@ -57,7 +57,7 @@
       sql: |
         select date, logname, type from #this
         group by date, logname, type
-        order by date desc
+        order by date desc, lid
 
     - name: 'Время сообщения, имя лога, тип; группировка по дате, логу, типу' 
       add_lid: 1 
@@ -65,7 +65,7 @@
       sql: |
         select strftime('%H:%M:%f',date), logname, type from #this
         group by date, logname, type
-        order by date desc
+        order by date desc, lid
 
     - name: 'Группировка по идущим подряд именам логa'
       add_lid: 1 
@@ -77,17 +77,26 @@
         from (select date, logname, computer, type, group_logname(logname) as logname_group
               from #this
               group by date, logname, computer, type
-              order by date DESC)
+              order by date DESC, lid)
         group by logname_group
         order by logname_group desc
 
-    - name: 'Количество сообщений по именам лога'
+    - name: 'Группировка по именам лога'
       add_lid: 1
       default: 0
       sql: |
         select logname, computer, count(log) as c, error(type)
         from #this
         group by logname, computer
+        order by c desc
+
+    - name: 'Группировка по файлам-источникам'
+      add_lid: 1
+      default: 0
+      sql: |
+        select source, count(log) as c, error(type)
+        from #this
+        group by source
         order by c desc
 
     - name: 'Количество сообщений'
@@ -103,7 +112,7 @@
       sql: |
         select strftime('%H:%M:%f',date), logname, type from #this
         where type = 'ERROR'
-        order by date desc
+        order by date desc, lid
 
 filters:
     - name: "Новый" 

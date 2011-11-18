@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import re
 import xml.dom.minidom
 from colorsys import *
@@ -52,8 +69,6 @@ def parse_bad_xml(m):
 def parse_good_xml(m):
     return '\n'+xml_pretty(m.group())
     
-
-
 def pretty_xml(t):
     if xml_bad.search(t):
         text = xml_new.sub(parse_good_xml, t)
@@ -65,17 +80,32 @@ def pretty_xml(t):
 def pretty(t):
     return pretty_xml(convert_line_ends(t))
 
+re_cache = {}
+i_re_cache = {}
+
 
 def regexp(pattern, field):
-    ret = re.compile(pattern).search(field)
+    re_obj = re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def iregexp(field, pattern):
-    ret = re.compile(pattern, re.I).search(field)
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def not_iregexp(field, pattern):
-    ret = re.compile(pattern, re.I).search(field)
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return False if ret else True
 
 def icontains(field, text):
@@ -91,15 +121,23 @@ def not_contains(field, text):
     return text not in field
 
 def regex(t, pattern, gr):
-    ret = re.compile(pattern).search(t)
+    re_obj = re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(t)
     if ret:
         return ret.group(gr)
     else:
         return ""
 
 def rmatch(pattern, field):
-    pattern = re.escape(pattern).replace('\*', '\w*')
-    ret = re.compile('(\W|^)'+pattern+'(\W|$)', re.I).search(field)
+    pattern = '(\W|^)' + re.escape(pattern).replace('\*', '\w*') + '(\W|$)'
+    re_obj = i_re_cache.get(pattern)
+    if not re_obj:
+        re_obj = re.compile(pattern, re.I)
+        re_cache[pattern] = re_obj
+    ret = re_obj.search(field)
     return True if ret else False
 
 def intersct(lids1, lids2):
@@ -131,20 +169,20 @@ class AggError:
 
 class RowIDsList:
     def __init__(self):
-        self.rowids = []
+        self.rowids = ""
 
     def step(self, value):
-        self.rowids.append(str(value))
+        self.rowids += ',%s' % value
 
     def finalize(self):
-        return ','.join(self.rowids)
+        return self.rowids[1:]
 
 class ColorAgg:
     def __init__(self):
         self.colors = set()
 
     def step(self, value):
-        self.colors.add(str(value))
+        self.colors.add('%s' % value)
 
     def finalize(self):
         return " ".join(self.colors)
@@ -170,10 +208,3 @@ class GroupLogname:
         self.__init__()
 
 group_logname = GroupLogname()
-
-
-if __name__ == '__main__':
-    s1 = '''2010-12-05 14:36:05,153 [1] DEBUG OrderManagement.Utils.Logging.LoggerFactory
-=======================================
-<CreateRequestParameters xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><TariffPlanIdNew>11</TariffPlanIdNew><Msisdn>79167677425</Msisdn><TerminalDeviceId>5980</TerminalDeviceId><IsFreePrice>false</IsFreePrice><IsMakeInvoice>false</IsMakeInvoice><IpAddress>172.20.64.254</IpAddress><SalePointCode /><Comment>test</Comment><IsSplitPersonalAccount>true</IsSplitPersonalAccount><PaymentAmount>0</PaymentAmount><MoveAmount>352.56984</MoveAmount><CustomerProcessId xsi:nil="true" /></CreateRequestParameters>''' 
-    print pretty_xml(s1)

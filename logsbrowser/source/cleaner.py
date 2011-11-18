@@ -1,9 +1,26 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 """This module cleans file names from junk"""
 
 import re
 import os
 
-_digits = re.compile(r"(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[A-Za-z._-]")
+_digits = re.compile(r"(?<=[a-zA-Z])_\d{1,2}_(?=[a-zA-Z])|(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[-A-Za-z._]")
 _t = re.compile(r"(?<=\d)T(?=\d)")
 _start_end_literals = re.compile("^[._-]+|[._-]+$")
 _repeated_literals = re.compile(r"([._-]){2,}")
@@ -22,3 +39,10 @@ def clear(path):
     name = _repeated_literals.sub(r'\1', name)
     name = _null.sub("", name)
     return (name, ext[1:].lower())
+
+
+if __name__ == "__main__":
+    name = "DEEngine-14012011-full.0.log.log.log"
+    import pdb
+    pdb.set_trace()
+    print clear(name)

@@ -1,3 +1,20 @@
+# LogsBrowser is program for find and analyze logs.
+# Copyright (C) <2010-2011>  <Lyakishev Andrey (lyakav@gmail.com)>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 #-*- coding: utf8 -*-
 
 import pygtk
@@ -75,7 +92,6 @@ class LogWindow:
         self.iter_ = iter_
 
         self.popup = gtk.Window()
-        self.popup.set_title("Log")
         self.popup.set_default_size(config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
 
         self.box = PanedBox(self.popup.show_all,
@@ -134,7 +150,7 @@ class LogWindow:
         except DBException as e:
             merror(str(e))
             self.popup.destroy()
-        else:
+    #    else:
             self.fill_highlight_combo()
             self.popup.show_all()
 
@@ -180,6 +196,8 @@ class LogWindow:
 
     def set_log(self):
         rows = self.model.get_value(self.iter_, self.loglist.rflw)
+                                             date_))
+        #self.procs = self.motion_text(self.txt)
         select = get_msg(rows, self.loglist.from_)
         self.log_text.write_from_iterable(select[4])
         #self.log_text.highlight(self.highlighter.get_syntax())
