@@ -26,7 +26,7 @@ import re
 import xml.dom.minidom
 import os
 import subprocess
-from colorparser import LogColorParser
+from colorparser import HighlightSyntaxTextView
 import pango
 import traceback
 from dialogs import merror
@@ -114,33 +114,43 @@ class LogWindow:
         toolbar.append_sep()
         
         toolbar.append_item(gtk.Label("Find:"))
+
+        re_toggle = gtk.CheckButton("regexp")
+        re_toggle.connect_after("toggled", self.log_text.re_toggled_search)
+
         find_entry = gtk.Entry()
-        find_entry.connect("changed", self.log_text.changed_search)
+        find_entry.connect("changed", self.log_text.changed_search,
+                                        re_toggle.get_active)
         toolbar.append_item(find_entry)
         toolbar.append_button(gtk.STOCK_GO_BACK, self.log_text.prev_search)
         toolbar.append_button(gtk.STOCK_GO_FORWARD, self.log_text.next_search)
 
-        self.re_toggle = gtk.CheckButton("regexp")
-        self.re_toggle.connect_after("toggled", self.log_text.re_toggled_search)
-        toolbar.append_item(self.re_toggle)
+        toolbar.append_item(re_toggle)
         toolbar.append_sep()
 
         toolbar.append_togglebutton(gtk.STOCK_SELECT_COLOR,
                                 lambda btn: self.box.change_box(btn.get_active()))
 
         self.syntax = gtk.combo_box_new_text()
-        self.syntax.connect("changed", self.highlight)
+        self.syntax.connect("changed", self.change_syntax)
         toolbar.append_item(self.syntax)
+
+        toolbar.append_button(gtk.STOCK_APPLY, self.highlight)
+
+        toolbar.append_sep()
 
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
-        #self.highlighter = LogColorParser(self)
+        self.highlighter = HighlightSyntaxTextView()
+        scrh = gtk.ScrolledWindow()
+        scrh.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrh.add(self.highlighter)
 
         self.box.pack_start(self.info_box, False, False, padding=10)
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.scr)
-        #self.box.paned_pack(self.highlighter)
+        self.box.paned_pack(scrh)
 
         self.popup.add(self.box)
 
@@ -150,7 +160,7 @@ class LogWindow:
         except DBException as e:
             merror(str(e))
             self.popup.destroy()
-    #    else:
+        else:
             self.fill_highlight_combo()
             self.popup.show_all()
 
@@ -169,12 +179,14 @@ class LogWindow:
         self.config.update({"from table": self.from_table_hl})
         self.syntax.set_active(0)
 
+    def change_syntax(self, *args):
+        syntax = self.syntax.get_active_text()
+        c_syntax = self.config.get(syntax, "")
+        self.highlighter.txt_buff.set_text(c_syntax)
+        self.highlight()
+
     def highlight(self, *args):
-        pass
-        #syntax = self.syntax.get_active_text()
-        #c_syntax = self.config.get(syntax, "")
-        #self.highlighter.set_syntax(c_syntax)
-        #self.log_text.highlight(self.highlighter.get_syntax())
+        self.log_text.highlight(self.highlighter.get_syntax())
 
     def save_to_file(self, *args):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
@@ -196,11 +208,9 @@ class LogWindow:
 
     def set_log(self):
         rows = self.model.get_value(self.iter_, self.loglist.rflw)
-                                             date_))
-        #self.procs = self.motion_text(self.txt)
         select = get_msg(rows, self.loglist.from_)
         self.log_text.write_from_iterable(select[4])
-        #self.log_text.highlight(self.highlighter.get_syntax())
+        self.log_text.highlight(self.highlighter.get_syntax())
         self.log_text.grab_focus()
         self.files = set(select[3])
         date_, logname = self.info_box.set_info(select[0], select[1], select[2], self.files)
