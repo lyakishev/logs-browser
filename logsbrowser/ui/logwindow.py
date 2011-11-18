@@ -207,6 +207,8 @@ class LogWindow:
             subprocess.Popen("%s %s" % (config.EXTERNAL_LOG_VIEWER, f))
 
     def set_log(self):
+        self.sens_func(True)
+        self.popup.set_sensitive(False)
         rows = self.model.get_value(self.iter_, self.loglist.rflw)
         select = get_msg(rows, self.loglist.from_)
         self.log_text.write_from_iterable(select[4])
@@ -216,6 +218,8 @@ class LogWindow:
         date_, logname = self.info_box.set_info(select[0], select[1], select[2], self.files)
         self.popup.set_title("Log: %s %s" % (logname.replace('\n', ','),
                                              date_))
+        self.popup.set_sensitive(True)
+        self.sens_func(False)
 
     def set_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
@@ -230,8 +234,6 @@ class LogWindow:
             return
         self.selection.select_path(prevPath)
         self.view.scroll_to_cell(prevPath)
-        self.popup.set_sensitive(False)
-        self.sens_func(True)
         try:
             self.set_log()
         except DBException as e:
@@ -240,8 +242,6 @@ class LogWindow:
             self.view.scroll_to_cell(int(path))
             self.iter_ = self.model.get_iter_from_string(path)
         finally:
-            self.popup.set_sensitive(True)
-            self.sens_func(False)
             self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def set_next(self, *args):
@@ -255,8 +255,6 @@ class LogWindow:
             self.iter_ = self.model.get_iter_from_string(str(prevPath))
             self.selection.select_path(prevPath)
             self.view.scroll_to_cell(prevPath)
-            self.popup.set_sensitive(False)
-            self.sens_func(True)
             try:
                 self.set_log()
             except DBException as e:
@@ -264,9 +262,6 @@ class LogWindow:
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))
                 self.iter_ = self.model.get_iter_from_string(path)
-            finally:
-                self.popup.set_sensitive(True)
-                self.sens_func(False)
         self.selection.set_mode(gtk.SELECTION_MULTIPLE)
 
 

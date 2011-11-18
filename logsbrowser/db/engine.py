@@ -81,22 +81,19 @@ def create_new_table(table, index=True):
         sql = """create table %s (lid INTEGER PRIMARY KEY,
                  date text, computer text, logname text,
                  type text, source text, event integer, log text);""" % table
-        sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
+        #sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
         _dbconn.execute(sql)
-        _dbconn.execute(sql_index)
+        #_dbconn.execute(sql_index)
 
 
 def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
-    core = """select date, logname, type, source, pretty(log), lid 
-                 from %s where %s"""
-    msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
-    msg_sql += ' order by date asc, %s desc' % 'lid'
-    #print msg_sql
+    sql = """select date, logname, type, source, log
+                 from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
     cur = _dbconn.cursor()
-    cur.execute(msg_sql)
+    cur.execute(sql)
     result = cur.fetchall()
     dates = [r[0] for r in result]
     lognames = (r[1] for r in result)
