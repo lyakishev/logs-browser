@@ -26,7 +26,7 @@ import re
 import xml.dom.minidom
 import os
 import subprocess
-from colorparser import HighlightSyntaxTextView
+from highlighter import HighlightSyntaxTextView
 import pango
 import traceback
 from dialogs import merror
@@ -108,8 +108,8 @@ class LogWindow:
 
         toolbar = Toolbar()
         toolbar.append_button(gtk.STOCK_OPEN, self.open_file)
-        toolbar.append_button(gtk.STOCK_SAVE, self.open_file)
-        toolbar.append_button(gtk.STOCK_COPY, self.open_file)
+        toolbar.append_button(gtk.STOCK_SAVE, self.save_to_file)
+        toolbar.append_button(gtk.STOCK_COPY, self.log_text.copy)
 
         toolbar.append_sep()
         
@@ -198,7 +198,7 @@ class LogWindow:
         if response == gtk.RESPONSE_OK:
             path = fchooser.get_filename()
             f = open(path.decode('utf8'), "w")
-            f.write(self.get_text())
+            f.write(self.log_text.get_text())
             f.close()
         fchooser.destroy()
 
