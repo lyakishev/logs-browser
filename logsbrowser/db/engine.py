@@ -51,6 +51,7 @@ def interrupt():
 def insert_many(table, iter_):
     _dbconn.executemany("insert into %s values (last_insert_rowid()+1,?,?,?,?,?,?,?);" %
                                     table, iter_)
+    _dbconn.commit()
 
 def create_new_table(table, index=True):
     if index:
@@ -58,20 +59,22 @@ def create_new_table(table, index=True):
                  date text, computer text,
                  logname text,
                  type text, source text, event integer, log text);""" % table
+        _dbconn.execute(sql)
     else:
         sql = """create table %s (lid INTEGER PRIMARY KEY,
                  date text, computer text, logname text,
                  type text, source text, event integer, log text);""" % table
-    _dbconn.execute(sql)
+        sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
+        _dbconn.execute(sql)
+        _dbconn.execute(sql_index)
 
 
 def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
 
 def get_msg(rows, table):
-    core = """select date, logname, type, source, pretty(log)
+    core = """select date, logname, type, source, pretty(log), lid 
                  from %s where %s"""
-    t = time.time()
     msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
     msg_sql += ' order by date asc, %s desc' % 'lid'
     #print msg_sql
@@ -84,28 +87,6 @@ def get_msg(rows, table):
     sources = (r[3] for r in result)
     msg = (r[4] for r in result)
     return (dates, lognames, types, sources, msg)
-
-def get_msg_info(rows, table):
-    core = """select min(date), max(date), logname, source
-                 from %s where %s
-                 group by source"""
-    msg_sql = ' union '.join([core % (table, cl) for cl in ranges(rows, 'lid')])
-    msg_sql += ' order by date asc, %s desc' % 'lid'
-    cur = _dbconn.cursor()
-    cur.execute(msg_sql)
-    result = cur.fetchall()
-    try:
-        min_dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S.%f") for r in result]
-    except ValueError:
-        min_dates = [datetime.strptime(r[0],"%Y-%m-%d %H:%M:%S") for r in result]
-    try:
-        max_dates = [datetime.strptime(r[1],"%Y-%m-%d %H:%M:%S.%f") for r in result]
-    except ValueError:
-        max_dates = [datetime.strptime(r[1],"%Y-%m-%d %H:%M:%S") for r in result]
-    lognames = [r[2] for r in result]
-    sources = [r[3] for r in result]
-    return (min_dates, max_dates, lognames, sources)
-
 
 @time_it
 def execute(sql):

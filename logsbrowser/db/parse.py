@@ -310,7 +310,7 @@ class SelectCore:
                 if self.queries_for_autolid:
                     if group:
                         self.result_list.insert(0,
-                            'rows(rows_for_log_window) as rows_for_log_window')
+                            'group_concat(rows_for_log_window) as rows_for_log_window')
                     else:
                         self.result_list.insert(0,
                                               'rows_for_log_window')
@@ -319,7 +319,7 @@ class SelectCore:
                 else:
                     if group:
                         self.result_list.insert(0,
-                                              'rows(lid) as rows_for_log_window')
+                                              'group_concat(lid) as rows_for_log_window')
                     else:
                         self.result_list.insert(0,
                                               'lid as rows_for_log_window')
