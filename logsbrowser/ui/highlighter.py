@@ -36,6 +36,9 @@ STYLE_RE = "(" +\
                 [("(?:" + ",".join(e) + ")")
                 for n, e in enumerate(STYLE_VARIANTS)]) +\
             "):"
+
+COLOR_RE = re.compile("%s|%s" % (FOREGROUND, BACKGROUND))
+
 STYLE = re.compile(STYLE_RE)
 digits = re.compile('\d+')
 
@@ -45,7 +48,7 @@ class HighlightSyntaxTextView(HighlightTextView):
         HighlightTextView.__init__(self)
         self.txt_buff.connect_after("insert-text", lambda *a: self.highlight())
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
-        #self.connect("button-press-event", self.change_color)
+        self.connect("button-press-event", self.change_color)
         self.connect_after("backspace", lambda *a: self.highlight())
         self.tags_ranges = []
 
@@ -112,38 +115,46 @@ class HighlightSyntaxTextView(HighlightTextView):
             style.append((pattern.strip(), self.parse_style(_style)))
         return style
 
+    def pos_in_color(self, pos):
+        text = self.get_text()
+        for m in COLOR_RE.finditer(text):
+            start = m.start()
+            end = m.end()
+            if start <= pos <= end:
+                return (start+1, end)
 
-    #def change_color(self, widget, event, *args):
-    #    if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
-    #        self.set_property('editable', False)
-    #        offset = self.get_iter_position().get_offset()
-    #        in_col = self.pos_is_highlighted(offset)
-    #        colordlg = gtk.ColorSelectionDialog("Select color")
-    #        colorsel = colordlg.colorsel
-    #        colorsel.set_has_palette(True)
+    def change_color(self, widget, event, *args):
+        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+            self.set_property('editable', False)
+            offset = self.get_iter_position().get_offset()
+            in_col = self.pos_in_color(offset)
+            colordlg = gtk.ColorSelectionDialog("Select color")
+            colorsel = colordlg.colorsel
+            colorsel.set_has_palette(True)
 
-    #        response = colordlg.run()
+            response = colordlg.run()
 
-    #        if response == gtk.RESPONSE_OK:
-    #            col = colorsel.get_current_color()
-    #            colordlg.destroy()
-    #            if in_col:
-    #                col_start = self.txt_buff.get_iter_at_offset(in_col[0])
-    #                col_end = self.txt_buff.get_iter_at_offset(in_col[1])
-    #                self.txt_buff.delete(col_start, col_end)
-    #                self.txt_buff.insert(col_start, str(col) + ": ")
-    #                new_end = self.txt_buff.get_iter_at_offset(in_col[0] +\
-    #                                                      len(str(col)\
-    #                                                      + ": "))
-    #                self.txt_buff.place_cursor(new_end)
-    #            else:
-    #                end = self.txt_buff.get_end_iter()
-    #                self.txt_buff.insert(end, str(col) + ": ")
-    #                self.txt_buff.place_cursor(self.txt_buff.get_end_iter())
-    #            self.text.grab_focus()
-    #        else:
-    #            colordlg.destroy()
-    #        self.set_property('editable', True)
+            if response == gtk.RESPONSE_OK:
+                col = colorsel.get_current_color()
+                colordlg.destroy()
+                if in_col:
+                    col_start = self.txt_buff.get_iter_at_offset(in_col[0])
+                    col_end = self.txt_buff.get_iter_at_offset(in_col[1])
+                    self.txt_buff.delete(col_start, col_end)
+                    self.txt_buff.insert(col_start, str(col))
+                    new_end = self.txt_buff.get_iter_at_offset(in_col[0] +\
+                                                          len(str(col)))
+                    self.txt_buff.place_cursor(new_end)
+                else:
+                    end = self.txt_buff.get_end_iter()
+                    self.txt_buff.insert(end, " f%s: " % str(col))
+                    self.txt_buff.place_cursor(self.txt_buff.get_end_iter())
+                self.grab_focus()
+            else:
+                colordlg.destroy()
+            self.set_property('editable', True)
+            end = self.txt_buff.get_end_iter()
+            return True
 
 
 
