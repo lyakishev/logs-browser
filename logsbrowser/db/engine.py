@@ -19,7 +19,7 @@ import sqlite3
 import config
 import functions
 from datetime import datetime
-#from utils.profiler import time_it
+from utils.profiler import time_it
 from utils.ranges import ranges
 import time
 
@@ -65,6 +65,7 @@ def set_callback(callback):
 def interrupt():
     _dbconn.interrupt()
 
+@time_it
 def insert_many(table, iter_):
     _dbconn.executemany("insert into %s values (last_insert_rowid()+1,?,?,?,?,?,?,?);" %
                                     table, iter_)
@@ -81,14 +82,16 @@ def create_new_table(table, index=True):
         sql = """create table %s (lid INTEGER PRIMARY KEY,
                  date text, computer text, logname text,
                  type text, source text, event integer, log text);""" % table
-        #sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
         _dbconn.execute(sql)
-        #_dbconn.execute(sql_index)
+        sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
+        _dbconn.execute(sql_index)
 
 
 def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
+    _dbconn.execute("drop index if exists %s_index;" % table)
 
+@time_it
 def get_msg(rows, table):
     sql = """select date, logname, type, source, log
                  from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
@@ -102,7 +105,7 @@ def get_msg(rows, table):
     msg = (r[4] for r in result)
     return (dates, lognames, types, sources, msg)
 
-#@time_it
+@time_it
 def execute(sql):
     functions.group_logname.clear()
     cur = _dbconn.cursor()

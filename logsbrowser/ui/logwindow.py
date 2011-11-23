@@ -31,6 +31,7 @@ import pango
 import traceback
 from dialogs import merror
 from db.engine import get_msg, DBException
+from db.functions import pretty
 import config
 from textview import SearchHighlightTextView
 from toolbar import Toolbar
@@ -139,6 +140,8 @@ class LogWindow:
 
         toolbar.append_sep()
 
+        self.pretty_btn = toolbar.append_togglebutton(gtk.STOCK_CONVERT, self.pretty)
+
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
@@ -163,6 +166,13 @@ class LogWindow:
         else:
             self.fill_highlight_combo()
             self.popup.show_all()
+
+    def pretty(self, toggle):
+        if toggle.get_active():
+            self.log_text.transform(pretty)
+        else:
+            self.log_text.restore()
+        self.highlight()
 
     def get_syntax_from_config(self):
         with open(config.SYNTAX_CFG) as f:
@@ -209,6 +219,7 @@ class LogWindow:
     def set_log(self):
         self.sens_func(True)
         self.popup.set_sensitive(False)
+        self.pretty_btn.set_active(False)
         rows = self.model.get_value(self.iter_, self.loglist.rflw)
         select = get_msg(rows, self.loglist.from_)
         self.log_text.write_from_iterable(select[4])

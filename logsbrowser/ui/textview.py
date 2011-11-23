@@ -1,6 +1,7 @@
 import gtk
 import re
 import pango
+import bz2
 
 class TextView(gtk.TextView):
     def __init__(self, *args, **kw):
@@ -226,13 +227,27 @@ class SearchTextView(TextView):
             self.search(self.s, self.f_re_search)
 
 
-class SearchHighlightTextView(SearchTextView, HighlightTextView):
+class PluginTextView(TextView):
+    def __init__(self):
+        TextView.__init__(self)
+        self.text = ""
+
+    def transform(self, transformation):
+        text = self.get_text()
+        self.txt_buff.set_text(transformation(text))
+        self.text = bz2.compress(text)
+
+    def restore(self):
+        self.txt_buff.set_text(bz2.decompress(self.text))
+
+
+class SearchHighlightTextView(SearchTextView, HighlightTextView, PluginTextView):
     def __init__(self, *args, **kw):
         SearchTextView.__init__(self, *args, **kw)
         HighlightTextView.__init__(self, *args, **kw)
+        PluginTextView.__init__(self, *args, **kw)
 
-class PluginTextView(TextView):
-    pass
+    #pass
     #def show_body(self, widget, event, *args):
     #    if event.button == 1 and event.type == gtk.gdk.BUTTON_PRESS:
     #        iter_ = self.log_text.get_iter_at_location(int(event.x),
