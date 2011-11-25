@@ -24,6 +24,8 @@ import re
 import pango
 from itertools import permutations
 from textview import HighlightTextView
+from button import Button
+from toolbar import Toolbar
 
 BACKGROUND = "(?:b#[A-Fa-f0-9]{3,})"
 FOREGROUND = "(?:f#[A-Fa-f0-9]{3,})"
@@ -54,25 +56,6 @@ class HighlightSyntaxTextView(HighlightTextView):
 
     def get_iter_position(self):
         return self.txt_buff.get_iter_at_mark(self.txt_buff.get_insert())
-
-    def pos_is_highlighted(self, offset):
-        for start, end in self.tags_ranges:
-            if start < offset < end:
-                return [start, end]
-        return None
-
-    #def tags_text(self, buf, textiter, text, length):
-    #    if text == "\t":
-    #        buf.backspace(self.get_iter_position(), False, True)
-    #        place = self.get_iter_position().get_offset()
-    #        try:
-    #            new_place = min([i[1] for i in self.tags_ranges
-    #                            if place < i[1]]) + 1
-    #        except ValueError:
-    #            new_place = self.tags_ranges[0][1] + 1
-    #        new_iter_place = buf.get_iter_at_offset(new_place)
-    #        buf.place_cursor(new_iter_place)
-    #    self.highlight()
 
     def highlight(self):
         HighlightTextView.highlight(self, self.get_style())
@@ -157,6 +140,25 @@ class HighlightSyntaxTextView(HighlightTextView):
             return True
 
 
+class Highlighter(gtk.HBox):
+    def __init__(self, apply_act, save_act, save_as_act):
+        gtk.HBox.__init__(self)
+        self.textview = HighlightSyntaxTextView()
+        scr = gtk.ScrolledWindow()
+        scr.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scr.add(self.textview)
+        toolbar = Toolbar()
+        apply_btn = toolbar.append_button(gtk.STOCK_APPLY, apply_act)
+        save_btn = toolbar.append_button(gtk.STOCK_SAVE, save_act)
+        save_as_btn = toolbar.append_button(gtk.STOCK_SAVE_AS, save_as_act)
+        toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        toolbar.set_style(gtk.TOOLBAR_ICONS)
+        toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.pack_start(scr, True, True)
+        self.pack_start(toolbar, False, False)
+
+    def __getattr__(self, name):
+        return getattr(self.textview, name)
 
 
 if __name__ == "__main__":

@@ -173,7 +173,6 @@
             <folder>\\msk-app-v0223\c$\forislog</folder>
             <folder>\\msk-app-v0194\c$\FORIS\Messaging Gateway\CRMFilter\logs</folder>
             <folder>\\msk-app-v0194\c$\FORIS\Messaging Gateway\log</folder>
-            <folder>\\msk-app-v0195\c$\MedioRTS\RTS_3.03.02.36160_SCP140_SP2_P1\LogFile</folder>
             <folder>\\msk-app-v0223\c$\FORIS\MARTI\Workflow\Logs</folder>
         </filelogs>
         <evlogs>

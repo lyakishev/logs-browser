@@ -74,7 +74,7 @@ def pretty_xml(t):
         text = xml_new.sub(parse_good_xml, t)
         if xml_bad.search(text):
             text = xml_new_bad.sub(parse_bad_xml, text)
-        return text.replace("&quot;", '"').replace("&gt;",">").replace("&lt;","<")
+        return text
     return t
 
 def pretty(t):

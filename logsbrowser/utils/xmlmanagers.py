@@ -19,6 +19,36 @@ from xml.etree import ElementTree as ET
 import yaml
 import fnmatch
 import re
+import json
+
+
+
+
+class SyntaxManager(object):
+    
+    def __init__(self, syntax_file):
+        self.file_ = syntax_file
+
+    @property
+    def syntaxes(self):
+        with open(self.file_, 'r') as f:
+            conf = json.load(f)
+            new_conf = {}
+            for k,v in conf.items():
+                new_conf[k] = "\n".join(v)
+            return new_conf
+
+    def write_conf(self, conf):
+        with open(self.file_, 'w') as f:
+            json.dump(conf, f, indent=4)
+
+    def add_syntax(self, name, val):
+        conf = self.syntaxes
+        conf[name] = val
+        new_conf = {}
+        for k,v in conf.items():
+            new_conf[k] = v.splitlines()
+        self.write_conf(new_conf)
 
 class QueriesManager(object):
 

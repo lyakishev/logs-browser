@@ -1,0 +1,29 @@
+{
+    "xml": [
+        "f#ddd: <.+?> f#00f,s#b: <[A-Za-z0-9:]+ f#ddd:</\\w+> ", 
+        "s#i,f#00f: <.+?(?<!\"true\" )/> f#ddd: <|> f#0f0: \\d+; ", 
+        "f#f00: (?i)(?<=>)\\s*[a-zA-Z0-9_#-:]+\\s*(?=<)", 
+        "f#f00: nil ", 
+        "s#10b: \\[|\\]"
+    ], 
+    "log4j_xml": [
+        "s#b: (?s)<log4j:message>.+?</log4j:message> ", 
+        "f#eee: <log4j:message>|</log4j:message>"
+    ], 
+    "A&B": [
+        "f#ddd: .*  f#0f0,s#11: BasketChangeLog", 
+        "f#f00,s#11: Errors", 
+        "f#00f: (ActionTypeCode|BasketAction|ExternalProductId|<ProductCode).+?(?=<)", 
+        "f#f00,s#b: ErrorCode.+?(?=<)", 
+        "f#000056b50000,s#b: Add ", 
+        "f#f00,s#b: Delete", 
+        "f#000,s#12: (?<=Message>).+(?=<)", 
+        "f#a020f0,s#b: <(Action|CorrectionActions)>", 
+        "f#ddd: >|<"
+    ], 
+    "PL/SQL": [
+        "f#00f,s#b: (?<!\\()[A-Z_]{4,}(?!\\)) f#f00,s#b: (?<=[=]).+ ", 
+        "f#00005ef70000,s#b: (?<=\\s)(\\w|_)+\\.(\\w|_)+(?=\\s) ", 
+        "f#a020f0: (?<=\\[)[A-Z][a-z]+(?=\\])"
+    ] 
+}

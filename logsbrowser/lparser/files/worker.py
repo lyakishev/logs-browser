@@ -26,6 +26,11 @@ import config
 from collections import deque
 
 
+def define_type(msg):
+    return ("ERROR" if ("Exception" in msg and "  at " in msg)
+                                           else "?")
+
+
 def get_start_date(file_, pformat, cdate, pfunc):
     for line in file_:
         start_date = pfunc(line, cdate, pformat)
@@ -64,8 +69,7 @@ def filelogworker2(dates, path, log, funcs):
                         yield (parsed_date,
                                comp,
                                log,
-                               ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                       else "?"),
+                               define_type(msg),
                                path,
                                0,
                                msg), len(msg)
@@ -101,8 +105,7 @@ def filelogworker(dates, path, log, funcs):
                         yield (parsed_date,
                                comp,
                                log,
-                               ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                       else "?"),
+                               define_type(msg),
                                path,
                                0,
                                to_unicode(strip_non_printable(msg))), chars

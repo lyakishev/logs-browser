@@ -26,7 +26,7 @@ import re
 import xml.dom.minidom
 import os
 import subprocess
-from highlighter import HighlightSyntaxTextView
+from highlighter import Highlighter
 import pango
 import traceback
 from dialogs import merror
@@ -36,6 +36,8 @@ import config
 from textview import SearchHighlightTextView
 from toolbar import Toolbar
 from panedbox import PanedBox
+from utils.xmlmanagers import SyntaxManager
+from dialogs import save_dialog
 
 class Info(gtk.HBox):
     def __init__(self, next_, prev_):
@@ -92,11 +94,13 @@ class LogWindow:
         self.sens_func = sens_func
         self.iter_ = iter_
 
+        self.syntax_manager = SyntaxManager(config.SYNTAX_CFG)
+
         self.popup = gtk.Window()
         self.popup.set_default_size(config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
 
         self.box = PanedBox(self.popup.show_all,
-                config.HEIGHT_LOG_WINDOW - config.HEIGHT_LOG_WINDOW/4)
+                config.HEIGHT_LOG_WINDOW - 215)
 
         self.info_box = Info(self.set_next, self.set_prev)
         self.scr = gtk.ScrolledWindow()
@@ -136,8 +140,6 @@ class LogWindow:
         self.syntax.connect("changed", self.change_syntax)
         toolbar.append_item(self.syntax)
 
-        toolbar.append_button(gtk.STOCK_APPLY, self.highlight)
-
         toolbar.append_sep()
 
         self.pretty_btn = toolbar.append_togglebutton(gtk.STOCK_CONVERT, self.pretty)
@@ -145,19 +147,17 @@ class LogWindow:
         toolbar.set_style(gtk.TOOLBAR_ICONS)
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
 
-        self.highlighter = HighlightSyntaxTextView()
-        scrh = gtk.ScrolledWindow()
-        scrh.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        scrh.add(self.highlighter)
+        self.highlighter = Highlighter(self.highlight,
+                                        self.save_syntax,
+                                        self.save_syntax_as)
 
         self.box.pack_start(self.info_box, False, False, padding=10)
         self.box.pack_start(toolbar, False, False)
         self.box.pack_start(self.scr)
-        self.box.paned_pack(scrh)
+        self.box.paned_pack(self.highlighter)
 
         self.popup.add(self.box)
 
-        self.get_syntax_from_config()
         try:
             self.set_log()
         except DBException as e:
@@ -168,32 +168,54 @@ class LogWindow:
             self.popup.show_all()
 
     def pretty(self, toggle):
+        self.sens_func(True)
         if toggle.get_active():
             self.log_text.transform(pretty)
         else:
             self.log_text.restore()
         self.highlight()
-
-    def get_syntax_from_config(self):
-        with open(config.SYNTAX_CFG) as f:
-            conf = f.read()
-            self.config = eval(conf)           #TODO: CHANGE IT!!
-            f.close()
+        self.sens_func(False)
 
     def fill_highlight_combo(self):
-        syntax = self.config.keys()
+        model = self.syntax.get_model()
+        if model:
+            model.clear()
+        syntax = self.syntax_manager.syntaxes.keys()
         self.syntax.append_text("from table")
         self.syntax.append_text("-------")
         for item in syntax:
             self.syntax.append_text(item)
-        self.config.update({"from table": self.from_table_hl})
         self.syntax.set_active(0)
 
     def change_syntax(self, *args):
         syntax = self.syntax.get_active_text()
-        c_syntax = self.config.get(syntax, "")
+        if syntax == "from table":
+            c_syntax = self.from_table_hl
+        else:
+            c_syntax = self.syntax_manager.syntaxes.get(syntax, "")
         self.highlighter.txt_buff.set_text(c_syntax)
         self.highlight()
+
+    def save_syntax(self, *args):
+        syntax_name = self.syntax.get_active_text()
+        if syntax_name != 'from table':
+            syntax = self.highlighter.get_text()
+            self.syntax_manager.add_syntax(syntax_name, syntax)
+            self.highlight()
+
+    def set_active_syntax(self, syntax_name):
+        for n, r in enumerate(self.syntax.get_model()):
+            if r[0] == syntax_name:
+                self.syntax.set_active(n)
+                return
+
+    def save_syntax_as(self, *args):
+        syntax = self.highlighter.get_text()
+        syntax_name = save_dialog()
+        self.syntax_manager.add_syntax(syntax_name, syntax)
+        self.fill_highlight_combo()
+        self.set_active_syntax(syntax_name)
+
 
     def highlight(self, *args):
         self.log_text.highlight(self.highlighter.get_syntax())
