@@ -454,6 +454,8 @@ class QueryLoader(gtk.VBox):
         self.notify_all = notify_func
         self.query_constructor = query_constructor
         self.query_constructor.query.default_operator = qmanager.default_operator
+        self.add_lid = gtk.CheckButton('auto__lid')
+        self.add_lid.set_active(True)
         self.tools = gtk.HBox()
         self.queries_combo = gtk.HBox()
         self.filters_label = gtk.Label()
@@ -483,8 +485,6 @@ class QueryLoader(gtk.VBox):
         self.froms_box.pack_start(self.from_, False, False, 5)
         self.froms_box.pack_start(self.froms_combo, False, False)
 
-        self.add_lid = gtk.CheckButton('auto__lid')
-        self.add_lid.set_active(True)
 
         self.advanced_box = gtk.HButtonBox()
         self.advanced_box.set_layout(gtk.BUTTONBOX_EDGE)
@@ -554,7 +554,10 @@ class QueryLoader(gtk.VBox):
 
     def set_query(self, *args):
         query = self.queries.get_active_text().decode('utf8')
-        self.query_constructor.set_query(self.query_manager.queries[query].strip())
+        sql, auto_lid = self.query_manager.queries[query]
+        self.add_lid.set_active(bool(auto_lid))
+        self.query_constructor.set_query(sql.strip())
+
 
     def set_filter(self, *args):
         self.notify_all(None)

@@ -61,7 +61,7 @@ class QueriesManager(object):
     def queries(self):
         q = {}
         for i in self.config['queries']:
-            q[i['name']] = i['sql']
+            q[i['name']] = (i['sql'], i['add_lid'])
         return q
 
     def get_filters_from_config(self):
