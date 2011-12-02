@@ -21,6 +21,7 @@ from colorsys import *
 import sys
 from utils.text import convert_line_ends
 from collections import OrderedDict
+from lxml import etree
 
 aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
 
@@ -42,47 +43,8 @@ operator_functions = {"CONTAINS": ["contains", "not_contains"],
             "IREGEXP": ["iregexp", "not_iregexp"]
 }
 
-xml_new = re.compile(r"(<\?xml.+?><(\w+).*?>.*?</\2>(?!<))")
-xml_bad = re.compile(r"<.+?><.+?>")
-xml_new_bad = re.compile(r"<(\w+).*?>.*?</\1>")
-
-
-#TODO SPA, ProdUI
-def xml_pretty(txt):
-        try:
-            xparse = xml.dom.minidom.parseString
-            pretty_xml = xparse(txt.encode("utf-16")).toprettyxml()
-        except xml.parsers.expat.ExpatError:
-            pretty_xml = txt.replace("><", ">\n<")
-        except Exception:
-            pretty_xml = txt
-        return pretty_xml
-
-def parse_bad_xml(m):
-    xml = m.group()
-    if xml_bad.search(xml):
-        ret_xml = xml_pretty('<?xml version="1.0" encoding="utf-16"?>'+m.group())
-        return '\n'.join(ret_xml.splitlines()[1:])
-    else:
-        return xml
-
-def parse_good_xml(m):
-    return '\n'+xml_pretty(m.group())
-    
-def pretty_xml(t):
-    if xml_bad.search(t):
-        text = xml_new.sub(parse_good_xml, t)
-        if xml_bad.search(text):
-            text = xml_new_bad.sub(parse_bad_xml, text)
-        return text
-    return t
-
-def pretty(t):
-    return pretty_xml(convert_line_ends(t))
-
 re_cache = {}
 i_re_cache = {}
-
 
 def regexp(pattern, field):
     re_obj = re_cache.get(pattern)

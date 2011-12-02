@@ -227,9 +227,9 @@
     <stand name="TEST">
         <filelogs>
 	    <!--<folder>\\00-term\c$\Documents and Settings\ALyakishev\logs</folder>-->
-	    <!--<folder>C:\Users\ALyakishev\logs\ocat</folder>-->
+	    <folder>C:\Users\ALyakishev\logs</folder>
 	    <!--<folder>C:\Users\ALyakishev\share</folder>-->
-	    <folder>/home/user/test</folder>
+	    <!--<folder>/home/user/test</folder>-->
         </filelogs>
         <evlogs />
     </stand>

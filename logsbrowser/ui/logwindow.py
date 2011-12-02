@@ -31,13 +31,14 @@ import pango
 import traceback
 from dialogs import merror
 from db.engine import get_msg, DBException
-from db.functions import pretty
 import config
 from textview import SearchHighlightTextView
 from toolbar import Toolbar
 from panedbox import PanedBox
 from utils.xmlmanagers import SyntaxManager
+from utils.pxml import prettify_xml
 from dialogs import save_dialog
+from itertools import groupby, chain
 
 class Info(gtk.HBox):
     def __init__(self, next_, prev_):
@@ -50,7 +51,7 @@ class Info(gtk.HBox):
         self.pack_start(open_info_box)
         open_info_box.pack_start(self.info_label)
         open_info_box.pack_start(self.open_label)
-        updown_btns = gtk.VButtonBox()
+        self.updown_btns = gtk.VButtonBox()
         up = gtk.Button()
         up_im = gtk.Image()
         up_im.set_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_BUTTON)
@@ -61,9 +62,9 @@ class Info(gtk.HBox):
         dwn_im.set_from_stock(gtk.STOCK_GO_DOWN, gtk.ICON_SIZE_BUTTON)
         down.add(dwn_im)
         down.connect("clicked", prev_)
-        updown_btns.pack_start(up)
-        updown_btns.pack_start(down)
-        self.pack_start(updown_btns, False, False, padding=30)
+        self.updown_btns.pack_start(up)
+        self.updown_btns.pack_start(down)
+        self.pack_start(self.updown_btns, False, False, padding=30)
 
     def set_info(self, dates, lognames, types, files):
         self.open_label.set_text("\n".join(files))
@@ -108,7 +109,7 @@ class LogWindow:
 
         self.log_text = SearchHighlightTextView()
         self.log_text.set_editable(False)
-        self.log_text.set_wrap_mode(gtk.WRAP_WORD)
+        self.log_text.set_wrap_mode(gtk.WRAP_CHAR)
         self.scr.add(self.log_text)
 
         toolbar = Toolbar()
@@ -140,6 +141,7 @@ class LogWindow:
         self.syntax.connect("changed", self.change_syntax)
         toolbar.append_item(self.syntax)
 
+
         toolbar.append_sep()
 
         self.pretty_btn = toolbar.append_togglebutton(gtk.STOCK_CONVERT, self.pretty)
@@ -170,7 +172,7 @@ class LogWindow:
     def pretty(self, toggle):
         self.sens_func(True)
         if toggle.get_active():
-            self.log_text.transform(pretty)
+            self.log_text.transform(prettify_xml)
         else:
             self.log_text.restore()
         self.highlight()
@@ -301,40 +303,40 @@ class LogWindow:
 class SeveralLogsWindow(LogWindow):
     def __init__(self, loglist, iter, sel, sens_func, from_table_hl):
         LogWindow.__init__(self, loglist, iter, sel, sens_func, from_table_hl)
-        self.info_box.remove(self.updown_btns)
+        self.info_box.remove(self.info_box.updown_btns)
 
-    def fill(self):
+    def set_log(self):
+        self.sens_func(True)
+        self.popup.set_sensitive(False)
+        self.pretty_btn.set_active(False)
         model, pathlist = self.selection.get_selected_rows()
         dates = []
-        text = []
+        files_text = []
         types = []
         lognames = []
         self.files = []
-        prev_f = ""
         for p in reversed(pathlist):
             iter_ = model.get_iter(p)
             rows = self.model.get_value(iter_, self.loglist.rflw)
             select = get_msg(rows, self.loglist.from_)
             dates.extend(select[0])
-            lognames.extend(select[1])
-            types.extend(select[2])
-            files = select[3]
-            txt = select[4]
-            for n,f in enumerate(files):
-                if prev_f == f:
-                    text.append(txt[n])
+            lognames.append(select[1])
+            types.append(select[2])
+            files_text.append((select[3], select[4]))
+        prev_f = ""
+        for f_gen, msg_gen in files_text:
+            for f, msg in zip(f_gen, msg_gen):
+                if f != prev_f:
+                    text = "%s%s" % (os.linesep if prev_f else "",
+                                    "{1}:{0}{0}{2}".format(os.linesep, f, msg))
+                    prev_f = f
+                    self.files.append(f)
                 else:
-                    text.append("%s:\n\n%s" % (f, txt[n]))
-                prev_f = f
-            self.files.extend(files)
+                    text = msg
+                self.log_text.txt_buff.insert_at_cursor(text)
         self.files = set(self.files)
-        self.txt = "\n".join(text)
-        type_ = ("ERROR" in types) and '<span foreground="red">ERROR</span>' or ""
-        logname_ = "\n".join(set(lognames))
-        if len(dates) > 1:
-            start = min(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
-            end = max(dates).strftime("%H:%M:%S.%f %d.%m.%Y")
-            date_ = "%s - %s" % (start, end)
-        else:
-            date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
-        self.filling(date_,logname_,type_)
+        self.info_box.set_info(dates, chain.from_iterable(lognames),
+                                      chain.from_iterable(types), self.files)
+        self.popup.set_sensitive(True)
+        self.sens_func(False)
+
