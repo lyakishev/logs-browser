@@ -12,9 +12,7 @@ xmls = [
 <sourceTypeIds><Int32>4</Int32></sourceTypeIds>
 ----------""",
 """[DEBUG][2011-12-07 09:23:39,701][42] Step end AggregateProducts
-
 <callTime>00:00:00</callTime>
-
 <sourceTypeIds>
     <Int32>4</Int32>
 </sourceTypeIds>
@@ -65,9 +63,7 @@ InterconnectionService: The subscriber FORIS.TelCRM.RequestManagement.CustomerCa
 ----------""",
 
 """[DEBUG][2011-12-07 11:28:06,222][51] Step end GetSecurityInfo
-
 <callTime>00:00:00</callTime>
-
 <securityInfo>
     <AllowedLevel>
         <Level>20</Level>
@@ -1293,7 +1289,6 @@ zzzzzzzzzzzzzzzz!</d2p1:Description>
 =======================================""",
 """2011-12-07 14:59:06,347 [1] DEBUG
 =======================================
-
 0 - GetPAsWithTDWithPrepaidTariffPlansByPaIds - process parameter oneTdOnPaTariffPlans=<Table>
     <Row>
         <TARIFF_PLAN_ID>486</TARIFF_PLAN_ID>
@@ -1582,17 +1577,17 @@ zzzzzzzzzzzzzzzz!</d2p1:Description>
     </Row>
 </Table>
 ======================================="""),
-"""2011-12-07 14:58:55,722 [10] DEBUG
+("""2011-12-07 14:58:55,722 [10] DEBUG
 =======================================
-23085 - GetContracts - out parameter contract.StatusInfo=<IContractStatusInfo DateFrom="26.08.2008 14:43:27" DateTo="01.01.0001 0:00:00"><IContractStatus ID = "1" Code = "1" Name = "Открыт" /><ICrmUser ID = "-9223372036854775808" Name = "" /></IContractStatusInfo>
+23085 - GetContracts - out parameter contract.StatusInfo=<IContractStatusInfo DateFrom="26.08.2008 14:43:27" DateTo="01.01.0001 0:00:00"><IContractStatus ID = "1" Code = "1" Name = "zzzzzz" /><ICrmUser ID = "-9223372036854775808" Name = "" /></IContractStatusInfo>
 =======================================""",
 """2011-12-07 14:58:55,722 [10] DEBUG
 =======================================
 23085 - GetContracts - out parameter contract.StatusInfo=<IContractStatusInfo DateFrom="26.08.2008 14:43:27" DateTo="01.01.0001 0:00:00">
-    <IContractStatus ID = "1" Code = "1" Name = "Открыт" />
+    <IContractStatus ID = "1" Code = "1" Name = "zzzzzz" />
     <ICrmUser ID = "-9223372036854775808" Name = "" />
 </IContractStatusInfo>
-======================================""")
+=======================================""")
 ]
 
 
@@ -1611,4 +1606,7 @@ if __name__ == '__main__':
             return lambda self: self.check(xmle, xmlr, m)
         setattr(TestPrettyXML, "test_%d" % n, ch(xml[1], pxml_real, n))
     unittest.main()
+    #for xml in xmls:
+    #    print prettify_xml(xml[0], sep="\n")
+    #    print "\n\n"
 
