@@ -1587,12 +1587,591 @@ zzzzzzzzzzzzzzzz!</d2p1:Description>
     <IContractStatus ID = "1" Code = "1" Name = "zzzzzz" />
     <ICrmUser ID = "-9223372036854775808" Name = "" />
 </IContractStatusInfo>
-=======================================""")
+======================================="""),
+(r"""[10:21:20.0108] (Thread=39): Call method FORIS.Common.Utils.Messaging.Communication.IMessageCommunicator.Send UserName=NT AUTHORITY\NETWORK SERVICE
+Message sent to spa
+<?xml version="1.0" encoding="utf-8"?>
+<ExtendedRequestMessage>
+  <Source>CRM</Source>
+  <Sender>NT AUTHORITY\SYSTEM</Sender>
+  <SourceAddress>&lt;msmq path="msk-func-01\spa_response"/&gt;</SourceAddress>
+  <Destination>SPA</Destination>
+  <DestinationAddress>&lt;msmq path="msk-func-06\foris.spa.incoming.01"/&gt;</DestinationAddress>
+  <ID>0</ID>
+  <Data />
+  <OriginalSource>CRM.OM</OriginalSource>
+  <OriginalID>3000114624</OriginalID>
+  <PackID />
+  <PackSize>0</PackSize>
+  <Comment />
+  <Priority>2</Priority>
+  <AdditionalData Executable="True"><IN-Platform>PREPAID</IN-Platform><RegisteredList><CB404447 /><CB405666 /><FRIP><Address>15.2.123.3</Address></FRIP><CB101 /><CB10363 /><CB9831 /><CB266 /><FRGOODOK><TimeZone>180</TimeZone></FRGOODOK></RegisteredList><SubscriberType>Normal</SubscriberType><SourceType>4</SourceType><WithdrawalList><CB534 /></WithdrawalList></AdditionalData>
+  <MustBeConfirmed>false</MustBeConfirmed>
+  <ActionName>Remove Services</ActionName>
+  <ActionNameAlias>zzzzzzzz zzzzzz zzzzzzzzzzzzzzzz zzzzzz</ActionNameAlias>
+  <IdentifiersList>
+    <Identifier>
+      <MSISDN>79105700099</MSISDN>
+      <IMSI>250010756760589</IMSI>
+    </Identifier>
+  </IdentifiersList>
+  <ContinueByDefault>true</ContinueByDefault>
+</ExtendedRequestMessage>""",
+r"""[10:21:20.0108] (Thread=39): Call method FORIS.Common.Utils.Messaging.Communication.IMessageCommunicator.Send UserName=NT AUTHORITY\NETWORK SERVICE
+Message sent to spa
+<?xml version="1.0" encoding="utf-8"?>
+<ExtendedRequestMessage>
+  <Source>CRM</Source>
+  <Sender>NT AUTHORITY\SYSTEM</Sender>
+  <SourceAddress>&lt;msmq path="msk-func-01\spa_response"/&gt;</SourceAddress>
+  <Destination>SPA</Destination>
+  <DestinationAddress>&lt;msmq path="msk-func-06\foris.spa.incoming.01"/&gt;</DestinationAddress>
+  <ID>0</ID>
+  <Data />
+  <OriginalSource>CRM.OM</OriginalSource>
+  <OriginalID>3000114624</OriginalID>
+  <PackID />
+  <PackSize>0</PackSize>
+  <Comment />
+  <Priority>2</Priority>
+  <AdditionalData Executable="True">
+      <IN-Platform>PREPAID</IN-Platform>
+      <RegisteredList>
+          <CB404447 />
+          <CB405666 />
+          <FRIP>
+              <Address>15.2.123.3</Address>
+          </FRIP>
+          <CB101 />
+          <CB10363 />
+          <CB9831 />
+          <CB266 />
+          <FRGOODOK>
+              <TimeZone>180</TimeZone>
+          </FRGOODOK>
+      </RegisteredList>
+      <SubscriberType>Normal</SubscriberType>
+      <SourceType>4</SourceType>
+      <WithdrawalList>
+          <CB534 />
+      </WithdrawalList>
+  </AdditionalData>
+  <MustBeConfirmed>false</MustBeConfirmed>
+  <ActionName>Remove Services</ActionName>
+  <ActionNameAlias>zzzzzzzz zzzzzz zzzzzzzzzzzzzzzz zzzzzz</ActionNameAlias>
+  <IdentifiersList>
+    <Identifier>
+      <MSISDN>79105700099</MSISDN>
+      <IMSI>250010756760589</IMSI>
+    </Identifier>
+  </IdentifiersList>
+  <ContinueByDefault>true</ContinueByDefault>
+</ExtendedRequestMessage>"""),
+("""2011-12-09 10:22:33,997 [14] DEBUG
+=======================================
+GetAdditionalParamsDataSet. Prepare additional SMS parameters. productSmsParameters: <?xml version="1.0" encoding="utf-16"?><ProductSmsParameters xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sitels.ru/OrderManagement.BusinessProcess.Contracts/v001"><AdditionalParameters xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" /><ProductAction i:type="ServiceAction"><ActionDate i:nil="true" /><ActionType>Delete</ActionType><ChildActions i:nil="true" /><IsRelation>false</IsRelation><NeedTariffication>true</NeedTariffication><OTPrice i:nil="true" /><Parameters i:nil="true" /><ParentPackageId i:nil="true" /><Product><ChildProducts i:nil="true" /><PEPrice i:nil="true" /><ProductId><ExternalPackageId i:nil="true" /><ExternalProductCode>CB534</ExternalProductCode><ExternalProductId>92</ExternalProductId><PackageId i:nil="true" /><ProductCode>PRODUCT_SERVICE#CB534</ProductCode><ProductId>24</ProductId><VersionDate>2011-12-07T10:52:32</VersionDate></ProductId><ProductLocal><ProductLocal><Description>zzzzz!
+zzzz!
+zzzzzz!
+zzzzzzzzzzzzzzzz!</Description><Info i:nil="true" /><LanguageCode>1</LanguageCode><Name>zzzzzzzzzzzzzzzz zzzzzz</Name><VersionDate>2011-12-07T10:52:32</VersionDate></ProductLocal></ProductLocal><ProductType>Service</ProductType></Product><BonusCampaignId i:nil="true" /><ExternalSystemIdentifier>0</ExternalSystemIdentifier><IsAutomaticAdded i:nil="true" /><NeedCheckBlocks i:nil="true" /><Quantity>1</Quantity><ServiceId><ServiceCode>CB534</ServiceCode><ServiceId>92</ServiceId></ServiceId><ServiceName i:nil="true" /><TariffPlanId i:nil="true" /></ProductAction></ProductSmsParameters>, requiredParameters: <?xml version="1.0" encoding="utf-16"?><MessageInfoParams dataSetType="1"><Param name="I_SERVICE_NAME" /></MessageInfoParams>""",
+"""2011-12-09 10:22:33,997 [14] DEBUG
+=======================================
+GetAdditionalParamsDataSet. Prepare additional SMS parameters. productSmsParameters: <?xml version="1.0" encoding="utf-16"?>
+<ProductSmsParameters xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sitels.ru/OrderManagement.BusinessProcess.Contracts/v001">
+    <AdditionalParameters xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+    <ProductAction i:type="ServiceAction">
+        <ActionDate i:nil="true" />
+        <ActionType>Delete</ActionType>
+        <ChildActions i:nil="true" />
+        <IsRelation>false</IsRelation>
+        <NeedTariffication>true</NeedTariffication>
+        <OTPrice i:nil="true" />
+        <Parameters i:nil="true" />
+        <ParentPackageId i:nil="true" />
+        <Product>
+            <ChildProducts i:nil="true" />
+            <PEPrice i:nil="true" />
+            <ProductId>
+                <ExternalPackageId i:nil="true" />
+                <ExternalProductCode>CB534</ExternalProductCode>
+                <ExternalProductId>92</ExternalProductId>
+                <PackageId i:nil="true" />
+                <ProductCode>PRODUCT_SERVICE#CB534</ProductCode>
+                <ProductId>24</ProductId>
+                <VersionDate>2011-12-07T10:52:32</VersionDate>
+            </ProductId>
+            <ProductLocal>
+                <ProductLocal>
+                    <Description>zzzzz!
+zzzz!
+zzzzzz!
+zzzzzzzzzzzzzzzz!</Description>
+                    <Info i:nil="true" />
+                    <LanguageCode>1</LanguageCode>
+                    <Name>zzzzzzzzzzzzzzzz zzzzzz</Name>
+                    <VersionDate>2011-12-07T10:52:32</VersionDate>
+                </ProductLocal>
+            </ProductLocal>
+            <ProductType>Service</ProductType>
+        </Product>
+        <BonusCampaignId i:nil="true" />
+        <ExternalSystemIdentifier>0</ExternalSystemIdentifier>
+        <IsAutomaticAdded i:nil="true" />
+        <NeedCheckBlocks i:nil="true" />
+        <Quantity>1</Quantity>
+        <ServiceId>
+            <ServiceCode>CB534</ServiceCode>
+            <ServiceId>92</ServiceId>
+        </ServiceId>
+        <ServiceName i:nil="true" />
+        <TariffPlanId i:nil="true" />
+    </ProductAction>
+</ProductSmsParameters>, requiredParameters: <?xml version="1.0" encoding="utf-16"?>
+<MessageInfoParams dataSetType="1">
+    <Param name="I_SERVICE_NAME" />
+</MessageInfoParams>"""),
+("""09.12.2011 16:50:02 Message
+<OkChangBalance><lRequestID>786455455</lRequestID><crmID>0</crmID><addParam /></OkChangBalance>
+...has been sent to all process instances with correlation set
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<SOAP-ENC:Array SOAP-ENC:arrayType="xsd:anyType[1]">
+<item xsi:type="xsd:long">786455455</item>
+</SOAP-ENC:Array>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>""",
+"""09.12.2011 16:50:02 Message
+<OkChangBalance>
+    <lRequestID>786455455</lRequestID>
+    <crmID>0</crmID>
+    <addParam />
+</OkChangBalance>
+...has been sent to all process instances with correlation set
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <SOAP-ENV:Body>
+        <SOAP-ENC:Array SOAP-ENC:arrayType="xsd:anyType[1]">
+            <item xsi:type="xsd:long">786455455</item>
+        </SOAP-ENC:Array>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>"""),
+"""09.12.2011 16:48:46 The following variables of process [1401.419415] have changed:
+OrderStorageRequestId = 3000115262
+PersonalAccount = <PersonalAccount xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Entities"><Id>49254</Id><DateFrom>2011-10-24T12:47:53</DateFrom><CustomAttributes xmlns:d2p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:32</VersionDate><BillTextTypeId>323</BillTextTypeId><BillingGroupCode>1</BillingGroupCode><BillingGroupId>1</BillingGroupId><CalculationMethodCode>3</CalculationMethodCode><CalculationMethodId>3</CalculationMethodId><CodeWord>zzz</CodeWord><ContractId>45861</ContractId><CreditLimits i:nil="true" /><CurrencyCode>810</CurrencyCode><CustomerId>46778</CustomerId><DeliveryMethods i:nil="true" /><ExchangeRateListTypeCode>1</ExchangeRateListTypeCode><LanguageCode>1</LanguageCode><LanguageId>1</LanguageId><LoyaltyCategories i:nil="true" /><Note i:nil="true" /><Payer i:nil="true" /><PayerId>46778</PayerId><PaymentPlaces i:nil="true" /><PersonalAccountNumber>277300016451</PersonalAccountNumber><PersonalAccountStatusCode>1</PersonalAccountStatusCode><PersonalAccountStatusId>1</PersonalAccountStatusId><PersonalAccountTypeCode>1</PersonalAccountTypeCode><PersonalAccountTypeId>1</PersonalAccountTypeId><SelfcarePassword i:nil="true" /><ServiceProviderId>1</ServiceProviderId><SignedPerson i:nil="true" /><SignedPersonId>46778</SignedPersonId><TerminalDevices i:nil="true" /><TraceId>144851</TraceId><TrustCategoryCode>10</TrustCategoryCode><TrustCategoryId>41</TrustCategoryId><CustomerRoles i:nil="true" /><OfflineDiscounts i:nil="true" /><RequestId i:nil="true" /><Contacts i:nil="true" /><ServiceProviderCode>Moscow</ServiceProviderCode></PersonalAccount>
+Pid = 521.419411
+StartDate = 09.12.2011 16:48:29
+StartRequest = <OCFChangeProductRequest xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sitels.ru/marti/ocf/message/v001"><AutomaticCompensation xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays"><d2p1:string>ACTION_DATE</d2p1:string><d2p1:string>ADD_CUSTOMER_FORBIDDEN</d2p1:string><d2p1:string>ACTION_REQUIRED</d2p1:string><d2p1:string>REMOVE_REQUIRED</d2p1:string><d2p1:string>DEL_WITH_PACKAGE</d2p1:string><d2p1:string>ADD_DATE</d2p1:string><d2p1:string>CHANGE_DATE</d2p1:string><d2p1:string>PLANNED_DEL_ADD</d2p1:string><d2p1:string>PLANNED_DEL_DELETE</d2p1:string><d2p1:string>DEL_NO_CUSTOMER_PRODUCT</d2p1:string><d2p1:string>REMOVE_CHILD</d2p1:string><d2p1:string>REMOVE_PARENT</d2p1:string></AutomaticCompensation><Comment></Comment><LanguageCode i:nil="true" /><MSISDN>79166060092</MSISDN><ProcessInitiator xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/dto/v001"><d2p1:EngineType>RequestEngine</d2p1:EngineType><d2p1:OrderStorageRequestId>3000115246</d2p1:OrderStorageRequestId><d2p1:ProcessId>3000115246</d2p1:ProcessId><d2p1:ProcessType xmlns:d3p1="http://schemas.sitels.ru/marti/ocf/entities/v001"><d3p1:Code>ChangeTariff</d3p1:Code><d3p1:Id>116</d3p1:Id></d2p1:ProcessType></ProcessInitiator><ProcessRegistrationRule>DontCheckPriceAndBlocking BasketHasBeenBuilt</ProcessRegistrationRule><ProductActions xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v002"><d2p1:ProductAction><d2p1:ActionFlags>None</d2p1:ActionFlags><d2p1:ActionType>AddProductInstance</d2p1:ActionType><d2p1:Children i:nil="true" /><d2p1:Comment i:nil="true" /><d2p1:OTService xmlns:d4p1="http://schemas.sitels.ru/marti/ocf/dto/v001"><d4p1:OneTimeServiceBasicPrice i:nil="true" /><d4p1:OneTimeServiceCode>AddZgpRed</d4p1:OneTimeServiceCode><d4p1:OneTimeServiceDiscount i:nil="true" /><d4p1:OneTimeServiceId>6427</d4p1:OneTimeServiceId><d4p1:OneTimeServiceName>zzzzzzzzzz zzzzzz "zzzzzzzz zzzzzzzzzzz zzzzzz RED"</d4p1:OneTimeServiceName><d4p1:OneTimeServicePrice>11.80</d4p1:OneTimeServicePrice><d4p1:OneTimeServiceTax i:nil="true" /></d2p1:OTService><d2p1:Parameters><d2p1:Parameter><d2p1:Code>TariffPlanId</d2p1:Code><d2p1:IsLocal>false</d2p1:IsLocal><d2p1:ProvisionFlags>None</d2p1:ProvisionFlags><d2p1:Type>Number</d2p1:Type><d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:int">7010</d2p1:Value></d2p1:Parameter><d2p1:Parameter><d2p1:Code>ExtGroupNumber</d2p1:Code><d2p1:IsLocal>false</d2p1:IsLocal><d2p1:ProvisionFlags>ToOCatAndCM</d2p1:ProvisionFlags><d2p1:Type>String</d2p1:Type><d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:string">66677</d2p1:Value></d2p1:Parameter><d2p1:Parameter><d2p1:Code>ExtPrivateGroupType</d2p1:Code><d2p1:IsLocal>false</d2p1:IsLocal><d2p1:ProvisionFlags>ToOCatAndCM</d2p1:ProvisionFlags><d2p1:Type>String</d2p1:Type><d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:string">555</d2p1:Value></d2p1:Parameter></d2p1:Parameters><d2p1:PostponedAction i:nil="true" /><d2p1:Product i:type="d2p1:Service"><d2p1:Code i:nil="true" /><d2p1:Description i:nil="true" /><d2p1:ExternalCode>ZgpRed</d2p1:ExternalCode><d2p1:ExternalId>6307</d2p1:ExternalId><d2p1:Id i:nil="true" /><d2p1:Name>zzzzzzzz zzzzzzzzzzz..</d2p1:Name><d2p1:VersionDate i:nil="true" /><d2p1:IsMultiService>false</d2p1:IsMultiService><d2p1:PlatformProductCode>666777</d2p1:PlatformProductCode><d2p1:ProductClassCode i:nil="true" /></d2p1:Product><d2p1:ProvisionItemCode i:nil="true" /><d2p1:ProvisionOperation>None</d2p1:ProvisionOperation><d2p1:Quantity>1</d2p1:Quantity><d2p1:SalePointCode i:nil="true" /><d2p1:SourceType>11</d2p1:SourceType><d2p1:WasCompensated>false</d2p1:WasCompensated></d2p1:ProductAction></ProductActions><ProductInstanceAction xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v001" i:nil="true" /><RegisterId i:nil="true" /><SalePointCode i:nil="true" /><SourceType>0</SourceType><UserIdentity xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v001"><d2p1:MsisdnInitiator i:nil="true" /><d2p1:SourceType>11</d2p1:SourceType><d2p1:UserHostAddress i:nil="true" /><d2p1:UserNtName>NT AUTHORITY\SYSTEM</d2p1:UserNtName></UserIdentity></OCFChangeProductRequest>
+TerminalDevice = <TerminalDevice xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Entities"><Id>78405</Id><DateFrom>2011-12-09T16:47:43</DateFrom><CustomAttributes xmlns:d2p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:29</VersionDate><AddressId i:nil="true" /><ContractId>45861</ContractId><CustomerId>46778</CustomerId><Iccid>89791010107310016122</Iccid><Imsi>250010731001612</Imsi><LanguageCode>1</LanguageCode><LanguageId>1</LanguageId><Msisdn>79166060092</Msisdn><Note i:nil="true" /><PersonalAccountId>49254</PersonalAccountId><Quantity>1</Quantity><TariffPlanCode>7010</TariffPlanCode><TariffPlanId>7010</TariffPlanId><TerminalDeviceClassCode>M</TerminalDeviceClassCode><TerminalDeviceClassId>65</TerminalDeviceClassId><TerminalDeviceNumber>377300049413</TerminalDeviceNumber><TerminalDeviceServices><TerminalDeviceService><Id>197274</Id><DateFrom>2011-09-30T15:39:00</DateFrom><DateTo>2011-12-08T17:15:05</DateTo><CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:30</VersionDate><ActionStatus>Exists ToBeDeleted</ActionStatus><Quantity>1</Quantity><ServiceCode>CB534</ServiceCode><ServiceId>92</ServiceId><ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName><TariffPlanId>7001</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>197277</Id><DateFrom>2011-09-30T15:39:00</DateFrom><CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:30</VersionDate><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>per11</ServiceCode><ServiceId>6727</ServiceId><ServiceName>zzzzzzzzzzzzzzzzz 11</ServiceName><TariffPlanId i:nil="true" /><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>215536</Id><DateFrom>2011-12-08T16:28:52</DateFrom><CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:30</VersionDate><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>per12</ServiceCode><ServiceId>6747</ServiceId><ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName><TariffPlanId i:nil="true" /><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>206644</Id><DateFrom>2011-10-17T15:32:51</DateFrom><CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:30</VersionDate><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>KIPADMIN</ServiceCode><ServiceId>6072</ServiceId><ServiceName>zzz zzzzzzzzzzzzz..</ServiceName><TariffPlanId i:nil="true" /><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>215537</Id><DateFrom>2011-12-08T16:33:26</DateFrom><CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:30</VersionDate><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>IP111817</ServiceCode><ServiceId>9435</ServiceId><ServiceName>IPhone zzzzzzzzz</ServiceName><TariffPlanId i:nil="true" /><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService></TerminalDeviceServices><TerminalDeviceStatusCode i:nil="true" /><TerminalDeviceStatusId i:nil="true" /><TerminalDeviceUser i:nil="true" /><TerminalDeviceUserId i:nil="true" /><TraceId>152871</TraceId><TariffPlanName>zzz zzzzzz - zzzzz - 30 zzz.</TariffPlanName><FavoriteNumbers xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities" /><FavoritePrivateGroups xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities" i:nil="true" /><TerminalDeviceIdentities i:nil="true" /><OfflineDiscounts i:nil="true" /><TerminalDeviceProducts xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Dto"><d2p1:Products xmlns:d3p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities"><d3p1:TerminalDeviceProduct><Id>11137</Id><DateFrom>2011-12-08T16:33:26</DateFrom><VersionDate i:nil="true" /><d3p1:ProductId>189092</d3p1:ProductId><d3p1:ProductVersionDate>2011-12-07T16:13:31</d3p1:ProductVersionDate><d3p1:Services><TerminalDeviceService><Id>197274</Id><DateFrom>2011-09-30T15:39:00</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>CB534</ServiceCode><ServiceId>92</ServiceId><ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService></d3p1:Services><d3p1:TerminalDeviceId>78405</d3p1:TerminalDeviceId><d3p1:ValidFrom i:nil="true" /><d3p1:ValidTo i:nil="true" /><d3p1:ChildTdProducts><d3p1:TerminalDeviceProduct><Id>11138</Id><DateFrom>2011-12-08T16:33:26</DateFrom><VersionDate i:nil="true" /><d3p1:ProductId>189094</d3p1:ProductId><d3p1:ProductVersionDate>2011-12-07T16:13:31</d3p1:ProductVersionDate><d3p1:Services><TerminalDeviceService><Id>215536</Id><DateFrom>2011-12-08T16:28:52</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>per12</ServiceCode><ServiceId>6747</ServiceId><ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>215537</Id><DateFrom>2011-12-08T16:33:26</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>IP111817</ServiceCode><ServiceId>9435</ServiceId><ServiceName>IPhone zzzzzzzzz</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService></d3p1:Services><d3p1:TerminalDeviceId>78405</d3p1:TerminalDeviceId><d3p1:ValidFrom i:nil="true" /><d3p1:ValidTo i:nil="true" /><d3p1:ChildTdProducts /><d3p1:ParentProductId>11137</d3p1:ParentProductId><d3p1:RootId>11137</d3p1:RootId></d3p1:TerminalDeviceProduct></d3p1:ChildTdProducts><d3p1:ParentProductId>11137</d3p1:ParentProductId><d3p1:RootId>11137</d3p1:RootId></d3p1:TerminalDeviceProduct></d2p1:Products><d2p1:Services><TerminalDeviceService><Id>197277</Id><DateFrom>2011-09-30T15:39:00</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>per11</ServiceCode><ServiceId>6727</ServiceId><ServiceName>zzzzzzzzzzzzzzzzz 11</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>206644</Id><DateFrom>2011-10-17T15:32:51</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>KIPADMIN</ServiceCode><ServiceId>6072</ServiceId><ServiceName>zzz zzzzzzzzzzzzz..</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>215536</Id><DateFrom>2011-12-08T16:28:52</DateFrom><VersionDate i:nil="true" /><ActionStatus>Exists</ActionStatus><Quantity>1</Quantity><ServiceCode>per12</ServiceCode><ServiceId>6747</ServiceId><ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName><TariffPlanId>7010</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService><TerminalDeviceService><Id>0</Id><DateFrom>0001-01-01T00:00:00</DateFrom><DateTo>2011-12-08T17:15:05</DateTo><VersionDate i:nil="true" /><ActionStatus>ToBeDeleted</ActionStatus><Quantity i:nil="true" /><ServiceCode>CB534</ServiceCode><ServiceId>92</ServiceId><ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName><TariffPlanId>7001</TariffPlanId><TerminalDeviceId>78405</TerminalDeviceId><TerminalDeviceServiceParameters i:nil="true" /><ValidFrom i:nil="true" /><ValidTo i:nil="true" /></TerminalDeviceService></d2p1:Services></TerminalDeviceProducts><RequestId i:nil="true" /></TerminalDevice>""",
+"""09.12.2011 16:48:46 The following variables of process [1401.419415] have changed:
+OrderStorageRequestId = 3000115262
+PersonalAccount = <PersonalAccount xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Entities">
+    <Id>49254</Id>
+    <DateFrom>2011-10-24T12:47:53</DateFrom>
+    <CustomAttributes xmlns:d2p1="http://schemas.marti.sitels.ru/Core/" />
+    <VersionDate>2011-12-09T16:48:32</VersionDate>
+    <BillTextTypeId>323</BillTextTypeId>
+    <BillingGroupCode>1</BillingGroupCode>
+    <BillingGroupId>1</BillingGroupId>
+    <CalculationMethodCode>3</CalculationMethodCode>
+    <CalculationMethodId>3</CalculationMethodId>
+    <CodeWord>zzz</CodeWord>
+    <ContractId>45861</ContractId>
+    <CreditLimits i:nil="true" />
+    <CurrencyCode>810</CurrencyCode>
+    <CustomerId>46778</CustomerId>
+    <DeliveryMethods i:nil="true" />
+    <ExchangeRateListTypeCode>1</ExchangeRateListTypeCode>
+    <LanguageCode>1</LanguageCode>
+    <LanguageId>1</LanguageId>
+    <LoyaltyCategories i:nil="true" />
+    <Note i:nil="true" />
+    <Payer i:nil="true" />
+    <PayerId>46778</PayerId>
+    <PaymentPlaces i:nil="true" />
+    <PersonalAccountNumber>277300016451</PersonalAccountNumber>
+    <PersonalAccountStatusCode>1</PersonalAccountStatusCode>
+    <PersonalAccountStatusId>1</PersonalAccountStatusId>
+    <PersonalAccountTypeCode>1</PersonalAccountTypeCode>
+    <PersonalAccountTypeId>1</PersonalAccountTypeId>
+    <SelfcarePassword i:nil="true" />
+    <ServiceProviderId>1</ServiceProviderId>
+    <SignedPerson i:nil="true" />
+    <SignedPersonId>46778</SignedPersonId>
+    <TerminalDevices i:nil="true" />
+    <TraceId>144851</TraceId>
+    <TrustCategoryCode>10</TrustCategoryCode>
+    <TrustCategoryId>41</TrustCategoryId>
+    <CustomerRoles i:nil="true" />
+    <OfflineDiscounts i:nil="true" />
+    <RequestId i:nil="true" />
+    <Contacts i:nil="true" />
+    <ServiceProviderCode>Moscow</ServiceProviderCode>
+</PersonalAccount>
+
+Pid = 521.419411
+StartDate = 09.12.2011 16:48:29
+
+StartRequest = <OCFChangeProductRequest xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sitels.ru/marti/ocf/message/v001">
+    <AutomaticCompensation xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <d2p1:string>ACTION_DATE</d2p1:string>
+        <d2p1:string>ADD_CUSTOMER_FORBIDDEN</d2p1:string>
+        <d2p1:string>ACTION_REQUIRED</d2p1:string>
+        <d2p1:string>REMOVE_REQUIRED</d2p1:string>
+        <d2p1:string>DEL_WITH_PACKAGE</d2p1:string>
+        <d2p1:string>ADD_DATE</d2p1:string>
+        <d2p1:string>CHANGE_DATE</d2p1:string>
+        <d2p1:string>PLANNED_DEL_ADD</d2p1:string>
+        <d2p1:string>PLANNED_DEL_DELETE</d2p1:string>
+        <d2p1:string>DEL_NO_CUSTOMER_PRODUCT</d2p1:string>
+        <d2p1:string>REMOVE_CHILD</d2p1:string>
+        <d2p1:string>REMOVE_PARENT</d2p1:string>
+    </AutomaticCompensation>
+    <Comment></Comment>
+    <LanguageCode i:nil="true" />
+    <MSISDN>79166060092</MSISDN>
+    <ProcessInitiator xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/dto/v001">
+        <d2p1:EngineType>RequestEngine</d2p1:EngineType>
+        <d2p1:OrderStorageRequestId>3000115246</d2p1:OrderStorageRequestId>
+        <d2p1:ProcessId>3000115246</d2p1:ProcessId>
+        <d2p1:ProcessType xmlns:d3p1="http://schemas.sitels.ru/marti/ocf/entities/v001">
+            <d3p1:Code>ChangeTariff</d3p1:Code>
+            <d3p1:Id>116</d3p1:Id>
+        </d2p1:ProcessType>
+    </ProcessInitiator>
+    <ProcessRegistrationRule>DontCheckPriceAndBlocking BasketHasBeenBuilt</ProcessRegistrationRule>
+    <ProductActions xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v002">
+        <d2p1:ProductAction>
+            <d2p1:ActionFlags>None</d2p1:ActionFlags>
+            <d2p1:ActionType>AddProductInstance</d2p1:ActionType>
+            <d2p1:Children i:nil="true" />
+            <d2p1:Comment i:nil="true" />
+            <d2p1:OTService xmlns:d4p1="http://schemas.sitels.ru/marti/ocf/dto/v001">
+                <d4p1:OneTimeServiceBasicPrice i:nil="true" />
+                <d4p1:OneTimeServiceCode>AddZgpRed</d4p1:OneTimeServiceCode>
+                <d4p1:OneTimeServiceDiscount i:nil="true" />
+                <d4p1:OneTimeServiceId>6427</d4p1:OneTimeServiceId>
+                <d4p1:OneTimeServiceName>zzzzzzzzzz zzzzzz "zzzzzzzz zzzzzzzzzzz zzzzzz RED"</d4p1:OneTimeServiceName>
+                <d4p1:OneTimeServicePrice>11.80</d4p1:OneTimeServicePrice>
+                <d4p1:OneTimeServiceTax i:nil="true" />
+            </d2p1:OTService>
+            <d2p1:Parameters>
+                <d2p1:Parameter>
+                    <d2p1:Code>TariffPlanId</d2p1:Code>
+                    <d2p1:IsLocal>false</d2p1:IsLocal>
+                    <d2p1:ProvisionFlags>None</d2p1:ProvisionFlags>
+                    <d2p1:Type>Number</d2p1:Type>
+                    <d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:int">7010</d2p1:Value>
+                </d2p1:Parameter>
+                <d2p1:Parameter>
+                    <d2p1:Code>ExtGroupNumber</d2p1:Code>
+                    <d2p1:IsLocal>false</d2p1:IsLocal>
+                    <d2p1:ProvisionFlags>ToOCatAndCM</d2p1:ProvisionFlags>
+                    <d2p1:Type>String</d2p1:Type>
+                    <d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:string">66677</d2p1:Value>
+                </d2p1:Parameter>
+                <d2p1:Parameter>
+                    <d2p1:Code>ExtPrivateGroupType</d2p1:Code>
+                    <d2p1:IsLocal>false</d2p1:IsLocal>
+                    <d2p1:ProvisionFlags>ToOCatAndCM</d2p1:ProvisionFlags>
+                    <d2p1:Type>String</d2p1:Type>
+                    <d2p1:Value xmlns:d6p1="http://www.w3.org/2001/XMLSchema" i:type="d6p1:string">555</d2p1:Value>
+                </d2p1:Parameter>
+            </d2p1:Parameters>
+            <d2p1:PostponedAction i:nil="true" />
+            <d2p1:Product i:type="d2p1:Service">
+                <d2p1:Code i:nil="true" />
+                <d2p1:Description i:nil="true" />
+                <d2p1:ExternalCode>ZgpRed</d2p1:ExternalCode>
+                <d2p1:ExternalId>6307</d2p1:ExternalId>
+                <d2p1:Id i:nil="true" />
+                <d2p1:Name>zzzzzzzz zzzzzzzzzzz..</d2p1:Name>
+                <d2p1:VersionDate i:nil="true" />
+                <d2p1:IsMultiService>false</d2p1:IsMultiService>
+                <d2p1:PlatformProductCode>666777</d2p1:PlatformProductCode>
+                <d2p1:ProductClassCode i:nil="true" />
+            </d2p1:Product>
+            <d2p1:ProvisionItemCode i:nil="true" />
+            <d2p1:ProvisionOperation>None</d2p1:ProvisionOperation>
+            <d2p1:Quantity>1</d2p1:Quantity>
+            <d2p1:SalePointCode i:nil="true" />
+            <d2p1:SourceType>11</d2p1:SourceType>
+            <d2p1:WasCompensated>false</d2p1:WasCompensated>
+        </d2p1:ProductAction>
+    </ProductActions>
+    <ProductInstanceAction xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v001" i:nil="true" />
+    <RegisterId i:nil="true" />
+    <SalePointCode i:nil="true" />
+    <SourceType>0</SourceType>
+    <UserIdentity xmlns:d2p1="http://schemas.sitels.ru/marti/ocf/entities/v001">
+        <d2p1:MsisdnInitiator i:nil="true" />
+        <d2p1:SourceType>11</d2p1:SourceType>
+        <d2p1:UserHostAddress i:nil="true" />
+        <d2p1:UserNtName>NT AUTHORITY\SYSTEM</d2p1:UserNtName>
+    </UserIdentity>
+</OCFChangeProductRequest>
+
+TerminalDevice = <TerminalDevice xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Entities">
+    <Id>78405</Id>
+    <DateFrom>2011-12-09T16:47:43</DateFrom>
+    <CustomAttributes xmlns:d2p1="http://schemas.marti.sitels.ru/Core/" />
+    <VersionDate>2011-12-09T16:48:29</VersionDate>
+    <AddressId i:nil="true" />
+    <ContractId>45861</ContractId>
+    <CustomerId>46778</CustomerId>
+    <Iccid>89791010107310016122</Iccid>
+    <Imsi>250010731001612</Imsi>
+    <LanguageCode>1</LanguageCode>
+    <LanguageId>1</LanguageId>
+    <Msisdn>79166060092</Msisdn>
+    <Note i:nil="true" />
+    <PersonalAccountId>49254</PersonalAccountId>
+    <Quantity>1</Quantity>
+    <TariffPlanCode>7010</TariffPlanCode>
+    <TariffPlanId>7010</TariffPlanId>
+    <TerminalDeviceClassCode>M</TerminalDeviceClassCode>
+    <TerminalDeviceClassId>65</TerminalDeviceClassId>
+    <TerminalDeviceNumber>377300049413</TerminalDeviceNumber>
+    <TerminalDeviceServices>
+        <TerminalDeviceService>
+            <Id>197274</Id>
+            <DateFrom>2011-09-30T15:39:00</DateFrom>
+            <DateTo>2011-12-08T17:15:05</DateTo>
+            <CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" />
+            <VersionDate>2011-12-09T16:48:30</VersionDate>
+            <ActionStatus>Exists ToBeDeleted</ActionStatus>
+            <Quantity>1</Quantity>
+            <ServiceCode>CB534</ServiceCode>
+            <ServiceId>92</ServiceId>
+            <ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName>
+            <TariffPlanId>7001</TariffPlanId>
+            <TerminalDeviceId>78405</TerminalDeviceId>
+            <TerminalDeviceServiceParameters i:nil="true" />
+            <ValidFrom i:nil="true" />
+            <ValidTo i:nil="true" />
+        </TerminalDeviceService>
+        <TerminalDeviceService>
+            <Id>197277</Id>
+            <DateFrom>2011-09-30T15:39:00</DateFrom>
+            <CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" />
+            <VersionDate>2011-12-09T16:48:30</VersionDate>
+            <ActionStatus>Exists</ActionStatus>
+            <Quantity>1</Quantity>
+            <ServiceCode>per11</ServiceCode>
+            <ServiceId>6727</ServiceId>
+            <ServiceName>zzzzzzzzzzzzzzzzz 11</ServiceName>
+            <TariffPlanId i:nil="true" />
+            <TerminalDeviceId>78405</TerminalDeviceId>
+            <TerminalDeviceServiceParameters i:nil="true" />
+            <ValidFrom i:nil="true" />
+            <ValidTo i:nil="true" />
+        </TerminalDeviceService>
+        <TerminalDeviceService>
+            <Id>215536</Id>
+            <DateFrom>2011-12-08T16:28:52</DateFrom>
+            <CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" />
+            <VersionDate>2011-12-09T16:48:30</VersionDate>
+            <ActionStatus>Exists</ActionStatus>
+            <Quantity>1</Quantity>
+            <ServiceCode>per12</ServiceCode>
+            <ServiceId>6747</ServiceId>
+            <ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName>
+            <TariffPlanId i:nil="true" />
+            <TerminalDeviceId>78405</TerminalDeviceId>
+            <TerminalDeviceServiceParameters i:nil="true" />
+            <ValidFrom i:nil="true" />
+            <ValidTo i:nil="true" />
+        </TerminalDeviceService>
+        <TerminalDeviceService>
+            <Id>206644</Id>
+            <DateFrom>2011-10-17T15:32:51</DateFrom>
+            <CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" />
+            <VersionDate>2011-12-09T16:48:30</VersionDate>
+            <ActionStatus>Exists</ActionStatus>
+            <Quantity>1</Quantity>
+            <ServiceCode>KIPADMIN</ServiceCode>
+            <ServiceId>6072</ServiceId>
+            <ServiceName>zzz zzzzzzzzzzzzz..</ServiceName>
+            <TariffPlanId i:nil="true" />
+            <TerminalDeviceId>78405</TerminalDeviceId>
+            <TerminalDeviceServiceParameters i:nil="true" />
+            <ValidFrom i:nil="true" />
+            <ValidTo i:nil="true" />
+        </TerminalDeviceService>
+        <TerminalDeviceService>
+            <Id>215537</Id>
+            <DateFrom>2011-12-08T16:33:26</DateFrom>
+            <CustomAttributes xmlns:d4p1="http://schemas.marti.sitels.ru/Core/" />
+            <VersionDate>2011-12-09T16:48:30</VersionDate>
+            <ActionStatus>Exists</ActionStatus>
+            <Quantity>1</Quantity>
+            <ServiceCode>IP111817</ServiceCode>
+            <ServiceId>9435</ServiceId>
+            <ServiceName>IPhone zzzzzzzzz</ServiceName>
+            <TariffPlanId i:nil="true" />
+            <TerminalDeviceId>78405</TerminalDeviceId>
+            <TerminalDeviceServiceParameters i:nil="true" />
+            <ValidFrom i:nil="true" />
+            <ValidTo i:nil="true" />
+        </TerminalDeviceService>
+    </TerminalDeviceServices>
+    <TerminalDeviceStatusCode i:nil="true" />
+    <TerminalDeviceStatusId i:nil="true" />
+    <TerminalDeviceUser i:nil="true" />
+    <TerminalDeviceUserId i:nil="true" />
+    <TraceId>152871</TraceId>
+    <TariffPlanName>zzz zzzzzz - zzzzz - 30 zzz.</TariffPlanName>
+    <FavoriteNumbers xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities" />
+    <FavoritePrivateGroups xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities" i:nil="true" />
+    <TerminalDeviceIdentities i:nil="true" />
+    <OfflineDiscounts i:nil="true" />
+    <TerminalDeviceProducts xmlns:d2p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Dto">
+        <d2p1:Products xmlns:d3p1="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v2/Entities">
+            <d3p1:TerminalDeviceProduct>
+                <Id>11137</Id>
+                <DateFrom>2011-12-08T16:33:26</DateFrom>
+                <VersionDate i:nil="true" />
+                <d3p1:ProductId>189092</d3p1:ProductId>
+                <d3p1:ProductVersionDate>2011-12-07T16:13:31</d3p1:ProductVersionDate>
+                <d3p1:Services>
+                    <TerminalDeviceService>
+                        <Id>197274</Id>
+                        <DateFrom>2011-09-30T15:39:00</DateFrom>
+                        <VersionDate i:nil="true" />
+                        <ActionStatus>Exists</ActionStatus>
+                        <Quantity>1</Quantity>
+                        <ServiceCode>CB534</ServiceCode>
+                        <ServiceId>92</ServiceId>
+                        <ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName>
+                        <TariffPlanId>7010</TariffPlanId>
+                        <TerminalDeviceId>78405</TerminalDeviceId>
+                        <TerminalDeviceServiceParameters i:nil="true" />
+                        <ValidFrom i:nil="true" />
+                        <ValidTo i:nil="true" />
+                    </TerminalDeviceService>
+                </d3p1:Services>
+                <d3p1:TerminalDeviceId>78405</d3p1:TerminalDeviceId>
+                <d3p1:ValidFrom i:nil="true" />
+                <d3p1:ValidTo i:nil="true" />
+                <d3p1:ChildTdProducts>
+                    <d3p1:TerminalDeviceProduct>
+                        <Id>11138</Id>
+                        <DateFrom>2011-12-08T16:33:26</DateFrom>
+                        <VersionDate i:nil="true" />
+                        <d3p1:ProductId>189094</d3p1:ProductId>
+                        <d3p1:ProductVersionDate>2011-12-07T16:13:31</d3p1:ProductVersionDate>
+                        <d3p1:Services>
+                            <TerminalDeviceService>
+                                <Id>215536</Id>
+                                <DateFrom>2011-12-08T16:28:52</DateFrom>
+                                <VersionDate i:nil="true" />
+                                <ActionStatus>Exists</ActionStatus>
+                                <Quantity>1</Quantity>
+                                <ServiceCode>per12</ServiceCode>
+                                <ServiceId>6747</ServiceId>
+                                <ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName>
+                                <TariffPlanId>7010</TariffPlanId>
+                                <TerminalDeviceId>78405</TerminalDeviceId>
+                                <TerminalDeviceServiceParameters i:nil="true" />
+                                <ValidFrom i:nil="true" />
+                                <ValidTo i:nil="true" />
+                            </TerminalDeviceService>
+                            <TerminalDeviceService>
+                                <Id>215537</Id>
+                                <DateFrom>2011-12-08T16:33:26</DateFrom>
+                                <VersionDate i:nil="true" />
+                                <ActionStatus>Exists</ActionStatus>
+                                <Quantity>1</Quantity>
+                                <ServiceCode>IP111817</ServiceCode>
+                                <ServiceId>9435</ServiceId>
+                                <ServiceName>IPhone zzzzzzzzz</ServiceName>
+                                <TariffPlanId>7010</TariffPlanId>
+                                <TerminalDeviceId>78405</TerminalDeviceId>
+                                <TerminalDeviceServiceParameters i:nil="true" />
+                                <ValidFrom i:nil="true" />
+                                <ValidTo i:nil="true" />
+                            </TerminalDeviceService>
+                        </d3p1:Services>
+                        <d3p1:TerminalDeviceId>78405</d3p1:TerminalDeviceId>
+                        <d3p1:ValidFrom i:nil="true" />
+                        <d3p1:ValidTo i:nil="true" />
+                        <d3p1:ChildTdProducts />
+                        <d3p1:ParentProductId>11137</d3p1:ParentProductId>
+                        <d3p1:RootId>11137</d3p1:RootId>
+                    </d3p1:TerminalDeviceProduct>
+                </d3p1:ChildTdProducts>
+                <d3p1:ParentProductId>11137</d3p1:ParentProductId>
+                <d3p1:RootId>11137</d3p1:RootId>
+            </d3p1:TerminalDeviceProduct>
+        </d2p1:Products>
+        <d2p1:Services>
+            <TerminalDeviceService>
+                <Id>197277</Id>
+                <DateFrom>2011-09-30T15:39:00</DateFrom>
+                <VersionDate i:nil="true" />
+                <ActionStatus>Exists</ActionStatus>
+                <Quantity>1</Quantity>
+                <ServiceCode>per11</ServiceCode>
+                <ServiceId>6727</ServiceId>
+                <ServiceName>zzzzzzzzzzzzzzzzz 11</ServiceName>
+                <TariffPlanId>7010</TariffPlanId>
+                <TerminalDeviceId>78405</TerminalDeviceId>
+                <TerminalDeviceServiceParameters i:nil="true" />
+                <ValidFrom i:nil="true" />
+                <ValidTo i:nil="true" />
+            </TerminalDeviceService>
+            <TerminalDeviceService>
+                <Id>206644</Id>
+                <DateFrom>2011-10-17T15:32:51</DateFrom>
+                <VersionDate i:nil="true" />
+                <ActionStatus>Exists</ActionStatus>
+                <Quantity>1</Quantity>
+                <ServiceCode>KIPADMIN</ServiceCode>
+                <ServiceId>6072</ServiceId>
+                <ServiceName>zzz zzzzzzzzzzzzz..</ServiceName>
+                <TariffPlanId>7010</TariffPlanId>
+                <TerminalDeviceId>78405</TerminalDeviceId>
+                <TerminalDeviceServiceParameters i:nil="true" />
+                <ValidFrom i:nil="true" />
+                <ValidTo i:nil="true" />
+            </TerminalDeviceService>
+            <TerminalDeviceService>
+                <Id>215536</Id>
+                <DateFrom>2011-12-08T16:28:52</DateFrom>
+                <VersionDate i:nil="true" />
+                <ActionStatus>Exists</ActionStatus>
+                <Quantity>1</Quantity>
+                <ServiceCode>per12</ServiceCode>
+                <ServiceId>6747</ServiceId>
+                <ServiceName>zzzzzzzzzzzzzzzzz 12</ServiceName>
+                <TariffPlanId>7010</TariffPlanId>
+                <TerminalDeviceId>78405</TerminalDeviceId>
+                <TerminalDeviceServiceParameters i:nil="true" />
+                <ValidFrom i:nil="true" />
+                <ValidTo i:nil="true" />
+            </TerminalDeviceService>
+            <TerminalDeviceService>
+                <Id>0</Id>
+                <DateFrom>0001-01-01T00:00:00</DateFrom>
+                <DateTo>2011-12-08T17:15:05</DateTo>
+                <VersionDate i:nil="true" />
+                <ActionStatus>ToBeDeleted</ActionStatus>
+                <Quantity i:nil="true" />
+                <ServiceCode>CB534</ServiceCode>
+                <ServiceId>92</ServiceId>
+                <ServiceName>zzzzzzzzzzzzzzzz zzzzzz</ServiceName>
+                <TariffPlanId>7001</TariffPlanId>
+                <TerminalDeviceId>78405</TerminalDeviceId>
+                <TerminalDeviceServiceParameters i:nil="true" />
+                <ValidFrom i:nil="true" />
+                <ValidTo i:nil="true" />
+            </TerminalDeviceService>
+        </d2p1:Services>
+    </TerminalDeviceProducts>
+    <RequestId i:nil="true" />
+</TerminalDevice>"""
 ]
 
 
 def diff(t1, t2):
- return "".join(difflib.ndiff(t1.splitlines(1), t2.splitlines(1)))
+    return "".join(difflib.ndiff(t1.splitlines(1), t2.splitlines(1)))
 
 class TestPrettyXML(unittest.TestCase):
     def check(self, pxml_exp, pxml_real, n):
