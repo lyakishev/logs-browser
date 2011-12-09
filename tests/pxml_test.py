@@ -1753,7 +1753,7 @@ zzzzzzzzzzzzzzzz!</Description>
         </SOAP-ENC:Array>
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>"""),
-"""09.12.2011 16:48:46 The following variables of process [1401.419415] have changed:
+("""09.12.2011 16:48:46 The following variables of process [1401.419415] have changed:
 OrderStorageRequestId = 3000115262
 PersonalAccount = <PersonalAccount xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sts.sitronics.com/Foris/TelCrm/CustomerManagement/v1/Entities"><Id>49254</Id><DateFrom>2011-10-24T12:47:53</DateFrom><CustomAttributes xmlns:d2p1="http://schemas.marti.sitels.ru/Core/" /><VersionDate>2011-12-09T16:48:32</VersionDate><BillTextTypeId>323</BillTextTypeId><BillingGroupCode>1</BillingGroupCode><BillingGroupId>1</BillingGroupId><CalculationMethodCode>3</CalculationMethodCode><CalculationMethodId>3</CalculationMethodId><CodeWord>zzz</CodeWord><ContractId>45861</ContractId><CreditLimits i:nil="true" /><CurrencyCode>810</CurrencyCode><CustomerId>46778</CustomerId><DeliveryMethods i:nil="true" /><ExchangeRateListTypeCode>1</ExchangeRateListTypeCode><LanguageCode>1</LanguageCode><LanguageId>1</LanguageId><LoyaltyCategories i:nil="true" /><Note i:nil="true" /><Payer i:nil="true" /><PayerId>46778</PayerId><PaymentPlaces i:nil="true" /><PersonalAccountNumber>277300016451</PersonalAccountNumber><PersonalAccountStatusCode>1</PersonalAccountStatusCode><PersonalAccountStatusId>1</PersonalAccountStatusId><PersonalAccountTypeCode>1</PersonalAccountTypeCode><PersonalAccountTypeId>1</PersonalAccountTypeId><SelfcarePassword i:nil="true" /><ServiceProviderId>1</ServiceProviderId><SignedPerson i:nil="true" /><SignedPersonId>46778</SignedPersonId><TerminalDevices i:nil="true" /><TraceId>144851</TraceId><TrustCategoryCode>10</TrustCategoryCode><TrustCategoryId>41</TrustCategoryId><CustomerRoles i:nil="true" /><OfflineDiscounts i:nil="true" /><RequestId i:nil="true" /><Contacts i:nil="true" /><ServiceProviderCode>Moscow</ServiceProviderCode></PersonalAccount>
 Pid = 521.419411
@@ -1805,10 +1805,8 @@ PersonalAccount = <PersonalAccount xmlns:i="http://www.w3.org/2001/XMLSchema-ins
     <Contacts i:nil="true" />
     <ServiceProviderCode>Moscow</ServiceProviderCode>
 </PersonalAccount>
-
 Pid = 521.419411
 StartDate = 09.12.2011 16:48:29
-
 StartRequest = <OCFChangeProductRequest xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.sitels.ru/marti/ocf/message/v001">
     <AutomaticCompensation xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
         <d2p1:string>ACTION_DATE</d2p1:string>
@@ -2166,7 +2164,7 @@ TerminalDevice = <TerminalDevice xmlns:i="http://www.w3.org/2001/XMLSchema-insta
         </d2p1:Services>
     </TerminalDeviceProducts>
     <RequestId i:nil="true" />
-</TerminalDevice>"""
+</TerminalDevice>""")
 ]
 
 
