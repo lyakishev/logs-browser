@@ -521,6 +521,7 @@ OperatorInfo = <?xml version="1.0" encoding="utf-16"?><ContextOperatorInfo xmlns
 =======================================""",
 """2011-12-07 09:08:42,294 [16] DEBUG FORIS.TelCRM.RemoteDealer.Services.Interfaces.Behaviors.ContextFlowBehaviorAttribute
 =======================================
+
 OperationInfo = <?xml version="1.0" encoding="utf-16"?>
 <ContextOperationInfo xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2004/07/FORIS.TelCRM.RemoteDealer.CommonLibrary.Context">
     <BpCode>SalesContract</BpCode>
@@ -535,6 +536,7 @@ OperatorInfo = <?xml version="1.0" encoding="utf-16"?>
     <RequestUrl>/salesui/ContractRegistration.aspx</RequestUrl>
     <UserHostAddress>172.25.29.80</UserHostAddress>
 </ContextOperatorInfo>
+
 ======================================="""),
 
 ("""2011-12-07 09:08:42,888 [16] DEBUG FORIS.TelCRM.RemoteDealer.DomainModel.Directories.GetCustomizationDirectory
@@ -2173,7 +2175,6 @@ TerminalDevice = <TerminalDevice xmlns:i="http://www.w3.org/2001/XMLSchema-insta
 
 def diff(t1, t2):
     return "".join(difflib.ndiff(t1.splitlines(1), t2.splitlines(1)))
-    #print t2
 
 class TestPrettyXML(unittest.TestCase):
     def check(self, pxml_exp, pxml_real, n):
