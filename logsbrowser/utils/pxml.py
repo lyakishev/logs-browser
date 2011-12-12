@@ -60,46 +60,41 @@ def get_indent(string):
             return n*" "
 
 def prettify_xml(xml, indent="    ", sep=os.linesep):
-    h_pretty_tag = partial(pretty_tag, sep, indent)
-    pretty_first_tag = partial(pretty_tag, "", indent, lambda i,c: i*c)
+    pretty_tag_sep = partial(pretty_tag, sep, indent)
+    pretty_tag_no_sep = partial(pretty_tag, "", indent, lambda i,c: i*c)
     pretty_xml = ""
     counter = 0
     open_flag = 0
     first_tag = 1
     for line in xml.splitlines(True):
         if need_to_prettify(line):
-            ppretty_tag = partial(h_pretty_tag, lambda i,c: get_indent(line)+i*c)
+            pretty_tag_line_indent = partial(pretty_tag_sep, lambda i,c: get_indent(line)+i*c)
+            pretty_tag_first_flag = lambda ff: pretty_tag_no_sep if ff else pretty_tag_line_indent
             for tag in split_xml(line):
                 if is_tag(tag):
                     close = is_close(tag)
                     if (is_empty(tag) or is_cdata(tag)) and not close:
-                        if first_tag:
-                            pretty_xml += pretty_first_tag(counter, tag)
-                        else:
-                            pretty_xml += ppretty_tag(counter, tag)
+                        pretty_xml += pretty_tag_first_flag(first_tag)(counter, tag)
                         open_flag = 0
                     else:
                         open_  = is_open(tag)
                         both = close and open_
                         if both:
-                            pretty_xml += ppretty_tag(counter, tag)
+                            pretty_xml += pretty_tag_line_indent(counter, tag)
                             open_flag = 0
                         elif close:
                             counter -= 1
                             if open_flag:
                                 pretty_xml += tag
                             else:
-                                pretty_xml += ppretty_tag(counter, tag)
+                                pretty_xml += pretty_tag_line_indent(counter, tag)
                             open_flag = 0
                         elif open_:
-                            if first_tag:
-                                pretty_xml += pretty_first_tag(counter, tag)
-                            else:
-                                pretty_xml += ppretty_tag(counter, tag)
+                            pretty_xml += pretty_tag_first_flag(first_tag)(counter, tag)
                             counter += 1
                             open_flag = 1
                         else:
-                            pretty_xml += ppretty_tag(counter, tag)
+                            pretty_xml += pretty_tag_line_indent(counter, tag)
                     first_tag = 0
                 else:
                     pretty_xml += tag
