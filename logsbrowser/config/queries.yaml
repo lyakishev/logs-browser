@@ -85,19 +85,27 @@
       add_lid: 1
       default: 0
       sql: |
+        select logname, computer
+        from #this
+        group by logname, computer
+
+    - name: 'Количество сообщений по именам лога'
+      add_lid: 1
+      default: 0
+      sql: |
         select logname, computer, count(log) as c, error(type)
         from #this
         group by logname, computer
         order by c desc
 
+
     - name: 'Группировка по файлам-источникам'
       add_lid: 1
       default: 0
       sql: |
-        select source, count(log) as c, error(type)
+        select source
         from #this
         group by source
-        order by c desc
 
     - name: 'Количество сообщений'
       add_lid: 1

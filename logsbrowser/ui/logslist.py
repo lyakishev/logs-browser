@@ -45,6 +45,8 @@ from toolbar import Toolbar
 import re
 from filedialogs import save_file_dialog, save_files_to_dir_dialog
 
+bad_chars = re.compile('[?|:*"><]')
+
 def callback():
     while gtk.events_pending():
         gtk.main_iteration()
@@ -166,11 +168,24 @@ class LogList(object):
             self.view.thaw_child_notify()
 
     def concat_row_vals(self, row):
-        return '_'.join([r for n,r in enumerate(row) if n!=self.rflw and n not in self.bgcolorsn])
+        name_parts = []
+        for n, name in enumerate(row):
+            if name and n != self.rflw and n not in self.bgcolorsn:
+                if os.sep in name:
+                    name = os.path.basename(name)
+                name_parts.append(bad_chars.sub('-', name))
+        pathname = '_'.join(name_parts)
+        path, ext = os.path.splitext(pathname)
+        if ext:
+            return pathname
+        else:
+            return "%s.log" % pathname
+
+
 
     def get_row_msg_action(self, path):
         row = self.model[path]
-        return "%s.log" % self.concat_row_vals(row), lambda: db.get_log(row[self.rflw], self.from_)
+        return self.concat_row_vals(row), lambda: db.get_log(row[self.rflw], self.from_)
 
     def build_view(self, args):
         self.bgcolorsn = []
