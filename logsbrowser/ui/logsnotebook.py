@@ -24,7 +24,7 @@ from logslist import LogsListWindow
 
 
 class LogsNotebook(gtk.Notebook):
-    def __init__(self, tree, btn):
+    def __init__(self, tree, parent_sens):
         super(LogsNotebook, self).__init__()
         self.loaders = {}
         self.tree = tree
@@ -57,7 +57,7 @@ class LogsNotebook(gtk.Notebook):
         act_box.show()
         self.set_action_widget(act_box, gtk.PACK_END)
         self.connect("switch_page", self.change_source_tree)
-        self.sens = [add_btn, btn]
+        self.sens = [add_btn] + parent_sens
 
     def set_sens(self, sens):
         for b in self.btns:

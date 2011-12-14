@@ -106,7 +106,11 @@ class ZipSizeBox(gtk.VBox):
         else:
             self.sizebox.set_sensitive(True)
         
-def save_files_to_dir_dialog(name_action):
+def gtk_main_iteration():
+    while gtk.events_pending():
+        gtk.main_iteration()
+
+def save_files_to_dir_dialog(name_action, sens):
     fchooser = gtk.FileChooserDialog("Save logs...", None,
         gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
         gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
@@ -118,18 +122,22 @@ def save_files_to_dir_dialog(name_action):
         zipsizebox.sizebox.setup_actions()
         zipsizebox.zipbox.setup_actions(path)
         fchooser.destroy()
+        sens(False)
         for name, action in name_action.iteritems():
+            gtk_main_iteration()
             fullpath = os.path.join(path, name)
             with open(fullpath, 'w') as f:
                 f.writelines(action())
             zipsizebox.sizebox.do_actions(fullpath)
             zipsizebox.sizebox.teardown_actions()
+            gtk_main_iteration()
             zipsizebox.zipbox.do_actions(fullpath, name)
         zipsizebox.zipbox.teardown_actions()
+        sens(True)
     else:
         fchooser.destroy()
 
-def save_file_dialog(name_action):
+def save_file_dialog(name_action, sens):
     name, text_action = name_action.items()[0]
     fchooser = gtk.FileChooserDialog("Save logs...", None,
         gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
@@ -142,10 +150,12 @@ def save_file_dialog(name_action):
         path = fchooser.get_filename()
         sizebox.setup_actions()
         fchooser.destroy()
+        sens(False)
         with open(path.decode('utf8'), 'w') as f:
             f.writelines(text_action())
         sizebox.do_actions(path)
         sizebox.teardown_actions()
+        sens(True)
     else:
         fchooser.destroy()
 

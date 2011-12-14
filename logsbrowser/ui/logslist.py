@@ -329,7 +329,7 @@ class LogsListWindow(gtk.Frame):
         toolbar.append_sep()
         lwin_btn = toolbar.append_button(gtk.STOCK_FILE, self.show_log_window,
                               "Show Log(s)")
-        toolbar.append_button(gtk.STOCK_SAVE, self.save_logs,
+        slog_btn = toolbar.append_button(gtk.STOCK_SAVE, self.save_logs,
                               "Save Log(s)")
         toolbar.append_sep()
         grid_btn = toolbar.append_togglebutton(gtk.STOCK_UNDERLINE, self.show_gridlines,
@@ -340,7 +340,7 @@ class LogsListWindow(gtk.Frame):
         toolbar.append_button(gtk.STOCK_GO_DOWN, lambda btn: self.log_list.down_color())
         toolbar.append_sep()
 
-        toolbar.append_button(gtk.STOCK_COPY, self.csv_export,
+        exp_btn = toolbar.append_button(gtk.STOCK_COPY, self.csv_export,
                               "Export...")
 
         self.qm = QueriesManager(config.QUERIES_FILE)
@@ -356,7 +356,7 @@ class LogsListWindow(gtk.Frame):
         self.show_all()
         self.break_btn.set_sensitive(False)
 
-        self.sens_list = [exec_btn, lwin_btn] + self.filter_logs.sens_list
+        self.sens_list = [exec_btn, lwin_btn, slog_btn, exp_btn] + self.filter_logs.sens_list
         self.ntb = ntb
 
         if config.GRID_LINES:
@@ -370,9 +370,9 @@ class LogsListWindow(gtk.Frame):
     def save_logs(self, *args):
         actions = self.get_selected()
         if len(actions) > 1:
-            save_files_to_dir_dialog(actions)
+            save_files_to_dir_dialog(actions, self.ntb.set_sens)
         else:
-            save_file_dialog(actions)
+            save_file_dialog(actions, self.ntb.set_sens)
         
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,

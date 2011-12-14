@@ -114,7 +114,8 @@ class LogsViewer:
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals, self.root)
 
-        self.browser = LogsNotebook(self.source_tree, self.show_button)
+        self.browser = LogsNotebook(self.source_tree,
+                            [self.show_button, self.source_tree])
         self.source_tree.fill_combo()
 
 
