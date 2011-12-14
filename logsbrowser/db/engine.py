@@ -90,7 +90,6 @@ def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
     _dbconn.execute("drop index if exists %s_index;" % table)
 
-@time_it
 def get_msg(rows, table):
     sql = """select date, logname, type, source, log
                  from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
@@ -104,7 +103,6 @@ def get_msg(rows, table):
     msg = (r[4] for r in result)
     return (dates, lognames, types, sources, msg)
 
-@time_it
 def get_log(rows, table):
     sql = """select log
                  from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)

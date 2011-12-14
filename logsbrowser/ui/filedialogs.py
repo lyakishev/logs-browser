@@ -69,6 +69,9 @@ class ZipBox(ToggleEntryWidget):
     def teardown(self):
         self.zip_.close()
 
+    def undo(self):
+        pass
+
 class SizeBox(ToggleEntryWidget):
     def __init__(self):
         super(SizeBox, self).__init__("Archive file if size larger than", "4", 4)
@@ -81,6 +84,7 @@ class SizeBox(ToggleEntryWidget):
         self.size = int(self.get_value())
         ToggleEntryWidget.setup_actions(self)
 
+
     def actions(self, *args):
         path = args[0]
         if os.path.getsize(path) > self.size*1024*1024:
@@ -88,6 +92,9 @@ class SizeBox(ToggleEntryWidget):
              z.write(path, os.path.basename(path))
              z.close()
              os.remove(path)
+
+    def undo(self):
+        pass
 
 class ZipSizeBox(gtk.VBox):
     def __init__(self):
@@ -105,12 +112,15 @@ class ZipSizeBox(gtk.VBox):
             self.sizebox.check.set_active(False)
         else:
             self.sizebox.set_sensitive(True)
+
+    def undo(self):
+        pass
         
 def gtk_main_iteration():
     while gtk.events_pending():
         gtk.main_iteration()
 
-def save_files_to_dir_dialog(name_action, sens):
+def save_files_to_dir_dialog(name_action, sens, progress):
     fchooser = gtk.FileChooserDialog("Save logs...", None,
         gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
         gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
@@ -123,21 +133,33 @@ def save_files_to_dir_dialog(name_action, sens):
         zipsizebox.zipbox.setup_actions(path)
         fchooser.destroy()
         sens(False)
-        for name, action in name_action.iteritems():
-            gtk_main_iteration()
-            fullpath = os.path.join(path, name)
-            with open(fullpath, 'w') as f:
-                f.writelines(action())
-            zipsizebox.sizebox.do_actions(fullpath)
-            zipsizebox.sizebox.teardown_actions()
-            gtk_main_iteration()
-            zipsizebox.zipbox.do_actions(fullpath, name)
-        zipsizebox.zipbox.teardown_actions()
+        try:
+            progress.begin(len(name_action))
+            for name, action in name_action.iteritems():
+                try:
+                    progress.set_text("Saving %s" % name)
+                    fullpath = os.path.join(path, name)
+                    with open(fullpath, 'w') as f:
+                        progress.execute(f.writelines, lambda: os.remove(fullpath),
+                                                    action())
+                    progress.execute(zipsizebox.sizebox.do_actions, zipsizebox.sizebox.undo, fullpath)
+                    progress.execute(zipsizebox.sizebox.teardown_actions, lambda: None)
+                    progress.execute(zipsizebox.zipbox.do_actions,
+                                        zipsizebox.zipbox.undo, fullpath, name)
+                    progress.add_frac()
+                except progress.StopException:
+                    break
+            progress.execute(zipsizebox.zipbox.teardown_actions, lambda: None)
+        except progress.BreakException:
+            progress.undo_all()
+            zipsizebox.zipbox.undo_all()
+        finally:
+            progress.end()
         sens(True)
     else:
         fchooser.destroy()
 
-def save_file_dialog(name_action, sens):
+def save_file_dialog(name_action, sens, progress):
     name, text_action = name_action.items()[0]
     fchooser = gtk.FileChooserDialog("Save logs...", None,
         gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
@@ -151,10 +173,18 @@ def save_file_dialog(name_action, sens):
         sizebox.setup_actions()
         fchooser.destroy()
         sens(False)
-        with open(path.decode('utf8'), 'w') as f:
-            f.writelines(text_action())
-        sizebox.do_actions(path)
-        sizebox.teardown_actions()
+        try:
+            progress.begin(0)
+            progress.set_text("Saving %s" % name)
+            path = path.decode('utf8')
+            with open(path, 'w') as f:
+                progress.execute(f.writelines, lambda: os.remove(path), text_action())
+            progress.execute(sizebox.do_actions, sizebox.undo, path)
+            progress.execute(sizebox.teardown_actions, lambda: None)
+        except (progress.BreakException, progress.StopException):
+            pass
+        finally:
+            progress.end()
         sens(True)
     else:
         fchooser.destroy()

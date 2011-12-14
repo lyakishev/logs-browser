@@ -353,21 +353,21 @@ class FileServersModel(ServersModel):
     def fill_tree(self):
         clear_source_formats(self.stand)
         self.treestore.clear()
-        frac = 1. / len(self.dirs)
-        for n, dir_ in enumerate(self.dirs):
+        self.progress.begin(len(self.dirs))
+        for dir_ in self.dirs:
             self.progress.set_text("%s" % dir_)
-            self.add_nodes(dir_)
-            if not (self.signals['stop'] or self.signals['break']):
+            try:
+                self.progress.execute(self.add_nodes, lambda: None, dir_)
+            except (self.progress.StopException, self.progress.BreakException):
+                pass
+            else:
                 self.connect(dir_)
                 try:
                     self.fill_dir(dir_)
                 except StopIteration:
                     continue
-            self.progress.set_fraction(frac * (n + 1))
-        self.progress.set_fraction(0)
-        self.progress.set_text("")
-        self.signals['stop'] = False
-        self.signals['break'] = False
+            self.progress.add_frac()
+        self.progress.end()
 
     def connect(self, dir_):
         root = self.split_path(dir_)[0]
@@ -395,7 +395,7 @@ class FileServersModel(ServersModel):
             self.treestore.remove(it)
 
     def fill_node(self, path):
-        self.progress.set_fraction(0)
+        self.progress.begin(0)
         self.progress.set_text("Fill node...")
         iter_ = self.treestore.get_iter(path)
         if self.treestore.get_value(iter_, 3) != 'f':
@@ -450,7 +450,7 @@ class FileServersModel(ServersModel):
                             self.fill_dir(d)
                     else:
                         self.fill_dir(it_path)
-        self.progress.set_text("")
+        self.progress.end()
 
     def file_callback(self, name, parent, ext_parent):
         parent_ = self.get_iter_by_path(ext_parent, True) or parent

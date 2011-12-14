@@ -24,9 +24,10 @@ from logslist import LogsListWindow
 
 
 class LogsNotebook(gtk.Notebook):
-    def __init__(self, tree, parent_sens):
+    def __init__(self, tree, progress, parent_sens):
         super(LogsNotebook, self).__init__()
         self.loaders = {}
+        self.progress = progress
         self.tree = tree
         act_box = gtk.HBox()
         add_btn = gtk.Button()
