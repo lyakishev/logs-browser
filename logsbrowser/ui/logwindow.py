@@ -39,6 +39,7 @@ from utils.xmlmanagers import SyntaxManager
 from utils.pxml import prettify_xml
 from dialogs import save_dialog
 from itertools import groupby, chain
+from filedialogs import save_file_dialog
 
 class Info(gtk.HBox):
     def __init__(self, next_, prev_):
@@ -223,18 +224,8 @@ class LogWindow:
         self.log_text.highlight(self.highlighter.get_syntax())
 
     def save_to_file(self, *args):
-        fchooser = gtk.FileChooserDialog("Save logs to file...", None,
-            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-        fchooser.set_current_name("_".join([os.path.basename(f) for f in
-                                            self.files]))
-        response = fchooser.run()
-        if response == gtk.RESPONSE_OK:
-            path = fchooser.get_filename()
-            f = open(path.decode('utf8'), "w")
-            f.write(self.log_text.get_text())
-            f.close()
-        fchooser.destroy()
+        name = "_".join([os.path.basename(f) for f in self.files])
+        save_file_dialog({name: self.log_text.get_text})
 
     def open_file(self, *args):
         for f in self.files:

@@ -114,7 +114,7 @@ class AggError:
     info = 'INFORMATION'
 
     def __init__(self):
-        self.type_ = '?'
+        self.type_ = ""
 
     def step(self, value):
         if value == self.error:
