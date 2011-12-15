@@ -165,7 +165,8 @@ class LogWindow:
         try:
             self.set_log()
         except DBException as e:
-            merror(str(e))
+            if e.message != "interrupted":
+                merror(str(e))
             self.popup.destroy()
         else:
             self.fill_highlight_combo()
@@ -264,7 +265,8 @@ class LogWindow:
         try:
             self.set_log()
         except DBException as e:
-            merror(str(e))
+            if e.message != "interrupted":
+                merror(str(e))
             self.selection.select_path(int(path))
             self.view.scroll_to_cell(int(path))
             self.iter_ = self.model.get_iter_from_string(path)
@@ -285,7 +287,8 @@ class LogWindow:
             try:
                 self.set_log()
             except DBException as e:
-                merror(str(e))
+                if e.message != "interrupted":
+                    merror(str(e))
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))
                 self.iter_ = self.model.get_iter_from_string(path)
