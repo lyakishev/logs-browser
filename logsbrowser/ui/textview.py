@@ -7,6 +7,7 @@ class TextView(gtk.TextView):
     def __init__(self, *args, **kw):
         gtk.TextView.__init__(self, *args, **kw)
         self.txt_buff = self.get_buffer()
+        self.txt_iter = []
 
     def clear(self):
         self.txt_buff.delete(self.txt_buff.get_start_iter(),
@@ -22,6 +23,13 @@ class TextView(gtk.TextView):
         clipboard.set_text(self.get_text())
 
     def write_from_iterable(self, text_iterable):
+        self.txt_iter = []
+        self.clear()
+        for text in text_iterable:
+            self.txt_buff.insert_at_cursor(text)
+            self.txt_iter.append(text)
+
+    def write_from_iterable_not_change_txt_iter(self, text_iterable):
         self.clear()
         for text in text_iterable:
             self.txt_buff.insert_at_cursor(text)
@@ -230,16 +238,17 @@ class SearchTextView(TextView):
 class PluginTextView(TextView):
     def __init__(self):
         TextView.__init__(self)
-        self.text = ""
 
+#    def store(self):
+#        self.text = bz2.compress(self.get_text())
     def transform(self, transformation):
-        text = self.get_text()
         self.txt_buff.set_text(transformation(text))
-        self.text = bz2.compress(text)
+
+    def transform_iter(self, transformation):
+        self.write_from_iterable_not_change_txt_iter(transformation(self.txt_iter))
 
     def restore(self):
-        self.txt_buff.set_text(bz2.decompress(self.text))
-
+        self.write_from_iterable_not_change_txt_iter(self.txt_iter)
 
 class SearchHighlightTextView(SearchTextView, HighlightTextView, PluginTextView):
     def __init__(self, *args, **kw):

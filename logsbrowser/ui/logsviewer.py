@@ -34,7 +34,7 @@ from statusicon import StatusIcon
 import config
 #import utils.profiler as profiler
 from process import process, mp_process
-from db.engine import close_conn
+from db.engine import close_conn, interrupt, DBException
 from operator import setitem
 import os
 import subprocess
@@ -99,11 +99,15 @@ class LogsViewer:
         self.show_button.connect("clicked", self.show_logs)
         self.stop_all_btn = gtk.Button('Stop')
         self.stop_all_btn.connect('clicked',
-                            lambda btn: setitem(self.signals,'stop',True))
+                            lambda btn: self.with_db_interrupt(setitem,
+                                                          self.signals,
+                                                          'stop',True))
         self.stop_all_btn.set_sensitive(False)
         self.break_btn = gtk.Button('Break')
         self.break_btn.connect('clicked',
-                            lambda btn: setitem(self.signals,'break',True))
+                            lambda btn: self.with_db_interrupt(setitem,
+                                                          self.signals,
+                                                          'break',True))
         self.break_btn.set_sensitive(False)
 
         main_box = gtk.HPaned()
@@ -165,6 +169,10 @@ class LogsViewer:
         menu_box.pack_start(main_box)
         self.root.add(menu_box)
         self.root.show_all()
+
+    def with_db_interrupt(self, action, *args):
+        action(*args)
+        interrupt()
 
     def edit_config(self, action):
         name = action.get_name()

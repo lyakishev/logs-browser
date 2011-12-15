@@ -122,6 +122,10 @@ def prettify_xml(xml, indent="    ", sep=os.linesep):
     else:
         return "".join(x[0] for x in parts)
 
+def prettify(text_iter, indent="    ", sep=os.linesep):
+    for text in text_iter:
+        yield prettify_xml("%s\n\n" % text.rstrip(), indent, sep)
+
 if __name__ == "__main__":
     import sys
     print prettify_xml(sys.stdin.read())

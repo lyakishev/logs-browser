@@ -133,7 +133,8 @@ class LogList(object):
             try:
                 desc, rows = db.execute(sql)
             except db.DBException as e:
-                merror(str(e))
+                if e.message != "interrupted":
+                    merror(str(e))
                 rows = None
             else:
                 self.words_hl = words_hl
@@ -390,12 +391,12 @@ class LogsListWindow(gtk.Frame):
         self.log_list.change_name(name)
 
     def fill(self, *args):
-        self.exec_sens(True)
+        self.exec_sens(False)
         self.filter_logs.unselect()
         self.log_list.execute(self.loader.get_query(),
                               self.loader.get_from(),
                               self.loader.get_auto_lid())
-        self.exec_sens(False)
+        self.exec_sens(True)
 
     def cancel(self, *args):
         db.interrupt()
@@ -417,7 +418,7 @@ class LogsListWindow(gtk.Frame):
 
     def show_log_window(self, *args):
         if self.log_list.model:
-            self.exec_sens(True)
+            self.exec_sens(False)
             view = self.log_list.view
             selection = view.get_selection()
             (model, pathlist) = selection.get_selected_rows()
@@ -427,19 +428,21 @@ class LogsListWindow(gtk.Frame):
                         SeveralLogsWindow(self.log_list,
                                           self.log_list.model.get_iter(pathlist[0]),
                                           selection, self.exec_sens,
-                                          self.log_list.words_hl)
+                                          self.log_list.words_hl,
+                                          self.ntb.progress)
                     else:
                         selection.set_mode(gtk.SELECTION_SINGLE)
                         LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                                    selection, self.exec_sens, self.log_list.words_hl)
+                                    selection, self.exec_sens,
+                                    self.log_list.words_hl, self.ntb.progress)
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
             except ValueError:
                 selection.set_mode(gtk.SELECTION_MULTIPLE)
-            self.exec_sens(False)
+            self.exec_sens(True)
 
     def exec_sens(self, start):
-        self.break_btn.set_sensitive(start)
-        self.ntb.set_sens((not start))
+        self.break_btn.set_sensitive((not start))
+        self.ntb.set_sens(start)
 
     def text_grab_focus(self, *args):
         self.filter_logs.txt.grab_focus()

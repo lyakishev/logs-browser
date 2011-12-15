@@ -355,9 +355,8 @@ class FileServersModel(ServersModel):
         self.treestore.clear()
         self.progress.begin(len(self.dirs))
         for dir_ in self.dirs:
-            self.progress.set_text("%s" % dir_)
             try:
-                self.progress.execute(self.add_nodes, lambda: None, dir_)
+                self.progress.execute(self.add_nodes, [lambda: None], dir_, dir_)
             except (self.progress.StopException, self.progress.BreakException):
                 pass
             else:

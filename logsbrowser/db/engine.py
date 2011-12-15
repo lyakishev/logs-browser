@@ -107,7 +107,10 @@ def get_log(rows, table):
     sql = """select log
                  from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
     cur = _dbconn.cursor()
-    cur.execute(sql)
+    try:
+        cur.execute(sql)
+    except DBException:
+        return []
     return (r[0] for r in cur)
 
 @time_it
