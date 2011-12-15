@@ -176,12 +176,10 @@ class LogList(object):
                 name_parts.append(bad_chars.sub('-', name))
         pathname = '_'.join(name_parts)
         path, ext = os.path.splitext(pathname)
-        if ext:
+        if ext in ('.txt', '.log'):
             return pathname
         else:
             return "%s.log" % pathname
-
-
 
     def get_row_msg_action(self, path):
         row = self.model[path]

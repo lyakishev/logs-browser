@@ -109,7 +109,7 @@ class LogsViewer:
         main_box = gtk.HPaned()
         control_box = gtk.VBox()
 
-        self.progressbar = ProgressBar(self.signals)
+        self.progressbar = ProgressBar(self.signals, self.stop_break_sens)
 
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
                                      self.signals, self.root)
@@ -245,12 +245,14 @@ class LogsViewer:
         if self.signals['stop'] or self.signals['break']:
             e_stop.set()
 
+    def stop_break_sens(self, val):
+        self.break_btn.set_sensitive(val)
+        self.stop_all_btn.set_sensitive(val)
+
     #@profiler.time_it
     def show_logs(self, *args):
-        self.break_btn.set_sensitive(True)
-        self.stop_all_btn.set_sensitive(True)
-        self.browser.set_sens(False)
         sources = self.source_tree.get_log_sources()
+        self.browser.set_sens(False)
         if sources[0] or sources[1]:
             logw, loglist = self.prepare_loglist()
             self.progressbar.begin(len(sources[0]+sources[1])+1)
@@ -264,16 +266,11 @@ class LogsViewer:
                 mp_process(loglist.table, sources, dates, self.mpcallback)
             if self.signals['break']:
                 loglist.clear()
-                self.progressbar.end()
             else:
-                self.break_btn.set_sensitive(False)
-                self.stop_all_btn.set_sensitive(False)
                 self.progressbar.set_fraction(1 - self.progressbar.dfrac)
                 self.progressbar.set_text("Executing query...")
                 logw.fill()
                 self.progressbar.set_fraction(1.0)
                 self.progressbar.set_text("Complete")
-        else:
-            self.break_btn.set_sensitive(False)
-            self.stop_all_btn.set_sensitive(False)
+        self.progressbar.end()
         self.browser.set_sens(True)
