@@ -231,7 +231,9 @@
 	    <!--<folder>C:\Users\ALyakishev\share</folder>-->
 	    <!--<folder>/home/user/test</folder>-->
         </filelogs>
-        <evlogs />
+        <evlogs>
+		<source server="localhost">Application</source>
+        </evlogs>
     </stand>
     <stand name="AutoBuild">
         <filelogs>

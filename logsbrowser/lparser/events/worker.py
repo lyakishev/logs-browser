@@ -83,7 +83,7 @@ def log_for_insert(log):
             to_unicode(msg))
 
 
-def evlogworker(dates, server, logtype, funcs=None):
+def evlogworker(dates, logtype, server, funcs=None):
     try:
         hand = win32evtlog.OpenEventLog(server, logtype)
     except pywintypes.error:
