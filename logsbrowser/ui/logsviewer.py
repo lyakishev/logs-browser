@@ -41,6 +41,7 @@ import subprocess
 from utils.monitor import ConfigMonitor
 import webbrowser
 from progressbar import ProgressBar
+from sens_context import Sensitive
 try:
     from imp import reload
 except ImportError:
@@ -260,25 +261,24 @@ class LogsViewer:
     #@profiler.time_it
     def show_logs(self, *args):
         sources = self.source_tree.get_log_sources()
-        self.browser.set_sens(False)
-        if sources[0] or sources[1]:
-            logw, loglist = self.prepare_loglist()
-            self.progressbar.begin(len(sources[0]+sources[1])+1)
-            dates = (self.date_filter.get_active() and
-                     self.date_filter.get_dates or
-                     (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
-            if not config.MULTIPROCESS:
-                process(loglist.table, sources, dates, self.callback)
-            else:
-                self.progressbar.set_text("Working...")
-                mp_process(loglist.table, sources, dates, self.mpcallback)
-            if self.signals['break']:
-                loglist.clear()
-            else:
-                self.progressbar.set_fraction(1 - self.progressbar.dfrac)
-                self.progressbar.set_text("Executing query...")
-                logw.fill()
-                self.progressbar.set_fraction(1.0)
-                self.progressbar.set_text("Complete")
-        self.progressbar.end()
-        self.browser.set_sens(True)
+        with Sensitive(self.browser.set_sens): #with
+            if sources[0] or sources[1]:
+                logw, loglist = self.prepare_loglist()
+                self.progressbar.begin(len(sources[0]+sources[1])+1)
+                dates = (self.date_filter.get_active() and
+                         self.date_filter.get_dates or
+                         (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
+                if not config.MULTIPROCESS:
+                    process(loglist.table, sources, dates, self.callback)
+                else:
+                    self.progressbar.set_text("Working...")
+                    mp_process(loglist.table, sources, dates, self.mpcallback)
+                if self.signals['break']:
+                    loglist.clear()
+                else:
+                    self.progressbar.set_fraction(1 - self.progressbar.dfrac)
+                    self.progressbar.set_text("Executing query...")
+                    logw.fill()
+                    self.progressbar.set_fraction(1.0)
+                    self.progressbar.set_text("Complete")
+            self.progressbar.end()

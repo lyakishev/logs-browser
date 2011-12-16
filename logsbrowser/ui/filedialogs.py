@@ -1,5 +1,6 @@
 import gtk
 from zipfile import ZipFile, ZIP_DEFLATED
+from sens_context import Sensitive
 import os
 
 class ToggleEntryWidget(gtk.HBox):
@@ -141,38 +142,37 @@ def save_files_to_dir_dialog(name_action, sens, progress):
         zipsizebox.sizebox.setup_actions(undo_files)
         zipsizebox.zipbox.setup_actions(path, undo_files)
         fchooser.destroy()
-        sens(False)
-        try:
-            progress.begin(len(name_action))
-            for name, action in name_action.iteritems():
-                try:
-                    progress.set_text("Saving %s" % name)
-                    fullpath = os.path.join(path, name)
-                    f = open(fullpath, 'w')
+        with Sensitive(sens):   #with sens
+            try:
+                progress.begin(len(name_action))
+                for name, action in name_action.iteritems():
                     try:
-                        progress.execute(f.writelines, [f.close, lambda: os.remove(fullpath)],
-                                                    "Saving %s" % name, action())
-                    finally:
-                        f.close()
-                    undo_files.add(fullpath)
-                    progress.execute(zipsizebox.sizebox.do_actions,
-                                    [zipsizebox.sizebox.undo], "Zipping %s" % name, fullpath)
-                    progress.execute(zipsizebox.sizebox.teardown_actions,
-                                            [lambda: None], "")
-                    progress.execute(zipsizebox.zipbox.do_actions,
-                                        [zipsizebox.zipbox.undo], "Zipping %s" % name,
-                                        fullpath, name)
-                    progress.add_frac()
-                except progress.StopException:
-                    break
-        except progress.BreakException:
-            zipsizebox.zipbox.teardown_actions()
-            for path in undo_files:
-                os.remove(path)
-        finally:
-            zipsizebox.zipbox.teardown_actions()
-            progress.end()
-        sens(True)
+                        progress.set_text("Saving %s" % name)
+                        fullpath = os.path.join(path, name)
+                        f = open(fullpath, 'w')
+                        try:
+                            progress.execute(f.writelines, [f.close, lambda: os.remove(fullpath)],
+                                                        "Saving %s" % name, action())
+                        finally:
+                            f.close()
+                        undo_files.add(fullpath)
+                        progress.execute(zipsizebox.sizebox.do_actions,
+                                        [zipsizebox.sizebox.undo], "Zipping %s" % name, fullpath)
+                        progress.execute(zipsizebox.sizebox.teardown_actions,
+                                                [lambda: None], "")
+                        progress.execute(zipsizebox.zipbox.do_actions,
+                                            [zipsizebox.zipbox.undo], "Zipping %s" % name,
+                                            fullpath, name)
+                        progress.add_frac()
+                    except progress.StopException:
+                        break
+            except progress.BreakException:
+                zipsizebox.zipbox.teardown_actions()
+                for path in undo_files:
+                    os.remove(path)
+            finally:
+                zipsizebox.zipbox.teardown_actions()
+                progress.end()
     else:
         fchooser.destroy()
 
@@ -190,25 +190,24 @@ def save_file_dialog(name_action, sens, progress):
         undo_files = set()
         sizebox.setup_actions(undo_files)
         fchooser.destroy()
-        sens(False)
-        try:
-            progress.begin(0)
-            progress.set_text("Saving %s" % name)
-            path = path.decode('utf8')
-            f = open(path, 'w')
+        with Sensitive(sens):  # with sens
             try:
-                progress.execute(f.writelines, [f.close, lambda: os.remove(path)],
-                                      "Saving %s" % name, text_action())
+                progress.begin(0)
+                progress.set_text("Saving %s" % name)
+                path = path.decode('utf8')
+                f = open(path, 'w')
+                try:
+                    progress.execute(f.writelines, [f.close, lambda: os.remove(path)],
+                                          "Saving %s" % name, text_action())
+                finally:
+                    f.close()
+                undo_files.add(path)
+                progress.execute(sizebox.do_actions, [sizebox.undo], "Zipping %s" % name, path)
+                progress.execute(sizebox.teardown_actions, [lambda: None], "")
+            except (progress.BreakException, progress.StopException):
+                pass
             finally:
-                f.close()
-            undo_files.add(path)
-            progress.execute(sizebox.do_actions, [sizebox.undo], "Zipping %s" % name, path)
-            progress.execute(sizebox.teardown_actions, [lambda: None], "")
-        except (progress.BreakException, progress.StopException):
-            pass
-        finally:
-            progress.end()
-        sens(True)
+                progress.end()
     else:
         fchooser.destroy()
 
