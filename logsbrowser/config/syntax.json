@@ -1,11 +1,11 @@
 {
     "xml": [
-        "f#ddd: <.+?> f#00f,s#b: <[A-Za-z0-9:]+ f#ddd:</\\w+> ", 
+        "f#ddd: <.+?> f#00f,s#b: <[A-Za-z_0-9:]+ f#ddd:</\\w+> ", 
         "s#i,f#00f: <.+?(?<!\"true\" )/> f#ddd: <|> f#0f0: \\d+; ", 
         "f#f00: (?i)(?<=>)\\s*[a-zA-Z0-9_#-:]+\\s*(?=<)", 
         "f#f00: nil ", 
         "s#10b: \\[|\\]", 
-        "f#ddd: d2p1:"
+        "f#ddd: d\\dp1:"
     ], 
     "log4j_xml": [
         "s#b: (?s)<log4j:message>.+?</log4j:message> ", 

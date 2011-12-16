@@ -21,7 +21,7 @@ import functions
 from datetime import datetime
 from utils.profiler import time_it
 from utils.ranges import ranges
-from utils.pxml import prettify_xml
+from utils.pretty import prettify
 import time
 
 
@@ -34,7 +34,7 @@ _dbconn.execute("PRAGMA PAGE_SIZE = 4096;")
 _dbconn.create_function("regexp", 2, functions.regexp)
 _dbconn.create_function("match", 2, functions.rmatch)
 _dbconn.create_function("regex", 3, functions.regex)
-_dbconn.create_function("pretty", 2, prettify_xml)
+_dbconn.create_function("pretty", 2, prettify)
 _dbconn.create_function("group_logname", 1, functions.group_logname)
 _dbconn.create_function("iregexp", 2, functions.iregexp)
 _dbconn.create_function("not_iregexp", 2, functions.not_iregexp)
@@ -45,7 +45,6 @@ _dbconn.create_function("not_contains", 2, functions.not_contains)
 _dbconn.create_function("rmatch", 2, functions.rmatch)
 _dbconn.create_function("intersct", 2, functions.intersct)
 
-
 def register_agg(name, nargs, object_):
     _dbconn.create_aggregate(name, nargs, object_)
     functions.aggregate_functions.append(name)
@@ -53,7 +52,6 @@ def register_agg(name, nargs, object_):
 register_agg("error", 1, functions.AggError)
 register_agg("rows", 1, functions.RowIDsList)
 register_agg("color_agg", 1, functions.ColorAgg)
-    
 
 DBException = sqlite3.OperationalError
 
@@ -68,31 +66,30 @@ def interrupt():
 
 @time_it
 def insert_many(table, iter_):
-    _dbconn.executemany("insert into %s values (last_insert_rowid()+1,?,?,?,?,?,?,?);" %
+    _dbconn.executemany("insert into %s values (NULL,?,?,?,?,?,?,?);" %
                                     table, iter_)
     _dbconn.commit()
 
 def create_new_table(table, index=True):
     if index:
-        sql = """create virtual table %s using fts4(lid INTEGER PRIMARY KEY,
+        sql = """create virtual table %s using fts4(lid INTEGER PRIMARY KEY AUTOINCREMENT,
                  date text, computer text,
                  logname text,
                  type text, source text, event integer, log text);""" % table
         _dbconn.execute(sql)
     else:
-        sql = """create table %s (lid INTEGER PRIMARY KEY,
+        sql = """create table %s (lid INTEGER PRIMARY KEY AUTOINCREMENT,
                  date text, computer text, logname text,
                  type text, source text, event integer, log text);""" % table
         _dbconn.execute(sql)
-        sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
-        _dbconn.execute(sql_index)
+    sql_index = """create index %s_index on %s (logname, computer);""" % (table, table)
+    _dbconn.execute(sql_index)
 
 
 def drop(table):
     _dbconn.execute("drop table if exists %s;" % table)
     _dbconn.execute("drop index if exists %s_index;" % table)
 
-@time_it
 def get_msg(rows, table):
     sql = """select date, logname, type, source, log
                  from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
@@ -105,6 +102,16 @@ def get_msg(rows, table):
     sources = (r[3] for r in result)
     msg = (r[4] for r in result)
     return (dates, lognames, types, sources, msg)
+
+def get_log(rows, table):
+    sql = """select log
+                 from %s where lid in (%s) order by date asc, lid desc;""" % (table, rows)
+    cur = _dbconn.cursor()
+    try:
+        cur.execute(sql)
+    except DBException:
+        return []
+    return (r[0] for r in cur)
 
 @time_it
 def execute(sql):

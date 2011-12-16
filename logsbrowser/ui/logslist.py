@@ -38,10 +38,14 @@ from itertools import cycle
 import config
 from cellrenderercolors import CellRendererColors
 from string import Template
-#from utils.profiler import time_it, profile
+from utils.profiler import time_it, profile
 from utils.colors import ColorError
 from panedbox import PanedBox
 from toolbar import Toolbar
+import re
+from filedialogs import save_file_dialog, save_files_to_dir_dialog
+
+bad_chars = re.compile('[?|:*"><]')
 
 def callback():
     while gtk.events_pending():
@@ -49,26 +53,8 @@ def callback():
 
 db.set_callback(callback)
 
-
 class FTemplate(Template):
     delimiter = '#'
-
-class Row(object):
-    def __init__(self, name, lids, from_):
-        self.lids = lids
-        self.from_ = from_
-
-    @property
-    def name(self):
-        min_dates, max_dates, lognames, sources = db.get_msg_info(self.lids, self.from_)
-        name = []
-        for n in xrange(len(min_dates)):
-            name.append("_".join([min_dates[n].strftime("%Y%m%d%H%M%S"), os.path.basename(sources[n])]))
-        return "__".join(name)
-
-    @property
-    def text(self):
-        return "\n\n".join([m.strip() for m in db.get_msg(self.lids, self.from_)[4]])
 
 class LogList(object):
     
@@ -147,7 +133,8 @@ class LogList(object):
             try:
                 desc, rows = db.execute(sql)
             except db.DBException as e:
-                merror(str(e))
+                if e.message != "interrupted":
+                    merror(str(e))
                 rows = None
             else:
                 self.words_hl = words_hl
@@ -181,10 +168,23 @@ class LogList(object):
                 self.view.set_model(self.model)
             self.view.thaw_child_notify()
 
-    def get_row(self, path):
+    def concat_row_vals(self, row):
+        name_parts = []
+        for n, name in enumerate(row):
+            if name and n != self.rflw and n not in self.bgcolorsn:
+                if os.sep in name:
+                    name = os.path.basename(name)
+                name_parts.append(bad_chars.sub('-', name))
+        pathname = '_'.join(name_parts)
+        path, ext = os.path.splitext(pathname)
+        if ext in ('.txt', '.log'):
+            return pathname
+        else:
+            return "%s.log" % pathname
+
+    def get_row_msg_action(self, path):
         row = self.model[path]
-        return Row('_'.join([r for n,r in enumerate(row) if n!=self.rflw and n not in self.bgcolorsn]),
-                                row[self.rflw], self.from_)
+        return self.concat_row_vals(row), lambda: db.get_log(row[self.rflw], self.from_)
 
     def build_view(self, args):
         self.bgcolorsn = []
@@ -328,7 +328,7 @@ class LogsListWindow(gtk.Frame):
         toolbar.append_sep()
         lwin_btn = toolbar.append_button(gtk.STOCK_FILE, self.show_log_window,
                               "Show Log(s)")
-        toolbar.append_button(gtk.STOCK_SAVE, self.save_logs,
+        slog_btn = toolbar.append_button(gtk.STOCK_SAVE, self.save_logs,
                               "Save Log(s)")
         toolbar.append_sep()
         grid_btn = toolbar.append_togglebutton(gtk.STOCK_UNDERLINE, self.show_gridlines,
@@ -339,7 +339,7 @@ class LogsListWindow(gtk.Frame):
         toolbar.append_button(gtk.STOCK_GO_DOWN, lambda btn: self.log_list.down_color())
         toolbar.append_sep()
 
-        toolbar.append_button(gtk.STOCK_COPY, self.csv_export,
+        exp_btn = toolbar.append_button(gtk.STOCK_COPY, self.csv_export,
                               "Export...")
 
         self.qm = QueriesManager(config.QUERIES_FILE)
@@ -355,7 +355,7 @@ class LogsListWindow(gtk.Frame):
         self.show_all()
         self.break_btn.set_sensitive(False)
 
-        self.sens_list = [exec_btn, lwin_btn] + self.filter_logs.sens_list
+        self.sens_list = [exec_btn, lwin_btn, slog_btn, exp_btn] + self.filter_logs.sens_list
         self.ntb = ntb
 
         if config.GRID_LINES:
@@ -365,33 +365,14 @@ class LogsListWindow(gtk.Frame):
     def get_loader(self):
         return self.loader
 
+    @time_it
     def save_logs(self, *args):
-        selected = self.get_selected()
-        if len(selected) > 1:
-            fchooser = gtk.FileChooserDialog("Save logs...", None,
-                gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,
-                gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-            response = fchooser.run()
-            if response == gtk.RESPONSE_OK:
-                path = fchooser.get_filename()
-                for l in selected:
-                    with open(os.path.join(path, l.name), 'w') as f:
-                        f.write(l.text)
-            fchooser.destroy()
+        actions = self.get_selected()
+        if len(actions) > 1:
+            save_files_to_dir_dialog(actions, self.ntb.set_sens, self.ntb.progress)
         else:
-            log = selected[0]
-            print log.name
-            fchooser = gtk.FileChooserDialog("Save logs...", None,
-                gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-                gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-            fchooser.set_current_name(log.name)
-            response = fchooser.run()
-            if response == gtk.RESPONSE_OK:
-                path = fchooser.get_filename()
-                with open(path, 'w') as f:
-                    f.write(log.text)
-            fchooser.destroy()
-
+            save_file_dialog(actions, self.ntb.set_sens, self.ntb.progress)
+        
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,
             gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
@@ -410,12 +391,12 @@ class LogsListWindow(gtk.Frame):
         self.log_list.change_name(name)
 
     def fill(self, *args):
-        self.exec_sens(True)
+        self.exec_sens(False)
         self.filter_logs.unselect()
         self.log_list.execute(self.loader.get_query(),
                               self.loader.get_from(),
                               self.loader.get_auto_lid())
-        self.exec_sens(False)
+        self.exec_sens(True)
 
     def cancel(self, *args):
         db.interrupt()
@@ -433,17 +414,11 @@ class LogsListWindow(gtk.Frame):
         view = self.log_list.view
         selection = view.get_selection()
         (model, pathlist) = selection.get_selected_rows()
-        selected = []
-        for p in pathlist:
-            selected.append(self.log_list.get_row(p))
-        #if not selected:
-        #    for p in all:
-        #        selected.append
-        return selected
+        return dict(map(self.log_list.get_row_msg_action, pathlist))
 
     def show_log_window(self, *args):
         if self.log_list.model:
-            self.exec_sens(True)
+            self.exec_sens(False)
             view = self.log_list.view
             selection = view.get_selection()
             (model, pathlist) = selection.get_selected_rows()
@@ -453,19 +428,21 @@ class LogsListWindow(gtk.Frame):
                         SeveralLogsWindow(self.log_list,
                                           self.log_list.model.get_iter(pathlist[0]),
                                           selection, self.exec_sens,
-                                          self.log_list.words_hl)
+                                          self.log_list.words_hl,
+                                          self.ntb.progress)
                     else:
                         selection.set_mode(gtk.SELECTION_SINGLE)
                         LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                                    selection, self.exec_sens, self.log_list.words_hl)
+                                    selection, self.exec_sens,
+                                    self.log_list.words_hl, self.ntb.progress)
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
             except ValueError:
                 selection.set_mode(gtk.SELECTION_MULTIPLE)
-            self.exec_sens(False)
+            self.exec_sens(True)
 
     def exec_sens(self, start):
-        self.break_btn.set_sensitive(start)
-        self.ntb.set_sens((not start))
+        self.break_btn.set_sensitive((not start))
+        self.ntb.set_sens(start)
 
     def text_grab_focus(self, *args):
         self.filter_logs.txt.grab_focus()

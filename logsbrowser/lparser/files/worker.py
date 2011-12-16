@@ -28,7 +28,7 @@ from collections import deque
 
 def define_type(msg):
     return ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                           else "?")
+                                           else "")
 
 
 def get_start_date(file_, pformat, cdate, pfunc):

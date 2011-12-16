@@ -21,7 +21,6 @@ from colorsys import *
 import sys
 from utils.text import convert_line_ends
 from collections import OrderedDict
-from lxml import etree
 
 aggregate_functions = ['avg', 'count', 'group_concat', 'max', 'min', 'sum', 'total']
 
@@ -114,7 +113,7 @@ class AggError:
     info = 'INFORMATION'
 
     def __init__(self):
-        self.type_ = '?'
+        self.type_ = ""
 
     def step(self, value):
         if value == self.error:

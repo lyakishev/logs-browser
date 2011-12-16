@@ -36,9 +36,11 @@ from textview import SearchHighlightTextView
 from toolbar import Toolbar
 from panedbox import PanedBox
 from utils.xmlmanagers import SyntaxManager
-from utils.pxml import prettify_xml
+from utils.pretty import prettify
 from dialogs import save_dialog
 from itertools import groupby, chain
+from filedialogs import save_file_dialog
+from sens_context import Sensitive
 
 class Info(gtk.HBox):
     def __init__(self, next_, prev_):
@@ -86,7 +88,7 @@ class Info(gtk.HBox):
         return date_
 
 class LogWindow:
-    def __init__(self, loglist, iter_, sel, sens_func, from_table_hl):
+    def __init__(self, loglist, iter_, sel, sens_func, from_table_hl, progress):
         self.from_table_hl = from_table_hl
         self.model = loglist.model
         self.view = loglist.view
@@ -94,6 +96,7 @@ class LogWindow:
         self.selection = sel
         self.sens_func = sens_func
         self.iter_ = iter_
+        self.progress = progress
 
         self.syntax_manager = SyntaxManager(config.SYNTAX_CFG)
 
@@ -163,20 +166,20 @@ class LogWindow:
         try:
             self.set_log()
         except DBException as e:
-            merror(str(e))
+            if e.message != "interrupted":
+                merror(str(e))
             self.popup.destroy()
         else:
             self.fill_highlight_combo()
             self.popup.show_all()
 
     def pretty(self, toggle):
-        self.sens_func(True)
-        if toggle.get_active():
-            self.log_text.transform(prettify_xml)
-        else:
-            self.log_text.restore()
-        self.highlight()
-        self.sens_func(False)
+        with Sensitive(self.sens_func): # with
+            if toggle.get_active():
+                self.log_text.transform_iter(prettify)
+            else:
+                self.log_text.restore()
+            self.highlight()
 
     def fill_highlight_combo(self):
         model = self.syntax.get_model()
@@ -223,38 +226,26 @@ class LogWindow:
         self.log_text.highlight(self.highlighter.get_syntax())
 
     def save_to_file(self, *args):
-        fchooser = gtk.FileChooserDialog("Save logs to file...", None,
-            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
-        fchooser.set_current_name("_".join([os.path.basename(f) for f in
-                                            self.files]))
-        response = fchooser.run()
-        if response == gtk.RESPONSE_OK:
-            path = fchooser.get_filename()
-            f = open(path.decode('utf8'), "w")
-            f.write(self.log_text.get_text())
-            f.close()
-        fchooser.destroy()
+        name = "_".join([os.path.basename(f) for f in self.files])
+        save_file_dialog({name: self.log_text.get_text}, self.sens_func, self.progress)
 
     def open_file(self, *args):
         for f in self.files:
             subprocess.Popen("%s %s" % (config.EXTERNAL_LOG_VIEWER, f))
 
     def set_log(self):
-        self.sens_func(True)
-        self.popup.set_sensitive(False)
-        self.pretty_btn.set_active(False)
-        rows = self.model.get_value(self.iter_, self.loglist.rflw)
-        select = get_msg(rows, self.loglist.from_)
-        self.log_text.write_from_iterable(select[4])
-        self.log_text.highlight(self.highlighter.get_syntax())
-        self.log_text.grab_focus()
-        self.files = set(select[3])
-        date_, logname = self.info_box.set_info(select[0], select[1], select[2], self.files)
-        self.popup.set_title("Log: %s %s" % (logname.replace('\n', ','),
-                                             date_))
-        self.popup.set_sensitive(True)
-        self.sens_func(False)
+        with Sensitive(self.sens_func): # with
+            with Sensitive(self.popup.set_sensitive):
+                self.pretty_btn.set_active(False)
+                rows = self.model.get_value(self.iter_, self.loglist.rflw)
+                select = get_msg(rows, self.loglist.from_)
+                self.log_text.write_from_iterable(select[4])
+                self.log_text.highlight(self.highlighter.get_syntax())
+                self.log_text.grab_focus()
+                self.files = set(select[3])
+                date_, logname = self.info_box.set_info(select[0], select[1], select[2], self.files)
+                self.popup.set_title("Log: %s %s" % (logname.replace('\n', ','),
+                                                     date_))
 
     def set_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
@@ -272,7 +263,8 @@ class LogWindow:
         try:
             self.set_log()
         except DBException as e:
-            merror(str(e))
+            if e.message != "interrupted":
+                merror(str(e))
             self.selection.select_path(int(path))
             self.view.scroll_to_cell(int(path))
             self.iter_ = self.model.get_iter_from_string(path)
@@ -293,7 +285,8 @@ class LogWindow:
             try:
                 self.set_log()
             except DBException as e:
-                merror(str(e))
+                if e.message != "interrupted":
+                    merror(str(e))
                 self.selection.select_path(int(path))
                 self.view.scroll_to_cell(int(path))
                 self.iter_ = self.model.get_iter_from_string(path)
@@ -301,14 +294,17 @@ class LogWindow:
 
 
 class SeveralLogsWindow(LogWindow):
-    def __init__(self, loglist, iter, sel, sens_func, from_table_hl):
-        LogWindow.__init__(self, loglist, iter, sel, sens_func, from_table_hl)
+    def __init__(self, loglist, iter, sel, sens_func, from_table_hl, progress):
+        LogWindow.__init__(self, loglist, iter, sel, sens_func, from_table_hl, progress)
         self.info_box.remove(self.info_box.updown_btns)
 
     def set_log(self):
-        self.sens_func(True)
-        self.popup.set_sensitive(False)
-        self.pretty_btn.set_active(False)
+        with Sensitive(self.sens_func): # with
+            with Sensitive(self.popup.set_sensitive):
+                self.pretty_btn.set_active(False)
+                self.log_text.write_from_iterable(self.logs_iter())
+
+    def logs_iter(self):
         model, pathlist = self.selection.get_selected_rows()
         dates = []
         files_text = []
@@ -333,10 +329,8 @@ class SeveralLogsWindow(LogWindow):
                     self.files.append(f)
                 else:
                     text = msg
-                self.log_text.txt_buff.insert_at_cursor(text)
+                yield text
         self.files = set(self.files)
         self.info_box.set_info(dates, chain.from_iterable(lognames),
                                       chain.from_iterable(types), self.files)
-        self.popup.set_sensitive(True)
-        self.sens_func(False)
 
