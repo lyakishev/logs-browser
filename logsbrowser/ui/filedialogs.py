@@ -8,7 +8,7 @@ class ToggleEntryWidget(gtk.HBox):
         gtk.HBox.__init__(self)
         self.visible_part = gtk.HBox()
         self.check = gtk.CheckButton(label)
-        self.check.connect("toggled", self.show_hide_part)
+        self.handler = self.check.connect("toggled", self.show_hide_part)
         self.visible_part.pack_start(self.check, True, True)
         self.hide_part = gtk.HBox()
         self.value_edit = gtk.Entry()
@@ -83,6 +83,8 @@ class SizeBox(ToggleEntryWidget):
         mb = gtk.Label("MB")
         self.hide_part.pack_start(mb, False, False, 2)
         mb.show()
+        self.hide_part.show()
+        self.check.disconnect(self.handler)
         self.size = None
 
     def setup_actions(self, undo_list):
