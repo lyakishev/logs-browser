@@ -367,10 +367,11 @@ class LogsListWindow(gtk.Frame):
 
     def save_logs(self, *args):
         actions = self.get_selected()
-        if len(actions) > 1:
-            save_files_to_dir_dialog(actions, self.ntb.set_sens, self.ntb.progress)
-        else:
-            save_file_dialog(actions, self.ntb.set_sens, self.ntb.progress)
+        if actions:
+            if len(actions) > 1:
+                save_files_to_dir_dialog(actions, self.ntb.set_sens, self.ntb.progress)
+            else:
+                save_file_dialog(actions, self.ntb.set_sens, self.ntb.progress)
         
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,

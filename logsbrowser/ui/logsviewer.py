@@ -33,7 +33,7 @@ import sys
 from statusicon import StatusIcon
 import config
 #import utils.profiler as profiler
-from process import process, mp_process
+from process import process, mp_process, PROCESSES
 from db.engine import close_conn, interrupt, DBException
 from operator import setitem
 import os
@@ -268,7 +268,7 @@ class LogsViewer:
                 dates = (self.date_filter.get_active() and
                          self.date_filter.get_dates or
                          (datetime.min.isoformat(' '), datetime.max.isoformat(' ')))
-                if not config.MULTIPROCESS:
+                if (PROCESSES == 1) or (not config.MULTIPROCESS):
                     process(loglist.table, sources, dates, self.callback)
                 else:
                     self.progressbar.set_text("Working...")

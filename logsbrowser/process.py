@@ -27,7 +27,7 @@ from threading import Thread
 import time
 from Queue import Empty as qEmpty
 
-PROCESSES = cpu_count()
+PROCESSES = cpu_count() 
 
 #@time_it
 def process(table, sources, dates, callback):
