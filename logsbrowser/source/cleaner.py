@@ -39,10 +39,3 @@ def clear(path):
     name = _repeated_literals.sub(r'\1', name)
     name = _null.sub("", name)
     return (name, ext[1:].lower())
-
-
-if __name__ == "__main__":
-    name = "DEEngine-14012011-full.0.log.log.log"
-    import pdb
-    pdb.set_trace()
-    print clear(name)

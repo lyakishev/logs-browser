@@ -1,7 +1,7 @@
 ﻿queries:
     - name: 'Время, вызов, имя лога, тип'
       add_lid: 1
-      default: 1
+      default: 0
       sql: |
          select strftime('%H:%M:%f',date) as time,
          regex(log, '(?im)call(?:(?:\W*\s+<)|(?:\s+method\s+)|(?:ing:\s+method\s)|(\s))([A-Za-z_.]+)(?(1)(\sargs\[))', 2) as call, 
@@ -10,7 +10,7 @@
 
     - name: 'SelfCare calls'
       add_lid: 1
-      default: 1
+      default: 0
       sql: |
         select strftime('%H:%M:%f',date) as time, regex(log, '(?m)^([A-Za-z_<>.]+) \[\d{4}.\d{2}.\d{2} \d{2}:\d{2}\]', 1) as call, logname, type
         from #this
@@ -61,7 +61,7 @@
 
     - name: 'Время сообщения, имя лога, тип; группировка по дате, логу, типу' 
       add_lid: 1 
-      default: 0
+      default: 1
       sql: |
         select strftime('%H:%M:%f',date), logname, type from #this
         group by date, logname, type
@@ -69,7 +69,7 @@
 
     - name: 'Группировка по идущим подряд именам логa'
       add_lid: 1 
-      default: 1
+      default: 0
       sql: |
         select strftime('%H:%M:%f',min(date)) as ftime, 
         strftime('%H:%M:%f',max(date)) as totime,
@@ -82,7 +82,7 @@
         order by logname_group desc
 
     - name: 'Группировка по именам лога'
-      add_lid: 0
+      add_lid: 1
       default: 0
       sql: |
         select logname, computer
@@ -100,7 +100,7 @@
 
 
     - name: 'Группировка по файлам-источникам'
-      add_lid: 0
+      add_lid: 1
       default: 0
       sql: |
         select source
@@ -116,7 +116,7 @@
 
     - name: 'Ошибки'
       add_lid: 1
-      default: 1
+      default: 0
       sql: |
         select strftime('%H:%M:%f',date), logname, type from #this
         where type = 'ERROR'
@@ -139,6 +139,14 @@ filters:
       default: 0
       rows:
         - {column: "type", color: "red", clause: "ERROR"}
+        - {column: "log", color: "steelblue", clause: ""}
+        - {column: "log", color: "seagreen", clause: ""}
+        - {column: "log", color: "darkorange", clause: "" }
+        - {column: "log", color: "firebrick", clause: "" }
+        - {column: "log", color: "purple", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
+        - {column: "log", color: "#fff", clause: "" }
 
 defaults:
         - column: 'lid'

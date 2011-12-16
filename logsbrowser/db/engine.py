@@ -64,7 +64,6 @@ def set_callback(callback):
 def interrupt():
     _dbconn.interrupt()
 
-@time_it
 def insert_many(table, iter_):
     _dbconn.executemany("insert into %s values (NULL,?,?,?,?,?,?,?);" %
                                     table, iter_)
@@ -113,7 +112,6 @@ def get_log(rows, table):
         return []
     return (r[0] for r in cur)
 
-@time_it
 def execute(sql):
     functions.group_logname.clear()
     cur = _dbconn.cursor()

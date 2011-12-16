@@ -365,7 +365,6 @@ class LogsListWindow(gtk.Frame):
     def get_loader(self):
         return self.loader
 
-    @time_it
     def save_logs(self, *args):
         actions = self.get_selected()
         if len(actions) > 1:
