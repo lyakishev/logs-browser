@@ -21,7 +21,7 @@ import functions
 from datetime import datetime
 from utils.profiler import time_it
 from utils.ranges import ranges
-from utils.pxml import prettify_xml
+from utils.pretty import prettify
 import time
 
 
@@ -34,7 +34,7 @@ _dbconn.execute("PRAGMA PAGE_SIZE = 4096;")
 _dbconn.create_function("regexp", 2, functions.regexp)
 _dbconn.create_function("match", 2, functions.rmatch)
 _dbconn.create_function("regex", 3, functions.regex)
-_dbconn.create_function("pretty", 2, prettify_xml)
+_dbconn.create_function("pretty", 2, prettify)
 _dbconn.create_function("group_logname", 1, functions.group_logname)
 _dbconn.create_function("iregexp", 2, functions.iregexp)
 _dbconn.create_function("not_iregexp", 2, functions.not_iregexp)
