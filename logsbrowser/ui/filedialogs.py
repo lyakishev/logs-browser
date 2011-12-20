@@ -150,7 +150,7 @@ def save_files_to_dir_dialog(name_action, sens, progress):
                 for name, action in name_action.iteritems():
                     try:
                         progress.set_text("Saving %s" % name)
-                        fullpath = os.path.join(path, name)
+                        fullpath = os.path.join(path.decode("utf8"), name.decode("utf8"))
                         f = open(fullpath, 'w')
                         try:
                             progress.execute(f.writelines, [f.close, lambda: os.remove(fullpath)],
