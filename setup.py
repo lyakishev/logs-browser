@@ -6,6 +6,7 @@ if sys.platform == "win32":
     base = "Win32GUI"
 
 version = '2.1.1'
+build_dir = "build/logsbrowser%s" % version
 
 import fileinput
 
@@ -28,7 +29,8 @@ buildOptions = dict(
             packages = ['logsbrowser'],
             path = sys.path+['logsbrowser/'],
             include_files = includefiles,
-            excludes = ["Tkinter", "ttk"]
+            excludes = ["Tkinter", "ttk"],
+            build_exe = build_dir
             )
 
 setup(name='logsbrowser',
@@ -61,4 +63,4 @@ for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace
         print line,
 
 import shutil
-shutil.copy("logsbrowser/LICENSE", "build/exe.win32-2.7/LICENSE")
+shutil.copy("logsbrowser/LICENSE", "%s/LICENSE" % build_dir)
