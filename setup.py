@@ -1,3 +1,5 @@
+import shutil
+import fileinput
 from cx_Freeze import setup, Executable
 import sys
 
@@ -7,7 +9,6 @@ if sys.platform == "win32":
 
 version = '2.0'
 
-import fileinput
 
 for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace=1)):
     if line.startswith("VERSION = "):
@@ -23,13 +24,13 @@ includefiles = [('logsbrowser/config', 'config'),
                 ('gtk_for_build/share', 'share')]
 
 buildOptions = dict(
-            compressed = True,
-            optimize = 2,
-            packages = ['logsbrowser'],
-            path = sys.path+['logsbrowser/'],
-            include_files = includefiles,
-            excludes = ["Tkinter", "ttk"]
-            )
+    compressed=True,
+    optimize=2,
+    packages=['logsbrowser'],
+    path=sys.path+['logsbrowser/'],
+    include_files=includefiles,
+    excludes=["Tkinter", "ttk"]
+)
 
 setup(name='logsbrowser',
       version=version,
@@ -41,15 +42,15 @@ setup(name='logsbrowser',
       url='',
       license='',
       packages=['logsbrowser', 'logsbrowser.db',
-                      'logsbrowser.lparser','logsbrowser.lparser.events',
-                      'logsbrowser.lparser.files',
-                      'logsbrowser.source',
-                      'logsbrowser.ui', 'logsbrowser.utils'],
+                'logsbrowser.lparser', 'logsbrowser.lparser.events',
+                'logsbrowser.lparser.files',
+                'logsbrowser.source',
+                'logsbrowser.ui', 'logsbrowser.utils'],
       requires=['sqlite3', 'hashlib'],
-      options = dict(build_exe = buildOptions),
-      executables=[Executable("logsbrowser/main.py",base=base,
+      options=dict(build_exe=buildOptions),
+      executables=[Executable("logsbrowser/main.py", base=base,
                               targetName="logsbrowser.exe",
-                                copyDependentFiles = True,
+                              copyDependentFiles=True,
                               )]
       )
 
@@ -60,5 +61,4 @@ for n, line in enumerate(fileinput.input('logsbrowser/ui/logsviewer.py', inplace
     else:
         print line,
 
-import shutil
 shutil.copy("logsbrowser/LICENSE", "build/exe.win32-2.7/LICENSE")
