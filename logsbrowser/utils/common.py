@@ -17,13 +17,16 @@
 
 import time
 
-NON_PRINTABLE = "\x00"#.join(chr(i) for i in range(8))
+NON_PRINTABLE = "\x00"  # .join(chr(i) for i in range(8))
+
 
 def strip_non_printable(msg):
     return msg.translate(None, NON_PRINTABLE)
-    
+
+
 def isoformat(t):
     return time.strftime('%Y-%m-%d %H:%M:%S', t)
+
 
 def to_unicode(msg):
     try:
@@ -31,9 +34,9 @@ def to_unicode(msg):
     except UnicodeDecodeError:
         return msg.decode('cp1251', 'ignore')
 
+
 def from_unicode(msg):
     try:
         return msg.encode('cp1251')
     except UnicodeEncodeError:
         return msg.encode('utf-8')
-

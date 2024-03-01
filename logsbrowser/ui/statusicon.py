@@ -15,17 +15,17 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from utils.net_time import get_true_time
+from multiprocessing import Value
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
 try:
     from utils.mouse_click import DetectClick
 except ImportError:
     pass
-from multiprocessing import Value
-from utils.net_time import get_true_time
 
 
 class StatusIcon:

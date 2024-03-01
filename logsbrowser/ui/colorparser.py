@@ -15,14 +15,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from itertools import permutations
+import pango
+import re
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-import re
-import pango
-from itertools import permutations
 
 cparser = re.compile(r"(#[a-fA-F0-9]{3,}):")
 
@@ -30,17 +30,17 @@ BACKGROUND = "(?P<bg>b#[A-Fa-f0-9]{3,})"
 FOREGROUND = "(?P<fg>f#[A-Fa-f0-9]{3,})"
 FONT_STYLE = "s#(?P<size>\d{,2})(?P<style>(bi|ib|b|i))?"
 STYLE_VARIANTS = list(permutations([BACKGROUND, FOREGROUND, FONT_STYLE], 3)) +\
-          list(permutations([BACKGROUND, FOREGROUND, FONT_STYLE], 2)) +\
-          list(permutations([BACKGROUND, FOREGROUND, FONT_STYLE], 1))
+    list(permutations([BACKGROUND, FOREGROUND, FONT_STYLE], 2)) +\
+    list(permutations([BACKGROUND, FOREGROUND, FONT_STYLE], 1))
 STYLE_RE = "(" +\
-           "|".join(\
-                [("(" + ",".join(e) + ")").\
-                replace("bg", "bg%d" % n).\
-                replace("fg", "fg%d" % n).\
-                replace("size", "size%d" % n).\
-                replace("style", "style%d" % n)\
+           "|".join(
+               [("(" + ",".join(e) + ")").
+                replace("bg", "bg%d" % n).
+                replace("fg", "fg%d" % n).
+                replace("size", "size%d" % n).
+                replace("style", "style%d" % n)
                 for n, e in enumerate(STYLE_VARIANTS)]) +\
-            "):"
+    "):"
 STYLE = re.compile(STYLE_RE)
 
 
@@ -50,8 +50,8 @@ class ColorParser(gtk.HBox):
 
         self.model = model
         self.view = view
-        #self.filter = self.model.get_model().filter_new()
-        #self.filter.set_visible_column(7)
+        # self.filter = self.model.get_model().filter_new()
+        # self.filter.set_visible_column(7)
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -77,16 +77,16 @@ class ColorParser(gtk.HBox):
         self.buf.connect_after("insert-text", self.tags_text)
         self.text.connect_after("backspace", self.backspace)
 
-        #self.__init_tags_filter()
+        # self.__init_tags_filter()
 
-        #self.tags_ranges = []
-        #self.parse_and_highlight()
+        # self.tags_ranges = []
+        # self.parse_and_highlight()
 
     def __init_tags_filter(self):
         def insert_with_tags(txt, tag1, tag2):
             self.buf.insert_with_tags_by_name(self.buf.get_end_iter(), txt,
-                                                                       tag1,
-                                                                       tag2)
+                                              tag1,
+                                              tag2)
             self.buf.insert(self.buf.get_end_iter(), '  ')
 
         self.buf.create_tag('#f00', foreground='#f00')
@@ -97,10 +97,10 @@ class ColorParser(gtk.HBox):
         self.bold_tag = self.buf.create_tag("bold", weight=pango.WEIGHT_BOLD)
 
         self.white_tag = self.buf.create_tag("#fff", foreground="#000",
-                                                     style=pango.STYLE_ITALIC)
+                                             style=pango.STYLE_ITALIC)
 
         self.error_tag = self.buf.create_tag("error", style=pango.STYLE_ITALIC,
-                                                      foreground="#f00")
+                                             foreground="#f00")
 
         insert_with_tags("#f00:", '#f00', 'bold')
         insert_with_tags("#0f0:", '#0f0', 'bold')
@@ -181,8 +181,8 @@ class ColorParser(gtk.HBox):
                 col_end = self.buf.get_iter_at_offset(in_col[1])
                 self.buf.delete(col_start, col_end)
                 self.buf.insert(col_start, str(col) + ": ")
-                new_end = self.buf.get_iter_at_offset(in_col[0] +\
-                                                      len(str(col)\
+                new_end = self.buf.get_iter_at_offset(in_col[0] +
+                                                      len(str(col)
                                                       + ": "))
                 self.buf.place_cursor(new_end)
             else:
@@ -232,16 +232,16 @@ class LogColorParser(gtk.HBox):
             if not tag:
                 if bg_fg == "bg":
                     tag = self.buf.create_tag(style_dict[key],
-                                  background=col)
+                                              background=col)
                 elif bg_fg == "fg":
                     tag = self.buf.create_tag(style_dict[key],
-                                  foreground=col)
+                                              foreground=col)
             self.buf.apply_tag(tag, start_iter, end_iter)
             bgfgranges = self.tags_ranges.get(trange, {})
             bgfgranges[bg_fg[:1]] = (match.start(key), match.end(key))
             self.tags_ranges[trange] = bgfgranges
             self.col_str[trange].append(style_dict[key])
-            
+
         self.tags_ranges = {}
         self.col_str = {}
         ttable = self.buf.get_tag_table()
@@ -268,16 +268,16 @@ class LogColorParser(gtk.HBox):
                         for w in weight:
                             if w == "i":
                                 self.buf.apply_tag(self.italic, start_iter,
-                                                                end_iter)
+                                                   end_iter)
                             if w == "b":
                                 self.buf.apply_tag(self.bold, start_iter,
-                                                              end_iter)
+                                                   end_iter)
                             self.col_str[trange].append(w)
                     elif "size" in key:
                         size = "s" + style_dict[key]
                         tag = ttable.lookup(size) or\
-                              self.buf.create_tag(size,
-                                            size=int(size[1:]) * pango.SCALE)
+                            self.buf.create_tag(size,
+                                                size=int(size[1:]) * pango.SCALE)
                         self.buf.apply_tag(tag, start_iter, end_iter)
                         self.col_str[trange].append(size)
 
@@ -315,8 +315,8 @@ class LogColorParser(gtk.HBox):
                 col_end = self.buf.get_iter_at_offset(in_col[2])
                 self.buf.delete(col_start, col_end)
                 self.buf.insert(col_start, in_col[0] + str(col))
-                new_end = self.buf.get_iter_at_offset(in_col[1] +\
-                                                      len(in_col[0] +\
+                new_end = self.buf.get_iter_at_offset(in_col[1] +
+                                                      len(in_col[0] +
                                                       str(col)))
                 self.buf.place_cursor(new_end)
             else:
@@ -354,4 +354,3 @@ class LogColorParser(gtk.HBox):
     def filter_logs(self, *args):
         col_str = self.def_text_ranges()
         self.logw.highlight(col_str)
-

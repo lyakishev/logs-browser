@@ -20,6 +20,7 @@ import yaml
 import fnmatch
 import re
 
+
 class QueriesManager(object):
 
     def __init__(self, source_xml):
@@ -53,7 +54,7 @@ class QueriesManager(object):
         cf = self.get_filters_from_config()
         cf.update(self.page_filters)
         return cf
-        
+
     @property
     def default_query(self):
         for i in self.config['queries']:
@@ -76,6 +77,7 @@ class QueriesManager(object):
             if op['column'] == '*':
                 default = op['operator']
         return default
+
 
 class SourceManager(object):
 
@@ -124,16 +126,16 @@ class SelectManager(object):
                 "stand": ("n",),
                 "all": ("d", "f", "n"),
                 "path": ()}
-    
+
     operation_map = {'select': 'select',
-                   'unselect': 'unselect'}
+                     'unselect': 'unselect'}
 
     def __init__(self, source_xml):
         self.xml = source_xml
 
     def get_attributes(self):
         return ["operation", "type", "operator", "rule"]
-    
+
     def get_actions(self, actions_name):
         xml = ET.parse(self.xml)
         actions = []
@@ -144,7 +146,7 @@ class SelectManager(object):
                 attrib_list.append(attrib[a])
             actions.append(attrib_list)
         return actions
-    
+
     def empty_action(self):
         return None
 
@@ -157,7 +159,7 @@ class SelectManager(object):
             ET.SubElement(actions, "action", action)
         tree = ET.ElementTree(root)
         tree.write(self.xml, encoding="utf-8")
-                   
+
     def update_actions(self, old_name, new_name, new_actions):
         xml = ET.parse(self.xml)
         root = xml.getroot()
@@ -202,11 +204,11 @@ class SelectManager(object):
                 path.encode('utf8')
             except UnicodeDecodeError:
                 continue
-            attrib = {"operation": "select", "type": "path", "operator": "=", "rule": path}
+            attrib = {"operation": "select", "type": "path",
+                      "operator": "=", "rule": path}
             ET.SubElement(actions, "action", attrib)
         tree = ET.ElementTree(root)
         tree.write(self.xml, encoding="utf-8")
-        
 
     def get_select_actions(self, select):
         xml = ET.parse(self.xml)
@@ -214,7 +216,7 @@ class SelectManager(object):
         for action in xml.getroot().find('select[@name="%s"]/actions' % select):
             actions.append(self.parse_action(action.attrib))
         return actions
-    
+
     def delete_select(self, select_name):
         xml = ET.parse(self.xml)
         root = xml.getroot()
@@ -222,9 +224,7 @@ class SelectManager(object):
         root.remove(select)
         tree = ET.ElementTree(root)
         tree.write(self.xml, encoding="utf-8")
-        
 
 
 if __name__ == '__main__':
     pass
-

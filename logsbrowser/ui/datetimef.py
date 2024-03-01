@@ -15,16 +15,17 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import re
+from gtk.gdk import CONTROL_MASK, SHIFT_MASK
+from utils.net_time import get_true_time
+from common_filter import CommonFilter
+import datetime
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-import datetime
-from common_filter import CommonFilter
-from utils.net_time import get_true_time
-from gtk.gdk import CONTROL_MASK, SHIFT_MASK
-import re
+
 
 def isoformat(function):
     def to_iso_wrapper(*args, **kw):
@@ -34,9 +35,10 @@ def isoformat(function):
 
 
 class DateTimeWidget(gtk.Table):
-    
+
     time_re = re.compile("(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?")
-    datetime_re = re.compile("(\d{4})[-.](\d{2})[-.](\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?")
+    datetime_re = re.compile(
+        "(\d{4})[-.](\d{2})[-.](\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?")
 
     def __init__(self, d=datetime.timedelta(0)):
         super(DateTimeWidget, self).__init__(2, 3, False)
@@ -54,10 +56,12 @@ class DateTimeWidget(gtk.Table):
         self.hours_spin.connect('key-press-event', self.copy_paste_datetime, 1)
         self.hours_spin.set_width_chars(2)
         self.minutes_spin = gtk.SpinButton(adjustment=self.minute_adj)
-        self.minutes_spin.connect('key-press-event', self.copy_paste_datetime, 1)
+        self.minutes_spin.connect(
+            'key-press-event', self.copy_paste_datetime, 1)
         self.minutes_spin.set_width_chars(2)
         self.seconds_spin = gtk.SpinButton(adjustment=self.second_adj)
-        self.seconds_spin.connect('key-press-event', self.copy_paste_datetime, 1)
+        self.seconds_spin.connect(
+            'key-press-event', self.copy_paste_datetime, 1)
         self.seconds_spin.set_width_chars(2)
         self.now_btn = gtk.Button("Now")
         self.now_btn.connect("clicked", self.set_now)
@@ -69,7 +73,7 @@ class DateTimeWidget(gtk.Table):
         self.set_now()
 
     def copy_paste_datetime(self, widget, event, only_time):
-	if event.state & gtk.gdk.CONTROL_MASK:
+        if event.state & gtk.gdk.CONTROL_MASK:
             clipboard = gtk.clipboard_get("CLIPBOARD")
             if gtk.gdk.keyval_name(event.keyval) == "c":
                 copy_date = self.get_datetime()
@@ -113,13 +117,13 @@ class DateTimeWidget(gtk.Table):
         self.year_entry.set_text(dt.strftime("%d.%m.%Y"))
 
     def get_datetime(self):
-            dt_date = datetime.datetime.strptime(self.year_entry.get_text(),
-                                                    '%d.%m.%Y')
-            return datetime.datetime(
-                dt_date.year, dt_date.month, dt_date.day,
-                self.hours_spin.get_value_as_int(),
-                    self.minutes_spin.get_value_as_int(),
-                    self.seconds_spin.get_value_as_int())
+        dt_date = datetime.datetime.strptime(self.year_entry.get_text(),
+                                             '%d.%m.%Y')
+        return datetime.datetime(
+            dt_date.year, dt_date.month, dt_date.day,
+            self.hours_spin.get_value_as_int(),
+            self.minutes_spin.get_value_as_int(),
+            self.seconds_spin.get_value_as_int())
 
     def set_sens(self, sens):
         for child in [self.hours_spin,
@@ -132,7 +136,8 @@ class DateTimeWidget(gtk.Table):
 
 class FromToOption(gtk.HBox):
 
-    datetimes_re = re.compile("(\d{4})-(\d{2})-(\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?\s+-\s+(\d{4})-(\d{2})-(\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?")
+    datetimes_re = re.compile(
+        "(\d{4})-(\d{2})-(\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?\s+-\s+(\d{4})-(\d{2})-(\d{2})(?:\s+|T)(\d{2}):(\d{2}):(\d{2})(?:[.,]\d{3,6})?")
 
     def __init__(self):
         super(FromToOption, self).__init__()
@@ -165,7 +170,7 @@ class FromToOption(gtk.HBox):
                     date_times = self.datetimes_re.search(text)
                     if date_times:
                         params = date_times.groups()
-                        #print params
+                        # print params
                         from_ = map(int, params[:6])
                         to_ = map(int, params[6:])
                         self.from_date.set_datetime(*from_)
@@ -226,7 +231,7 @@ class ThisOption(gtk.HBox):
         self.this_date_combo = gtk.combo_box_new_text()
         self.this_date_combo.append_text('hour')
         self.this_date_combo.append_text('day')
-        #self.this_date_combo.append_text('week')
+        # self.this_date_combo.append_text('week')
         self.this_date_combo.append_text('month')
         self.this_date_combo.set_active(0)
         self.pack_start(self.this_date_radio, False, False)
@@ -235,23 +240,23 @@ class ThisOption(gtk.HBox):
     def get_dates(self):
         end_date = datetime.datetime.fromtimestamp(get_true_time())
         start_hour = datetime.datetime(end_date.year,
-            end_date.month,
-            end_date.day,
-            end_date.hour)
+                                       end_date.month,
+                                       end_date.day,
+                                       end_date.hour)
         start_day = datetime.datetime(end_date.year,
-            end_date.month,
-            end_date.day)
+                                      end_date.month,
+                                      end_date.day)
         start_month = datetime.datetime(end_date.year,
-            end_date.month, 1)
-        #start_week = datetime.datetime(end_date.year,
+                                        end_date.month, 1)
+        # start_week = datetime.datetime(end_date.year,
         #    end_date.month,
         #    end_date.day-end_date.weekday()
-        #)
+        # )
         this_date = [start_hour, start_day, start_month]
-        #start_week, start_month]
+        # start_week, start_month]
         start_date = this_date[self.this_date_combo.get_active()]
-        #print start_date
-        #print end_date
+        # print start_date
+        # print end_date
         return (start_date, end_date)
 
     def get_active(self):
@@ -265,9 +270,9 @@ class DateFilter(CommonFilter):
         self.last_option = LastDateOption()
         self.fromto_option = FromToOption()
         self.this_option = ThisOption()
-        self.fromto_option.from_radio.set_group(self.last_option.\
+        self.fromto_option.from_radio.set_group(self.last_option.
                                                 last_date_radio)
-        self.this_option.this_date_radio.set_group(self.last_option.\
+        self.this_option.this_date_radio.set_group(self.last_option.
                                                    last_date_radio)
         self.fromto_option.from_radio.set_active(True)
         self.add(self.date_box)

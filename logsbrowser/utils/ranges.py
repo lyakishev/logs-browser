@@ -17,11 +17,13 @@
 
 from itertools import chain
 
+
 def form_clause(seq, prefix, quant):
-    if len(seq)>quant:
-        return ["%s>=%s and %s<=%s" % (prefix,min(seq),prefix,max(seq))]
+    if len(seq) > quant:
+        return ["%s>=%s and %s<=%s" % (prefix, min(seq), prefix, max(seq))]
     else:
-        return ["%s=%s" % (prefix,v) for v in seq]
+        return ["%s=%s" % (prefix, v) for v in seq]
+
 
 def clause(iter_, prefix):
     prev = iter_[0]
@@ -31,10 +33,11 @@ def clause(iter_, prefix):
             cl.append(curr)
             prev = curr
         else:
-            yield form_clause(cl,prefix,2)
+            yield form_clause(cl, prefix, 2)
             cl = [curr]
             prev = curr
-    yield form_clause(cl,prefix,2)
+    yield form_clause(cl, prefix, 2)
+
 
 def ranges(values, prefix):
     ints = sorted(map(int, values.split(',')))
@@ -46,5 +49,3 @@ def ranges(values, prefix):
         yield ' OR '.join(clauses[(i+1)*500:])
     else:
         yield ' OR '.join(clauses)
-
-

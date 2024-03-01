@@ -15,12 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from logslist import LogsListWindow
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-from logslist import LogsListWindow
 
 
 class LogsNotebook(gtk.Notebook):
@@ -48,8 +48,8 @@ class LogsNotebook(gtk.Notebook):
         self.btns = []
         self.labels = []
         self.counter = 1
-        ll=self.add_new_page()
-        #self.tree.save_state(ll)
+        ll = self.add_new_page()
+        # self.tree.save_state(ll)
         self.set_current_page(0)
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.set_scrollable(True)
@@ -98,10 +98,10 @@ class LogsNotebook(gtk.Notebook):
 
     def new_page_name(self, *args):
         old_name = args[-1]
-        name = self.entry.get_text().replace(" ","_")
+        name = self.entry.get_text().replace(" ", "_")
         if name not in self.loaders:
             self.mem_tab.get_children()[0].get_children()[0].\
-                               set_text(name)
+                set_text(name)
             loader = self.loaders[old_name]
             self.loaders[name] = loader
             del self.loaders[old_name]
@@ -154,7 +154,7 @@ class LogsNotebook(gtk.Notebook):
         while page:
             try:
                 page_name = self.get_tab_label(page).get_children()[0].\
-                            get_children()[0].get_text()
+                    get_children()[0].get_text()
             except AttributeError:
                 break
             menu_item = gtk.MenuItem(page_name)

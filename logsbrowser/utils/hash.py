@@ -29,10 +29,12 @@ _quoted = re.compile(r"""('|")(.+?)\1""")
 def hash_value(params):
     pick = pickle.dumps(params)
     hash_v = hashlib.md5(pick).hexdigest()
-    return "".join(["_",hash_v])
+    return "".join(["_", hash_v])
+
 
 def _inqoutes(start, end, intervals):
-    return any(map(lambda i: i[0]<start<end<i[1], intervals))
+    return any(map(lambda i: i[0] < start < end < i[1], intervals))
+
 
 def sql_to_hash(sql):
     new_sql = ""
@@ -56,5 +58,3 @@ def sql_to_hash(sql):
         last_end_quote = end_quote
     sql_for_hash += _space.sub("", new_sql[last_end_quote:])
     return hashlib.md5(sql_for_hash).hexdigest()
-
-    

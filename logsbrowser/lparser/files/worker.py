@@ -39,7 +39,7 @@ def filelogworker2(dates, path, log, funcs):
         try:
             cdate = time.localtime(os.path.getctime(path))
         except WindowsError:
-            #print "WindowsError: %s" % path
+            # print "WindowsError: %s" % path
             raise StopIteration
     else:
         cdate = None
@@ -65,7 +65,7 @@ def filelogworker2(dates, path, log, funcs):
                                comp,
                                log,
                                ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                       else "?"),
+                                else "?"),
                                path,
                                0,
                                msg), len(msg)
@@ -73,13 +73,14 @@ def filelogworker2(dates, path, log, funcs):
     except IOError:
         raise StopIteration
 
+
 def filelogworker(dates, path, log, funcs):
     pformat, pfunc, need_date = funcs
     if need_date:
         try:
             cdate = time.localtime(os.path.getctime(path))
         except WindowsError:
-            #print "WindowsError: %s" % path
+            # print "WindowsError: %s" % path
             raise StopIteration
     else:
         cdate = None
@@ -102,7 +103,7 @@ def filelogworker(dates, path, log, funcs):
                                comp,
                                log,
                                ("ERROR" if ("Exception" in msg and "  at " in msg)
-                                       else "?"),
+                                else "?"),
                                path,
                                0,
                                to_unicode(strip_non_printable(msg))), chars

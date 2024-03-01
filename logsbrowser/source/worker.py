@@ -26,9 +26,11 @@ from collections import defaultdict
 
 source_formats = defaultdict(dict)
 
+
 def clear_source_formats(stand):
     if stand:
         source_formats[stand].clear()
+
 
 def file_preparator(folders, stand):
     flf = []
@@ -43,18 +45,22 @@ def file_preparator(folders, stand):
                 flf.append([fullf, pfn, source_formats[stand][raw_key, pfn]])
     return sorted(flf, key=itemgetter(1))
 
+
 def lists_to_pathes(pathes):
     folders = {}
     dirs = set([p[0] for p in pathes])
     for dir_ in dirs:
-        folders[dir_] = [p[1] for p in pathes if p[0]==dir_]
+        folders[dir_] = [p[1] for p in pathes if p[0] == dir_]
     return folders
+
 
 def pathes(lst, stand):
     return file_preparator(lists_to_pathes(lst), stand)
 
+
 def join_path(prefix, path):
     return "%s%s" % (prefix, "|"+path if path else "")
+
 
 def date_format(path):
     try:
@@ -68,10 +74,11 @@ def date_format(path):
                 else:
                     break
             if not pfunc:
-                #print "Not found format for file %s" % path
+                # print "Not found format for file %s" % path
                 return None
     except IOError:
         return None
+
 
 def dir_walker(path, dir_callback, log_callback,  stand, parent=None):
     files = set()
@@ -96,7 +103,8 @@ def dir_walker(path, dir_callback, log_callback,  stand, parent=None):
                 elif ext != 'mdb':
                     if os.path.isdir(fullf):
                         node = dir_callback(f, parent, ext_parent, True)
-                        dir_walker(fullf, dir_callback, log_callback, stand, node)
+                        dir_walker(fullf, dir_callback,
+                                   log_callback, stand, node)
             else:
                 node = dir_callback(f, parent, ext_parent, True)
                 dir_walker(fullf, dir_callback, log_callback, stand, node)

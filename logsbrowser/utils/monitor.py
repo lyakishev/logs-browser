@@ -18,6 +18,7 @@
 import gio
 import gobject
 
+
 class ConfigMonitor:
     def __init__(self, config_file):
         self.conf = config_file
@@ -29,6 +30,3 @@ class ConfigMonitor:
             if event_type == gio.FILE_MONITOR_EVENT_CHANGED:
                 gobject.idle_add(func)
         self.monitor.connect("changed", callback)
-
-
-

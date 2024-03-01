@@ -25,20 +25,21 @@ import config
 
 class CellRendererColors(gtk.CellRendererText):
     __gproperties__ = {
-                    'backgrounds': (gobject.TYPE_STRING,
-                            'Backgrounds of the cell',
-                            'The backgrounds of the cell',
-                            '#FFFFFF',
-                            gobject.PARAM_READWRITE
-                            )
-                    }
+        'backgrounds': (gobject.TYPE_STRING,
+                        'Backgrounds of the cell',
+                        'The backgrounds of the cell',
+                        '#FFFFFF',
+                        gobject.PARAM_READWRITE
+                        )
+    }
+
     def __init__(self):
         self.__gobject_init__()
         gtk.CellRendererText.__init__(self)
 
     def do_get_size(self, widget, cell_area):
-        x,y,w,h = gtk.CellRendererText.do_get_size(self, widget, cell_area)
-        return (x,y,int(w*pango.SCALE_LARGE) if config.BOLD_SELECTED else w,h)
+        x, y, w, h = gtk.CellRendererText.do_get_size(self, widget, cell_area)
+        return (x, y, int(w*pango.SCALE_LARGE) if config.BOLD_SELECTED else w, h)
 
     def do_set_property(self, pspec, value):
         if pspec.name == 'backgrounds':
@@ -52,7 +53,7 @@ class CellRendererColors(gtk.CellRendererText):
         return getattr(self, pspec.name)
 
     def do_render(self, window, widget, background_area, cell_area,
-                    expose_area, flags):
+                  expose_area, flags):
         colors = self.get_property('backgrounds')
         if (colors and (not bool(flags & gtk.CELL_RENDERER_SELECTED) or
                         config.BOLD_SELECTED)):
@@ -69,18 +70,16 @@ class CellRendererColors(gtk.CellRendererText):
                 layout.set_text(self.get_property('text'))
                 layout.set_font_description(pango.FontDescription("bold"))
                 widget.style.paint_layout(window, gtk.STATE_NORMAL, True,
-                                        None, widget, '',
-                                        background_area.x, background_area.y+h/4-1,
-                                        layout)
+                                          None, widget, '',
+                                          background_area.x, background_area.y+h/4-1,
+                                          layout)
                 return
         gtk.CellRendererText.do_render(self, window, widget, background_area, cell_area,
-                expose_area, flags)
-                
+                                       expose_area, flags)
 
     def get_cairo_color(self, color):
-            ncolor = color/65535.0
-            return ncolor
-
+        ncolor = color/65535.0
+        return ncolor
 
     def render_rect(self, cr, x, y, w, h, colors):
         icolors = cycle(colors)
@@ -92,7 +91,7 @@ class CellRendererColors(gtk.CellRendererText):
         while x0 <= x1:
             c = icolors.next()
             cr.set_source_rgb(*map(lambda x: self.get_cairo_color(x),
-                                    [c.red,c.green,c.blue]))
+                                   [c.red, c.green, c.blue]))
             cr.move_to(x0, y0)
             cr.line_to(x0+width+1, y0)
             cr.line_to(x0, y1)
@@ -101,10 +100,10 @@ class CellRendererColors(gtk.CellRendererText):
             cr.close_path()
             cr.fill()
             cr.stroke()
-            x0=x0+width
+            x0 = x0+width
         c = icolors.next()
         cr.set_source_rgb(*map(lambda x: self.get_cairo_color(x),
-                                [c.red,c.green,c.blue]))
+                               [c.red, c.green, c.blue]))
         cr.move_to(x0, y0)
         cr.line_to(x0, y1)
         cr.line_to(x0-width-1, y1)
@@ -114,4 +113,3 @@ class CellRendererColors(gtk.CellRendererText):
 
 
 gobject.type_register(CellRendererColors)
-

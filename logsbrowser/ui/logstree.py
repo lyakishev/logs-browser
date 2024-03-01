@@ -15,29 +15,28 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from operator import or_, and_
+from itertools import ifilter, imap, starmap
+from functools import partial
+from utils.monitor import ConfigMonitor
+from sourceactionsmanager import SourceActionsManagerUI
+from dialogs import save_dialog
+from utils.xmlmanagers import SourceManager, SelectManager
+import config
+from source.worker import dir_walker, join_path, pathes, clear_source_formats
+import sys
+from configeditor import ConfigEditor
+import os
+import pango
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-import pango
-import os
-from configeditor import ConfigEditor
-import sys
-from source.worker import dir_walker, join_path, pathes, clear_source_formats
-import config
-from utils.xmlmanagers import SourceManager, SelectManager
-from dialogs import save_dialog
-from sourceactionsmanager import SourceActionsManagerUI
-from utils.monitor import ConfigMonitor
-from functools import partial
-from itertools import ifilter, imap, starmap
-from operator import or_, and_
 
 
 def os_join(p1, p2):
     return os.sep.join([p1, p2])
-
 
 
 class ServersModel(object):
@@ -86,9 +85,9 @@ class ServersModel(object):
 
     def enumerate_descendants(self, iter_):
         for i in self.enumerate(iter_, self.treestore.iter_children,
-                                       self.treestore.iter_next):
+                                self.treestore.iter_next):
             yield i
-    
+
     def enumerate_all_iters(self):
         for i in self.enumerate_descendants(None):
             yield i
@@ -107,7 +106,7 @@ class ServersModel(object):
         type_ = getv(iter_, 3)
         path_ = self.get_path(iter_)
         action(type_, path_, name, self.select_action(iter_),
-                                   self.unselect_action(iter_))
+               self.unselect_action(iter_))
 
     def set_inconsistent_iter(self, iter_, inc, toggle):
         if toggle:
@@ -140,6 +139,7 @@ class ServersModel(object):
 
     def select_action(self, iter_):
         setv = self.treestore.set_value
+
         def select():
             for it in self.enumerate_descendants(iter_):
                 setv(it, 2, 1)
@@ -148,6 +148,7 @@ class ServersModel(object):
 
     def unselect_action(self, iter_):
         setv = self.treestore.set_value
+
         def unselect():
             for it in self.enumerate_descendants(iter_):
                 setv(it, 2, 0)
@@ -176,18 +177,18 @@ class ServersModel(object):
     def get_pathes(self):
         return map(self.get_path,
                    ifilter(self.is_toggled_f,
-                          self.enumerate_all_iters()))
+                           self.enumerate_all_iters()))
 
     def get_active_check_paths(self):
         return map(self.treestore.get_string_from_iter,
                    ifilter(self.is_toggled,
-                          self.enumerate_all_iters()))
+                           self.enumerate_all_iters()))
 
     def set_active_from_paths(self, pathslist):
         for it in self.enumerate_all_iters():
             self.treestore.set_value(it, 2,
-                    self.treestore.get_string_from_iter(it) in pathslist)
-        
+                                     self.treestore.get_string_from_iter(it) in pathslist)
+
     def add_root(self, name, path):
         return self.treestore.append(None, [name,
                                             gtk.STOCK_DISCONNECT,
@@ -195,13 +196,14 @@ class ServersModel(object):
 
     def add_dir(self, name, parent, path):
         return self.treestore.append(parent, [name,
-                                            gtk.STOCK_DIRECTORY,
-                                            None, 'd', False])
+                                              gtk.STOCK_DIRECTORY,
+                                              None, 'd', False])
 
     def add_file(self, name, parent):
         return self.treestore.append(parent, [name,
-                                            gtk.STOCK_FILE,
-                                            None, 'f', False])
+                                              gtk.STOCK_FILE,
+                                              None, 'f', False])
+
 
 class EventServersModel(ServersModel):
     def __init__(self, stand, logs):
@@ -287,9 +289,10 @@ class FileServersModel(ServersModel):
 
     def find_root(self, name, conn):
         getv = self.treestore.get_value
-        predict = lambda it: (getv(it, 0) == name and 
-                              getv(it, 1) == (gtk.STOCK_CONNECT if conn
-                                             else gtk.STOCK_DISCONNECT))
+
+        def predict(it): return (getv(it, 0) == name and
+                                 getv(it, 1) == (gtk.STOCK_CONNECT if conn
+                                                 else gtk.STOCK_DISCONNECT))
         return self.takefirst(predict, self.enumerate_childs(None))
 
     def get_iter_by_path(self, path, conn=False):
@@ -387,8 +390,8 @@ class FileServersModel(ServersModel):
 
     def get_child_pathes(self, iter_):
         return map(self.get_path,
-            ifilter(lambda it: not self.treestore.iter_has_child(it),
-                   self.enumerate_descendants(iter_)))
+                   ifilter(lambda it: not self.treestore.iter_has_child(it),
+                           self.enumerate_descendants(iter_)))
 
     def clear_node(self, iter_):
         for it in self.enumerate_childs(iter_):
@@ -404,7 +407,8 @@ class FileServersModel(ServersModel):
             if self.treestore.get_value(root, 1) == gtk.STOCK_DISCONNECT:
                 dirs = self.get_child_pathes(iter_)
                 root_name = self.treestore.get_value(root, 0)
-                other_dirs = [d for d in self.get_child_pathes(root) if d not in dirs]
+                other_dirs = [d for d in self.get_child_pathes(
+                    root) if d not in dirs]
                 self.clear_node(root)
                 pos = self.treestore.iter_next(root)
                 if not self.find_root(root_name, True):
@@ -457,16 +461,17 @@ class FileServersModel(ServersModel):
         self.add_file(name, parent_)
         while gtk.events_pending():
             gtk.main_iteration()
-        #self.check_break()
+        # self.check_break()
 
     def fill_dir(self, path):
         parent_ = self.get_iter_by_path(path, True)
-        dir_walker(path, self.new_dir_node, self.file_callback, self.stand, parent_)
-
+        dir_walker(path, self.new_dir_node,
+                   self.file_callback, self.stand, parent_)
 
 
 class DisplayServersModel:
     """ Displays the Info_Model model in a view """
+
     def __init__(self, visible_func):
         """ Form a view for the Tree Model """
         self.models = {}
@@ -532,8 +537,10 @@ class DisplayServersModel:
             if path:
                 model = view.get_model()
                 true_model = self.servers_model.treestore
-                true_path =  self.servers_model.get_model().convert_path_to_child_path(path[0])
+                true_path = self.servers_model.get_model(
+                ).convert_path_to_child_path(path[0])
                 self.servers_model.fill_node(true_path)
+
 
 def tree_model_iter_children(model, treeiter):
     it = model.iter_children(treeiter)
@@ -559,13 +566,14 @@ class ServersTree(gtk.Frame):
         self.hide_log = gtk.Entry()
         self.hide_log.set_text("Search...")
         self.hide_log.modify_text(gtk.STATE_NORMAL,
-                            gtk.gdk.color_parse("#929292"))
+                                  gtk.gdk.color_parse("#929292"))
         self.hide_log.modify_font(pango.FontDescription("italic"))
 
         toolbar = gtk.Toolbar()
 
         cbtn = gtk.Button()
-        cbtn.connect_object("event", self.select_popup, SelectsMenu(self, root))
+        cbtn.connect_object("event", self.select_popup,
+                            SelectsMenu(self, root))
         image = gtk.Image()
         image.set_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
         image.show()
@@ -644,7 +652,7 @@ class ServersTree(gtk.Frame):
         self.ft = True
         self.hide_log.set_text(self.filter_text)
         self.hide_log.modify_text(gtk.STATE_NORMAL,
-                            gtk.gdk.color_parse("black"))
+                                  gtk.gdk.color_parse("black"))
         self.hide_log.modify_font(pango.FontDescription("normal"))
 
     def on_hide_log_focus_out(self, *args):
@@ -653,7 +661,7 @@ class ServersTree(gtk.Frame):
             self.hide_log.set_text("Search...")
             self.filter_text = ""
             self.hide_log.modify_text(gtk.STATE_NORMAL,
-                                gtk.gdk.color_parse("#929292"))
+                                      gtk.gdk.color_parse("#929292"))
             self.hide_log.modify_font(pango.FontDescription("italic"))
 
     def on_advanced_entry_changed(self, widget):
@@ -680,12 +688,14 @@ class ServersTree(gtk.Frame):
         else:
             return True
 
+
 class EvlogsServersTree(ServersTree):
     def __init__(self, root):
         super(EvlogsServersTree, self).__init__(root)
 
     def new_model(self, stand, logs):
         return EventServersModel(stand, logs)
+
 
 class FileServersTree(ServersTree):
     def __init__(self, progress, sens_func, signals, root):
@@ -701,11 +711,11 @@ class FileServersTree(ServersTree):
         self.view.servers_model.fill_tree()
 
 
-
 class LogsTrees(gtk.Notebook):
     def __init__(self, progress, sens_func, signals, root):
         super(LogsTrees, self).__init__()
-        self.file_servers_tree = FileServersTree(progress, sens_func, signals, root)
+        self.file_servers_tree = FileServersTree(
+            progress, sens_func, signals, root)
         file_label = gtk.Label("Filelogs")
         file_label.show()
         self.append_page(self.file_servers_tree, file_label)
@@ -736,7 +746,6 @@ class SourceManagerUI(gtk.VBox):
         self.source_manager = SourceManager(config.SOURCES_XML)
         self.config_monitor = ConfigMonitor(config.SOURCES_XML)
         self.config_monitor.register_action(self.config_changed)
-
 
         reload_btn = gtk.ToolButton(gtk.STOCK_REFRESH)
         reload_btn.connect("clicked", lambda args: self.fill())
@@ -769,11 +778,12 @@ class SourceManagerUI(gtk.VBox):
             if st == stand:
                 active = n
         self.stand_choice.set_model(new_model)
-        self.stand_choice.set_active(active if active is not None else self.default)
+        self.stand_choice.set_active(
+            active if active is not None else self.default)
 
     def get_log_sources(self):
         flogs = pathes(self.trees.file_servers_tree.view.servers_model.get_active_servers(),
-                        self.trees.file_servers_tree.view.servers_model.stand)
+                       self.trees.file_servers_tree.view.servers_model.stand)
         if self.trees.evlogs_servers_tree:
             evlogs = ([(s[1], s[0], None) for s in
                       self.trees.evlogs_servers_tree.view.servers_model.get_active_servers()])
@@ -786,17 +796,17 @@ class SourceManagerUI(gtk.VBox):
         etree = self.trees.evlogs_servers_tree
         state = self.state_.get(page)
         if state:
-            fpathslist, fentry, epathslist, eentry,\
-                    stand, f_expanded_rows, e_expanded_rows = state
+            fpathslist, fentry, epathslist, eentry, \
+                stand, f_expanded_rows, e_expanded_rows = state
         else:
-            fpathslist, fentry, epathslist, eentry,\
-                    stand, f_expanded_rows, e_expanded_rows = ([],
-                                                        ("", False),
-                                                        [],
-                                                        ("", False),
-                                                        self.default,
-                                                        [],
-                                                        [])
+            fpathslist, fentry, epathslist, eentry, \
+                stand, f_expanded_rows, e_expanded_rows = ([],
+                                                           ("", False),
+                                                           [],
+                                                           ("", False),
+                                                           self.default,
+                                                           [],
+                                                           [])
         self.stand_choice.set_active(stand)
         ftree.view.servers_model.set_active_from_paths(fpathslist)
         ftree.set_text(fentry)
@@ -805,7 +815,6 @@ class SourceManagerUI(gtk.VBox):
             etree.view.expand_rows(e_expanded_rows)
             etree.set_text(eentry)
             etree.view.servers_model.set_active_from_paths(epathslist)
-
 
     def save_state(self, page):
         ftree = self.trees.file_servers_tree
@@ -841,7 +850,6 @@ class SourceManagerUI(gtk.VBox):
         stand = self.stand_choice.get_active_text()
         self.trees.fill_trees()
 
-
     def fill_combo(self):
         for n, stand in enumerate(self.source_manager.stands):
             self.stand_choice.append_text(stand)
@@ -864,16 +872,17 @@ class SelectsMenu(gtk.Menu):
         self.append(save)
         self.append(edit)
         self.show_all()
-        
+
     def show_edit_window(self, menuitem, root):
         SourceActionsManagerUI(self.select_manager, root)
-        
+
     def build_submenu(self):
         self.show.remove_submenu()
         submenu = gtk.Menu()
         for item in self.select_manager.selects:
             mitem = gtk.MenuItem(item)
-            mitem.connect("activate", self.tree.apply_select, item, self.select_manager)
+            mitem.connect("activate", self.tree.apply_select,
+                          item, self.select_manager)
             submenu.append(mitem)
         submenu.show_all()
         self.show.set_submenu(submenu)
@@ -883,9 +892,3 @@ class SelectsMenu(gtk.Menu):
         if name != 0:
             pathes = self.tree.get_pathes()
             self.select_manager.save_pathes(name, pathes)
-
-
-
-
-
-

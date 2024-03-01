@@ -22,12 +22,12 @@ from ui.logsviewer import LogsViewer
 import multiprocessing as mp
 from ui import dialogs
 import sys
-#from threading import Thread
+# from threading import Thread
 import config
-#if config.XMLRPC:
+# if config.XMLRPC:
 #    from SimpleXMLRPCServer import SimpleXMLRPCServer
 
-#def xml_rpc_init(logsviewer):
+# def xml_rpc_init(logsviewer):
 #    if config.XMLRPC:
 #        try:
 #            server = SimpleXMLRPCServer(("localhost", config.RPC_PORT), allow_none=True)
@@ -41,12 +41,14 @@ import config
 #    else:
 #        return None
 
+
 def main():
     logsviewer = LogsViewer()
-    #server = xml_rpc_init(logsviewer)
+    # server = xml_rpc_init(logsviewer)
     gtk.main()
-    #if server:
+    # if server:
     #    server.server_close()
+
 
 if __name__ == '__main__':
     sys.excepthook = dialogs.exception_dialog

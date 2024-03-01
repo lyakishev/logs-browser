@@ -17,30 +17,30 @@
 
 # -*- coding: utf8 -*-
 
+import config
+from db.engine import get_msg, DBException
+from dialogs import merror
+import traceback
+import pango
+from colorparser import LogColorParser
+import subprocess
+import os
+import xml.dom.minidom
+import re
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-import re
-import xml.dom.minidom
-import os
-import subprocess
-from colorparser import LogColorParser
-import pango
-import traceback
-from dialogs import merror
-from db.engine import get_msg, DBException
-import config
 try:
     from plsql_analyzer import *
 except ImportError:
     pass
 
-#xml_re = re.compile("<\?xml(.+)>")
-#xml_spl = re.compile(r"(<\?xml.+?>)")
-#xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
-#xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
+# xml_re = re.compile("<\?xml(.+)>")
+# xml_spl = re.compile(r"(<\?xml.+?>)")
+# xml_s = re.compile(r"<\?xml.+?>", re.DOTALL)
+# xml_s2 = re.compile(r"(?P<xml><.+>)(?P<other>.*)")
 plsql_re = re.compile(r"(?<=\s|')(\w|_)+\.(\w|_)+(?=\s|')")
 
 
@@ -54,7 +54,8 @@ class LogWindow:
         self.sens_func = sens_func
         self.iter = iter
         self.popup = gtk.Window()
-        self.popup.set_default_size(config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
+        self.popup.set_default_size(
+            config.WIDTH_LOG_WINDOW, config.HEIGHT_LOG_WINDOW)
         self.box = gtk.VBox()
         self.open_info_box = gtk.VBox()
         self.info_box = gtk.HBox()
@@ -86,9 +87,9 @@ class LogWindow:
         self.log_text.set_editable(False)
         self.log_text.set_wrap_mode(gtk.WRAP_WORD)
         self.log_text.add_events(gtk.gdk.MOTION_NOTIFY | gtk.gdk.BUTTON_PRESS)
-        #self.log_text.connect("motion_notify_event", self.motion_notify)
+        # self.log_text.connect("motion_notify_event", self.motion_notify)
         self.log_text.add_events(gtk.gdk.BUTTON_PRESS_MASK)
-        #self.log_text.connect("button-press-event", self.show_body)
+        # self.log_text.connect("button-press-event", self.show_body)
         self.scr.add(self.log_text)
         self.popup.add(self.box)
 
@@ -158,7 +159,6 @@ class LogWindow:
         self.read_config()
         self.p_cursor = gtk.gdk.Cursor(gtk.gdk.HAND1)
 
-
         self.view.set_sensitive(False)
         try:
             self.fill()
@@ -183,7 +183,7 @@ class LogWindow:
                     PLSQL_Analyzer(proc)
                     break
 
-    #def motion_notify(self, widget, event):
+    # def motion_notify(self, widget, event):
     #    iter_ = self.log_text.get_iter_at_location(int(event.x), int(event.y))
     #    child_win = self.log_text.get_window(gtk.TEXT_WINDOW_TEXT)
     #    in_f = False
@@ -195,7 +195,7 @@ class LogWindow:
     #    else:
     #        child_win.set_cursor(None)
 
-    #def motion_text(self, txt):
+    # def motion_text(self, txt):
     #    m_iters = []
     #    procs = plsql_re.finditer(txt)
     #    for m in procs:
@@ -205,7 +205,7 @@ class LogWindow:
     #    return m_iters
 
     def read_config(self):
-        self.conf_dir = os.sep.join(os.path.dirname(__file__).\
+        self.conf_dir = os.sep.join(os.path.dirname(__file__).
                                     split(os.sep)[:-1] +
                                     ["config"])
         try:
@@ -238,9 +238,9 @@ class LogWindow:
         e_iter = self.txt_buff.get_iter_at_offset(e_pos)
         self.log_text.scroll_to_iter(s_iter, 0)
         self.txt_buff.remove_tag(self.selection_tag,
-            self.txt_buff.get_start_iter(),
-            self.txt_buff.get_end_iter())
-        #self.txt_buff.select_range(s_iter, e_iter)
+                                 self.txt_buff.get_start_iter(),
+                                 self.txt_buff.get_end_iter())
+        # self.txt_buff.select_range(s_iter, e_iter)
         self.txt_buff.apply_tag(self.selection_tag, s_iter, e_iter)
         self.s = e_pos
         self.e = s_pos
@@ -252,14 +252,15 @@ class LogWindow:
                 self.select_string(s_pos, e_pos)
         else:
             self.txt_buff.remove_tag(self.selection_tag,
-                self.txt_buff.get_start_iter(),
-                self.txt_buff.get_end_iter())
-            #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
-                                       #self.txt_buff.get_end_iter())
+                                     self.txt_buff.get_start_iter(),
+                                     self.txt_buff.get_end_iter())
+            # self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+            # self.txt_buff.get_end_iter())
 
     def b_search(self, start_pos):
         text = self.get_text().decode('utf8').lower()[::-1]
-        string_to_search = self.find_entry.get_text().decode('utf8').lower()[::-1]
+        string_to_search = self.find_entry.get_text().decode('utf8').lower()[
+            ::-1]
         chars = len(string_to_search)
         ltext = len(text)
         if chars > 0:
@@ -284,7 +285,7 @@ class LogWindow:
                 if start_pos == 0:
                     return (None, None)
                 else:
-                    return(-1, -1)
+                    return (-1, -1)
         else:
             return (None, None)
 
@@ -316,7 +317,7 @@ class LogWindow:
             try:
                 re_string = re.compile(string_to_search)
             except re.error:
-                return (-1,-1)
+                return (-1, -1)
             searched = list(re_string.finditer(text[:start_pos]))
             if searched:
                 s_pos = searched[-1].start()
@@ -329,8 +330,8 @@ class LogWindow:
 
     def t_insert_search(self, *args):
         self.txt_buff.remove_tag(self.selection_tag,
-            self.txt_buff.get_start_iter(),
-            self.txt_buff.get_end_iter())
+                                 self.txt_buff.get_start_iter(),
+                                 self.txt_buff.get_end_iter())
         if not self.re_toggle.get_active():
             self.search(0, self.f_search)
         else:
@@ -367,17 +368,17 @@ class LogWindow:
 
     def copy_log(self, *args):
         clipboard = gtk.clipboard_get("CLIPBOARD")
-        #self.txt_buff.select_range(self.txt_buff.get_start_iter(),
+        # self.txt_buff.select_range(self.txt_buff.get_start_iter(),
         #                           self.txt_buff.get_end_iter())
         clipboard.set_text(self.get_text())
-        #self.txt_buff.copy_clipboard(clipboard)
-        #self.txt_buff.select_range(self.txt_buff.get_end_iter(),
+        # self.txt_buff.copy_clipboard(clipboard)
+        # self.txt_buff.select_range(self.txt_buff.get_end_iter(),
         #                           self.txt_buff.get_end_iter())
 
     def save_to_file(self, *args):
         fchooser = gtk.FileChooserDialog("Save logs to file...", None,
-            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+                                         gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
+                                                                        gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
         fchooser.set_current_name("_".join([os.path.basename(f) for f in
                                             self.files]))
         response = fchooser.run()
@@ -413,8 +414,8 @@ class LogWindow:
                             else:
                                 ntag.set_property("weight", pango.WEIGHT_BOLD)
                         elif att == "s":
-                            ntag.set_property("size", (int(tag[1:])*
-                                                      pango.SCALE))
+                            ntag.set_property("size", (int(tag[1:]) *
+                                                       pango.SCALE))
                         elif att == "i":
                             ntag.set_property("style", pango.STYLE_ITALIC)
                     self.txt_buff.apply_tag(ntag, start_iter, end_iter)
@@ -423,12 +424,11 @@ class LogWindow:
         for f in self.files:
             subprocess.Popen("%s %s" % (config.EXTERNAL_LOG_VIEWER, f))
 
-
     def filling(self, date_, logname_, type_):
         self.open_label.set_text("\n".join(self.files))
         self.info_label.set_markup('<big><b>%s</b></big>\n%s\n%s\n' % (date_,
-                                                                     logname_,
-                                                                     type_))
+                                                                       logname_,
+                                                                       type_))
         self.log_text.get_buffer().set_text(self.txt)
         self.highlight(self.col_str)
         self.log_text.grab_focus()
@@ -437,8 +437,7 @@ class LogWindow:
         self.insert_search(None)
         self.popup.set_title("Log: %s %s" % (logname_.replace('\n', ','),
                                              date_))
-        #self.procs = self.motion_text(self.txt)
-        
+        # self.procs = self.motion_text(self.txt)
 
     def fill(self):
         rows = self.model.get_value(self.iter, self.loglist.rflw)
@@ -452,10 +451,10 @@ class LogWindow:
             date_ = "%s - %s" % (start, end)
         else:
             date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
-        type_ = ("ERROR" in select[2]) and '<span foreground="red">ERROR</span>' or ""
+        type_ = (
+            "ERROR" in select[2]) and '<span foreground="red">ERROR</span>' or ""
         logname_ = "\n".join(set(select[1]))
-        self.filling(date_,logname_,type_)
-        
+        self.filling(date_, logname_, type_)
 
     def show_prev(self, *args):
         self.selection.set_mode(gtk.SELECTION_SINGLE)
@@ -532,7 +531,7 @@ class SeveralLogsWindow(LogWindow):
             types.extend(select[2])
             files = select[3]
             txt = select[4]
-            for n,f in enumerate(files):
+            for n, f in enumerate(files):
                 if prev_f == f:
                     text.append(txt[n])
                 else:
@@ -549,4 +548,4 @@ class SeveralLogsWindow(LogWindow):
             date_ = "%s - %s" % (start, end)
         else:
             date_ = select[0][0].strftime("%H:%M:%S.%f %d.%m.%Y")
-        self.filling(date_,logname_,type_)
+        self.filling(date_, logname_, type_)

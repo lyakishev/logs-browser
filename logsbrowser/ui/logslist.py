@@ -17,33 +17,35 @@
 
 # -*- coding: utf8 -*-
 
+from utils.colors import ColorError
+from string import Template
+from cellrenderercolors import CellRendererColors
+import config
+from itertools import cycle
+import glib
+from dialogs import merror
+from utils.xmlmanagers import QueriesManager
+from utils.hash import hash_value, sql_to_hash
+from db.parse import process
+import db.engine as db
+from operator import mul, itemgetter, setitem
+import os
+import pango
+from datetime import datetime
+from query import Query, QueryLoader
+from logwindow import LogWindow, SeveralLogsWindow
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-from logwindow import LogWindow, SeveralLogsWindow
-from query import Query, QueryLoader
-from datetime import datetime
-import pango
-import os
-from operator import mul, itemgetter, setitem
-import db.engine as db
-from db.parse import process
-from utils.hash import hash_value, sql_to_hash
-from utils.xmlmanagers import QueriesManager
-from dialogs import merror
-import glib
-from itertools import cycle
-import config
-from cellrenderercolors import CellRendererColors
-from string import Template
-#from utils.profiler import time_it, profile
-from utils.colors import ColorError
+# from utils.profiler import time_it, profile
+
 
 def callback():
     while gtk.events_pending():
         gtk.main_iteration()
+
 
 db.set_callback(callback)
 
@@ -51,8 +53,9 @@ db.set_callback(callback)
 class FTemplate(Template):
     delimiter = '#'
 
+
 class LogList(object):
-    
+
     sql_context = {}
     _cache = {}
 
@@ -75,17 +78,19 @@ class LogList(object):
             path = view.get_path_at_pos(int(event.x), int(event.y))
             if path:
                 row = self.model.get_iter(path[0])
-                col = [n for n,c in enumerate(self.columns) if c == path[1]][0]
+                col = [n for n, c in enumerate(
+                    self.columns) if c == path[1]][0]
                 if col:
                     value = self.model.get_value(row, col)
                     clipboard = gtk.clipboard_get("CLIPBOARD")
                     clipboard.set_text(value)
 
     def visible_rows(self):
-        visible_columns = [n for n, c in enumerate(self.columns) if c.get_visible()]
+        visible_columns = [n for n, c in enumerate(
+            self.columns) if c.get_visible()]
         for row in self.model:
-            yield [c for n,c in enumerate(row) if n in visible_columns]
-        
+            yield [c for n, c in enumerate(row) if n in visible_columns]
+
     def change_name(self, name):
         try:
             self.sql_context.pop(self.name)
@@ -102,12 +107,15 @@ class LogList(object):
         fcontext = {}
         for k in context:
             if k == 'this':
-                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+from_constr})
+                fcontext[k] = Template(filter_).safe_substitute(
+                    {'table': '$'+from_constr})
             else:
-                fcontext[k] = Template(filter_).safe_substitute({'table': '$'+k})
+                fcontext[k] = Template(
+                    filter_).safe_substitute({'table': '$'+k})
         fquery = FTemplate(query).safe_substitute(fcontext)
         try:
-            sql, words_hl, self.from_ = process(fquery, context, auto_lid, self.fts)
+            sql, words_hl, self.from_ = process(
+                fquery, context, auto_lid, self.fts)
         except Exception as e:
             merror(str(e))
             return
@@ -142,7 +150,7 @@ class LogList(object):
                     bgcolor = self.headers.index('bgcolor')
                     white = set(["#fff", "None"])
                     colorcols = [n for n, c in enumerate(self.headers)
-                                             if c.startswith('bgcolor')]
+                                 if c.startswith('bgcolor')]
                     for row in self.model:
                         colors = set()
                         for cols in [r for r in [row[c] for c in colorcols] if r]:
@@ -150,13 +158,15 @@ class LogList(object):
                                 colors.add(col1)
                         wowhite = colors - white
                         if wowhite:
-                            if len(wowhite)>1:
-                                self.model.set_value(row.iter, bgcolor, " ".join(wowhite))
+                            if len(wowhite) > 1:
+                                self.model.set_value(
+                                    row.iter, bgcolor, " ".join(wowhite))
                             else:
-                                self.model.set_value(row.iter, bgcolor, wowhite.pop())
+                                self.model.set_value(
+                                    row.iter, bgcolor, wowhite.pop())
                         else:
                             self.model.set_value(row.iter, bgcolor, "#fff")
-                            
+
                 self._cache[sql_hash] = (self.model, self.headers, words_hl)
                 self.cached_queries.append(sql_hash)
                 self.view.set_model(self.model)
@@ -170,12 +180,12 @@ class LogList(object):
             if 'bgcolor' in args:
                 renderer = CellRendererColors()
                 col = gtk.TreeViewColumn(header, renderer,
-                                    text=number,
-                                    backgrounds=args.index('bgcolor'))
+                                         text=number,
+                                         backgrounds=args.index('bgcolor'))
             else:
                 renderer = gtk.CellRendererText()
                 col = gtk.TreeViewColumn(header, renderer,
-                                    text=number)
+                                         text=number)
             renderer.set_property('editable', False)
             renderer.props.wrap_width = 640
             renderer.props.wrap_mode = pango.WRAP_WORD
@@ -207,7 +217,7 @@ class LogList(object):
         con = self.sql_context.copy()
         con.update({"this": self.table})
         return con
-        
+
     def new_logs(self, index):
         self.clear()
         self.table = hash_value(datetime.now())
@@ -231,19 +241,21 @@ class LogList(object):
                 path = model.iter_n_children(None) - 1
             if path >= 0:
                 if not color:
-                    clause = lambda p: model[p][bgcolor] == '#fff'
+                    def clause(p): return model[p][bgcolor] == '#fff'
                 else:
                     if color == '#fff':
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
                         return
-                    clause = lambda p: color not in model[p][bgcolor]
+
+                    def clause(p): return color not in model[p][bgcolor]
                 while clause(path):
                     path -= 1
                     if path < 0:
                         break
                 else:
                     selection.select_path(path)
-                    self.view.scroll_to_cell(path, use_align=True, row_align=0.5)
+                    self.view.scroll_to_cell(
+                        path, use_align=True, row_align=0.5)
             selection.set_mode(gtk.SELECTION_MULTIPLE)
 
     def down_color(self, color=None):
@@ -261,12 +273,15 @@ class LogList(object):
                 iter_ = model.get_iter_first()
             if iter_:
                 if not color:
-                    clause = lambda it: model.get_value(it, bgcolor) == '#fff'
+                    def clause(it): return model.get_value(
+                        it, bgcolor) == '#fff'
                 else:
                     if color == '#fff':
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
                         return
-                    clause = lambda it: color not in model.get_value(it, bgcolor)
+
+                    def clause(it): return color not in model.get_value(
+                        it, bgcolor)
                 while clause(iter_):
                     iter_ = model.iter_next(iter_)
                     if not iter_:
@@ -302,7 +317,6 @@ class LogsListWindow(gtk.Frame):
         query_btn.set_is_important(True)
         query_btn.set_label("Edit Query")
 
-
         sep2 = gtk.SeparatorToolItem()
 
         lwin_btn = gtk.ToolButton(gtk.STOCK_FILE)
@@ -331,7 +345,6 @@ class LogsListWindow(gtk.Frame):
         export_btn.connect("clicked", self.csv_export)
         export_btn.set_label("Export...")
 
-        
         toolbar.insert(exec_btn, 0)
         toolbar.insert(self.break_btn, 1)
         toolbar.insert(sep1, 2)
@@ -348,10 +361,10 @@ class LogsListWindow(gtk.Frame):
         toolbar.set_icon_size(gtk.ICON_SIZE_SMALL_TOOLBAR)
         toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
-
         self.qm = QueriesManager(config.QUERIES_FILE)
         self.filter_logs = Query(self.log_list)
-        self.loader = QueryLoader(self.filter_logs, self.qm, ntb.notify_loaders)
+        self.loader = QueryLoader(
+            self.filter_logs, self.qm, ntb.notify_loaders)
         self.paned = gtk.VPaned()
         self.box = gtk.VBox()
 
@@ -362,7 +375,7 @@ class LogsListWindow(gtk.Frame):
         self.show_all()
         self.break_btn.set_sensitive(False)
 
-        self.sens_list = [exec_btn,lwin_btn]+self.filter_logs.sens_list
+        self.sens_list = [exec_btn, lwin_btn]+self.filter_logs.sens_list
         self.ntb = ntb
 
         if config.GRID_LINES:
@@ -374,8 +387,8 @@ class LogsListWindow(gtk.Frame):
 
     def csv_export(self, *args):
         fchooser = gtk.FileChooserDialog("Export logs list...", None,
-            gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
-            gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
+                                         gtk.FILE_CHOOSER_ACTION_SAVE, (gtk.STOCK_CANCEL,
+                                                                        gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK), None)
         fchooser.set_current_name("logslist.csv")
         response = fchooser.run()
         if response == gtk.RESPONSE_OK:
@@ -416,7 +429,8 @@ class LogsListWindow(gtk.Frame):
 
     def show_gridlines(self, button):
         if button.get_active():
-            self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
+            self.log_list.view.set_grid_lines(
+                gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
         else:
             self.log_list.view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
@@ -430,13 +444,14 @@ class LogsListWindow(gtk.Frame):
                 if pathlist:
                     if len(pathlist) > 1:
                         SeveralLogsWindow(self.log_list,
-                                          self.log_list.model.get_iter(pathlist[0]),
+                                          self.log_list.model.get_iter(
+                                              pathlist[0]),
                                           selection, self.exec_sens,
                                           self.log_list.words_hl)
                     else:
                         selection.set_mode(gtk.SELECTION_SINGLE)
                         LogWindow(self.log_list, self.log_list.model.get_iter(pathlist[0]),
-                                    selection, self.exec_sens, self.log_list.words_hl)
+                                  selection, self.exec_sens, self.log_list.words_hl)
                         selection.set_mode(gtk.SELECTION_MULTIPLE)
             except ValueError:
                 selection.set_mode(gtk.SELECTION_MULTIPLE)

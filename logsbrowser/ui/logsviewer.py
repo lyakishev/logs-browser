@@ -18,28 +18,28 @@
 #!/usr/bin/env python
 # vim: ts=4:sw=4:tw=78:nowrap
 
+import webbrowser
+from utils.monitor import ConfigMonitor
+import subprocess
+import os
+from operator import setitem
+from db.engine import close_conn
+from process import process, mp_process
+import config
+from statusicon import StatusIcon
+import sys
+from logsnotebook import LogsNotebook
+from logstree import SourceManagerUI
+from datetimef import DateFilter
+from datetime import datetime
+import gio
+import gobject
+import gtk
+import pygtk
 VERSION = 'DEV'
 
-import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-from datetime import datetime
-from datetimef import DateFilter
-from logstree import SourceManagerUI
-from logsnotebook import LogsNotebook
-import sys
-from statusicon import StatusIcon
-import config
-#import utils.profiler as profiler
-from process import process, mp_process
-from db.engine import close_conn
-from operator import setitem
-import os
-import subprocess
-from utils.monitor import ConfigMonitor
-import webbrowser
+# import utils.profiler as profiler
 try:
     from imp import reload
 except ImportError:
@@ -87,7 +87,8 @@ class LogsViewer:
         self.root = gtk.Window(type=gtk.WINDOW_TOPLEVEL)
         self.root.set_title("Logs Browser")
         self.root.connect("destroy", self.destroy_cb)
-        self.root.set_default_size(config.WIDTH_MAIN_WINDOW, config.HEIGHT_MAIN_WINDOW)
+        self.root.set_default_size(
+            config.WIDTH_MAIN_WINDOW, config.HEIGHT_MAIN_WINDOW)
 
         self.date_filter = DateFilter()
 
@@ -100,11 +101,11 @@ class LogsViewer:
         self.show_button.connect("clicked", self.show_logs)
         self.stop_all_btn = gtk.Button('Stop')
         self.stop_all_btn.connect('clicked',
-                            lambda btn: setitem(self.signals,'stop',True))
+                                  lambda btn: setitem(self.signals, 'stop', True))
         self.stop_all_btn.set_sensitive(False)
         self.break_btn = gtk.Button('Break')
         self.break_btn.connect('clicked',
-                            lambda btn: setitem(self.signals,'break',True))
+                               lambda btn: setitem(self.signals, 'break', True))
         self.break_btn.set_sensitive(False)
 
         main_box = gtk.HPaned()
@@ -114,11 +115,10 @@ class LogsViewer:
         self.progressbar.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 
         self.source_tree = SourceManagerUI(self.progressbar, self.fill_tree_sens,
-                                     self.signals, self.root)
+                                           self.signals, self.root)
 
         self.browser = LogsNotebook(self.source_tree, self.show_button)
         self.source_tree.fill_combo()
-
 
         button_box.pack_start(self.show_button)
         button_box.pack_start(self.stop_all_btn)
@@ -134,7 +134,8 @@ class LogsViewer:
         self.root.add_accel_group(accelgroup)
         actiongroup = gtk.ActionGroup('LogsBrowser')
         self.actiongroup = actiongroup
-        self.index_t = gtk.ToggleAction('fts', '_Full Text Index', 'Enable Full Text Search', None)
+        self.index_t = gtk.ToggleAction(
+            'fts', '_Full Text Index', 'Enable Full Text Search', None)
         self.index_t.set_active(config.FTSINDEX)
         actiongroup.add_actions([('Quit', gtk.STOCK_QUIT, '_Quit', None,
                                   'Quit the Program', self.destroy_cb),
@@ -142,18 +143,18 @@ class LogsViewer:
                                  ('?', None, '_?'),
                                 ('Settings', None, '_Settings'),
                                 ('Configuration', None, '_Configuration'),
-                                  ("Application", None,
-                                      "_Application", None, None,
-                                      self.edit_config),
-                                  ("Sources", None, "_Sources", None, None,
-                                      self.edit_config),
-                                  ("Queries", None, "_Queries", None, None,
-                                      self.edit_config),
-                                  ("Actions", None, "_Actions", None, None,
-                                      self.edit_config),
+                                 ("Application", None,
+                                  "_Application", None, None,
+                                  self.edit_config),
+                                 ("Sources", None, "_Sources", None, None,
+                                  self.edit_config),
+                                 ("Queries", None, "_Queries", None, None,
+                                  self.edit_config),
+                                 ("Actions", None, "_Actions", None, None,
+                                  self.edit_config),
                                 ('Help', gtk.STOCK_HELP, '_Help', None,
-                                  'Manual', self.show_help),
-                                  ('About', gtk.STOCK_ABOUT, '_About', None,
+                                 'Manual', self.show_help),
+                                 ('About', gtk.STOCK_ABOUT, '_About', None,
                                   'About', self.show_about)])
         actiongroup.add_action(self.index_t)
 
@@ -170,15 +171,16 @@ class LogsViewer:
     def edit_config(self, action):
         name = action.get_name()
         if name == "Application":
-            command = "%s %s" % (config.PROGRAM_CONFIG_EDITOR, "config/logsbrowser.cfg")
+            command = "%s %s" % (
+                config.PROGRAM_CONFIG_EDITOR, "config/logsbrowser.cfg")
         elif name == "Sources":
             command = "%s %s" % (config.SOURCES_XML_EDITOR, config.SOURCES_XML)
         elif name == "Queries":
-            command = "%s %s" % (config.QUERIES_FILE_EDITOR, config.QUERIES_FILE)
+            command = "%s %s" % (
+                config.QUERIES_FILE_EDITOR, config.QUERIES_FILE)
         elif name == "Actions":
             command = "%s %s" % (config.SELECTS_EDITOR, config.SELECTS)
         subprocess.Popen(command)
-
 
     def set_from_date(self):
         self.date_filter.fromto_option.from_date.set_now()
@@ -209,7 +211,7 @@ class LogsViewer:
         about.destroy()
 
     def fill_tree_sens(self, function):
-        def wrapper(*args,**kw):
+        def wrapper(*args, **kw):
             self.browser.set_sens(False)
             self.stop_all_btn.set_sensitive(True)
             self.break_btn.set_sensitive(True)
@@ -232,12 +234,12 @@ class LogsViewer:
         logw = self.browser.get_logs_list_window()
         loglist = logw.log_list
         loglist.new_logs(self.index_t.get_active())
-        #logw.filter_logs.set_sql()
+        # logw.filter_logs.set_sql()
         return (logw, loglist)
 
     def callback(self, text="Working..."):
         self.progressbar.set_fraction(self.frac*self.count)
-        self.count+=1
+        self.count += 1
         self.progressbar.set_text(text)
         while gtk.events_pending():
             gtk.main_iteration()
@@ -250,8 +252,8 @@ class LogsViewer:
         if self.signals['stop'] or self.signals['break']:
             e_stop.set()
 
+    # @profiler.time_it
 
-    #@profiler.time_it
     def show_logs(self, *args):
         self.break_btn.set_sensitive(True)
         self.stop_all_btn.set_sensitive(True)

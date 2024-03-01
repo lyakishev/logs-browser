@@ -35,9 +35,10 @@ EVT_DICT = {win32con.EVENTLOG_AUDIT_FAILURE: 'AUDIT_FAILURE',
             win32con.EVENTLOG_ERROR_TYPE: 'ERROR'}
 
 _flags = (win32evtlog.EVENTLOG_BACKWARDS_READ |
-         win32evtlog.EVENTLOG_SEQUENTIAL_READ)
+          win32evtlog.EVENTLOG_SEQUENTIAL_READ)
 
-DATETIME_REGEXP = re.compile(r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
+DATETIME_REGEXP = re.compile(
+    r"(\d{2})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})")
 UNICODE_SYMBOL_REGEXP = re.compile(r"\u\w{4}")
 DESCRIPTION_REGEXP = re.compile(r'''<The description for'''
                                 r'''.+?:\s*u['"](.+)['"]\.>''',
@@ -47,14 +48,14 @@ DESCRIPTION_REGEXP = re.compile(r'''<The description for'''
 def get_event_log(ev_obj, server, logtype):
     log = {}
     the_time = ev_obj.TimeGenerated.Format()  # '12/23/99 15:54:09'
-    parsed_dt= DATETIME_REGEXP.search(the_time)
+    parsed_dt = DATETIME_REGEXP.search(the_time)
     dt_group = parsed_dt.group
     dtdate = datetime.datetime(int("20" + dt_group(3)), int(dt_group(1)),
-                                int(dt_group(2)), int(dt_group(4)),
-                                int(dt_group(5)), int(dt_group(6)))
-    #log['evt_id'] = str(winerror.HRESULT_CODE(ev_obj.EventID))
-    #log['cat'] = ev_obj.EventCategory
-    #log['record'] = ev_obj.RecordNumber
+                               int(dt_group(2)), int(dt_group(4)),
+                               int(dt_group(5)), int(dt_group(6)))
+    # log['evt_id'] = str(winerror.HRESULT_CODE(ev_obj.EventID))
+    # log['cat'] = ev_obj.EventCategory
+    # log['record'] = ev_obj.RecordNumber
     log['computer'] = str(ev_obj.ComputerName)
     log['msg'] = str(win32evtlogutil.SafeFormatMessage(ev_obj, logtype))
     log['logtype'] = logtype
@@ -66,6 +67,7 @@ def get_event_log(ev_obj, server, logtype):
         log['evt_type'] = str(EVT_DICT[ev_obj.EventType])
     log['the_time'] = dtdate.isoformat(' ')
     return log
+
 
 def log_for_insert(log):
     msg = log['msg']
@@ -93,7 +95,7 @@ def evlogworker(dates, server, logtype, funcs=None):
             try:
                 events = win32evtlog.ReadEventLog(hand, _flags, 0)
             except pywintypes.error:
-                #hand.Detach()  # need?
+                # hand.Detach()  # need?
                 time.sleep(1)
             else:
                 if events:
@@ -101,7 +103,7 @@ def evlogworker(dates, server, logtype, funcs=None):
                 else:
                     raise StopIteration
         else:
-            #print "Can't read eventlogs: %s %s " % (serve,logtype)
+            # print "Can't read eventlogs: %s %s " % (serve,logtype)
             try:
                 win32evtlog.CloseEventLog(hand)
             except pywintypes.error:
@@ -114,4 +116,3 @@ def evlogworker(dates, server, logtype, funcs=None):
                 raise StopIteration
             if log['the_time'] <= dates[1]:
                 yield log_for_insert(log), 1
-

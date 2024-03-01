@@ -17,7 +17,10 @@
 
 import gtk
 
-class ColorError(Exception): pass
+
+class ColorError(Exception):
+    pass
+
 
 def check_color(color_value):
     try:
@@ -27,8 +30,7 @@ def check_color(color_value):
     else:
         return True
 
+
 def c_to_string(color_value):
     color = gtk.gdk.color_parse(color_value)
     return color.to_string()
-    
-

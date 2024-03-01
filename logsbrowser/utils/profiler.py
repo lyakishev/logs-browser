@@ -19,6 +19,7 @@ import cProfile
 import pstats
 import datetime
 
+
 def profile(function):
     def wrapper(*args):
         f = function
@@ -30,12 +31,13 @@ def profile(function):
 
 
 def time_it(function):
-    def wrapper(*args,**kw):
+    def wrapper(*args, **kw):
         dt = datetime.datetime.now()
-        res = function(*args,**kw)
+        res = function(*args, **kw)
         print function.__name__, datetime.datetime.now() - dt
         return res
     return wrapper
+
 
 def trace(f):
     def wrapper(*args, **kwargs):
@@ -43,6 +45,3 @@ def trace(f):
         r = f(*args, **kwargs)
         return r
     return wrapper
-    
-
-

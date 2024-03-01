@@ -17,12 +17,12 @@
 
 # -*- coding: utf8 -*-
 
+import traceback
+import gio
+import gobject
+import gtk
 import pygtk
 pygtk.require("2.0")
-import gtk
-import gobject
-import gio
-import traceback
 
 
 def merror(text):
@@ -31,10 +31,12 @@ def merror(text):
     md.run()
     md.destroy()
 
+
 def exception_dialog(type_, value, tb):
     dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                           buttons=gtk.BUTTONS_CLOSE)
-    dialog.set_markup("%s" % '\n'.join(traceback.format_exception_only(type_, value)))
+                               buttons=gtk.BUTTONS_CLOSE)
+    dialog.set_markup("%s" % '\n'.join(
+        traceback.format_exception_only(type_, value)))
     info = gtk.Expander('Stack trace')
     scr = gtk.ScrolledWindow()
     textview = gtk.TextView()
@@ -46,17 +48,19 @@ def exception_dialog(type_, value, tb):
     dialog.show_all()
     dialog.run()
     dialog.destroy()
-    
+
 
 def mwarning(parent, text):
     message_dialog = gtk.MessageDialog(parent,
-        gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
-        gtk.BUTTONS_CLOSE, text)
+                                       gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
+                                       gtk.BUTTONS_CLOSE, text)
     message_dialog.run()
     message_dialog.destroy()
 
+
 def responseToDialog(entry, dialog, response):
     dialog.response(response)
+
 
 def save_dialog():
     dialog = gtk.MessageDialog(
@@ -80,6 +84,7 @@ def save_dialog():
         text = 0
     dialog.destroy()
     return text
+
 
 if __name__ == "__main__":
     import sys

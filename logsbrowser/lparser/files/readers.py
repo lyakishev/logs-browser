@@ -20,6 +20,7 @@ import mmap
 from contextlib import closing
 import os
 
+
 def mmap_block_read(file_, block_size=8192):
     try:
         with closing(mmap.mmap(file_.fileno(), 0,
@@ -38,7 +39,6 @@ def mmap_block_read(file_, block_size=8192):
             yield line
 
 
-
 def mmap_block_read2(file_, block_size=8192):
     try:
         with closing(mmap.mmap(file_.fileno(), 0,
@@ -51,7 +51,7 @@ def mmap_block_read2(file_, block_size=8192):
                     start_msg_pos -= len(line)
                     if get_msg == 1:
                         yield (data[start_msg_pos:end_msg_pos],
-                                end_msg_pos - start_msg_pos)
+                               end_msg_pos - start_msg_pos)
                         end_msg_pos = start_msg_pos
                     elif get_msg == 0:
                         end_msg_pos = start_msg_pos
@@ -61,15 +61,16 @@ def mmap_block_read2(file_, block_size=8192):
                 start_msg_pos -= len(line)
                 if get_msg == 1:
                     yield (data[start_msg_pos:end_msg_pos],
-                            end_msg_pos - start_msg_pos)
+                           end_msg_pos - start_msg_pos)
                     end_msg_pos = start_msg_pos
                 elif get_msg == 0:
                     end_msg_pos = start_msg_pos
     except (WindowsError, MemoryError, ValueError):
         pass
 
+
 def seek_block_read(file_, block_size=8192):
-    file_.seek(0,2)
+    file_.seek(0, 2)
     mf_size = end_pos = file_.tell()
     if mf_size > 0:
         i = mf_size-1-block_size

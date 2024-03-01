@@ -20,13 +20,15 @@
 import re
 import os
 
-_digits = re.compile(r"(?<=[a-zA-Z])_\d{1,2}_(?=[a-zA-Z])|(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[-A-Za-z._]")
+_digits = re.compile(
+    r"(?<=[a-zA-Z])_\d{1,2}_(?=[a-zA-Z])|(?<=[a-zA-Z])\d(?=[a-zA-Z._])|\s|[-A-Za-z._]")
 _t = re.compile(r"(?<=\d)T(?=\d)")
 _start_end_literals = re.compile("^[._-]+|[._-]+$")
 _repeated_literals = re.compile(r"([._-]){2,}")
 _repeated_extension = re.compile(r"(\.[a-zA-Z]{3})\1+")
 _null = re.compile(r"(?<![A-Za-z])null(?![A-Za-z])")
-#_long_extension = re.compile(r"[A-Za-z_]{7,}")
+# _long_extension = re.compile(r"[A-Za-z_]{7,}")
+
 
 def clear(path):
     """Parse file name: remove digits, "junk" literals etc."""
